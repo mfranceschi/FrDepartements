@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { REGIONS, Region } from '../../data/regions';
-import { DEPARTEMENTS, Departement } from '../../data/departements';
+import { REGIONS } from '../../data/regions';
+import type { Region } from '../../data/regions';
+import { DEPARTEMENTS } from '../../data/departements';
+import type { Departement } from '../../data/departements';
 
 // Grouper les départements par code région
 const deptsByRegion = new Map<string, Departement[]>();

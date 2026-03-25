@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import type { Feature } from 'geojson';
 import type * as d3 from 'd3';
 
@@ -12,7 +13,7 @@ interface CoucheDepsProps {
   onClick?: (code: string) => void;
 }
 
-export default function CoucheDepts({
+export default memo(function CoucheDepts({
   features,
   pathGen,
   visible,
@@ -21,34 +22,34 @@ export default function CoucheDepts({
   onHover,
   onClick,
 }: CoucheDepsProps) {
+  // Calcul des paths une seule fois (ou quand features/pathGen changent)
+  const paths = useMemo(
+    () => features.map((f) => ({ feature: f, d: pathGen(f), code: f.properties?.code as string | undefined })),
+    [features, pathGen],
+  );
+
   if (!visible) return null;
 
   return (
     <g className="couche-depts">
-      {features.map((feature) => {
-        const code = feature.properties?.code as string | undefined;
-        const isHighlighted = code !== undefined && code === highlightCode;
-        const d = pathGen(feature);
+      {paths.map(({ feature, d, code }) => {
         if (!d) return null;
+        const isHighlighted = code !== undefined && code === highlightCode;
 
         return (
           <path
-            key={code ?? Math.random()}
+            key={code ?? d}
             d={d}
             fill={isHighlighted ? '#60a5fa' : '#dbeafe'}
             stroke="#3b82f6"
             strokeWidth={0.5}
             style={{ cursor: onClick ? 'pointer' : 'default' }}
-            onMouseMove={(e) => {
-              if (!quizMode) onHover(feature, e.clientX, e.clientY);
-            }}
+            onMouseMove={(e) => { if (!quizMode) onHover(feature, e.clientX, e.clientY); }}
             onMouseLeave={() => onHover(null, 0, 0)}
-            onClick={() => {
-              if (onClick && code) onClick(code);
-            }}
+            onClick={() => { if (onClick && code) onClick(code); }}
           />
         );
       })}
     </g>
   );
-}
+});

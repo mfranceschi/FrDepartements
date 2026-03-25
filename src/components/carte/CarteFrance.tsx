@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import * as d3 from 'd3';
 import type { Feature } from 'geojson';
 import CoucheRegions from './CoucheRegions';
@@ -14,13 +14,6 @@ export interface CarteFranceProps {
   highlightCode?: string;
   quizMode?: boolean;
   quizLayer?: 'departements' | 'regions';
-}
-
-interface TooltipState {
-  visible: boolean;
-  x: number;
-  y: number;
-  content: string;
 }
 
 // Départements DROM to exclude from metropolitan map
@@ -42,9 +35,11 @@ export default function CarteFrance({
   quizMode = false,
   quizLayer = 'departements',
 }: CarteFranceProps) {
-  const [showRegions, setShowRegions] = useState(true);
-  const [showDepts, setShowDepts] = useState(true);
-  const [tooltip, setTooltip] = useState<TooltipState>({ visible: false, x: 0, y: 0, content: '' });
+  type Layer = 'departements' | 'regions';
+  const [activeLayer, setActiveLayer] = useState<Layer>('departements');
+
+  // Tooltip via DOM ref — aucun setState sur mousemove
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
   // Filter out DROM from metro features
   const metroDepts = useMemo(
@@ -53,25 +48,26 @@ export default function CarteFrance({
   );
 
   const handleDeptHover = useCallback((feature: Feature | null, x: number, y: number) => {
-    if (!feature) {
-      setTooltip((prev) => ({ ...prev, visible: false }));
-      return;
-    }
+    const el = tooltipRef.current;
+    if (!el) return;
+    if (!feature) { el.style.display = 'none'; return; }
     const nom = feature.properties?.nom as string | undefined;
     const code = feature.properties?.code as string | undefined;
-    const content = nom && code ? `${nom} (${code})` : nom ?? code ?? '';
-    setTooltip({ visible: true, x, y, content });
+    el.textContent = nom && code ? `${nom} (${code})` : nom ?? code ?? '';
+    el.style.left = `${x + 12}px`;
+    el.style.top = `${y - 30}px`;
+    el.style.display = 'block';
   }, []);
 
   const handleRegionHover = useCallback((feature: Feature | null, x: number, y: number) => {
-    if (!feature) {
-      setTooltip((prev) => ({ ...prev, visible: false }));
-      return;
-    }
+    const el = tooltipRef.current;
+    if (!el) return;
+    if (!feature) { el.style.display = 'none'; return; }
     const nom = feature.properties?.nom as string | undefined;
-    const code = feature.properties?.code as string | undefined;
-    const content = nom ?? code ?? '';
-    setTooltip({ visible: true, x, y, content });
+    el.textContent = nom ?? '';
+    el.style.left = `${x + 12}px`;
+    el.style.top = `${y - 30}px`;
+    el.style.display = 'block';
   }, []);
 
   const handleRegionClick = useCallback(
@@ -89,37 +85,29 @@ export default function CarteFrance({
     [onFeatureClick],
   );
 
-  const effectiveShowRegions = quizMode ? quizLayer === 'regions' : showRegions;
-  const effectiveShowDepts = quizMode ? quizLayer === 'departements' : showDepts;
+  const effectiveShowRegions = quizMode ? quizLayer === 'regions' : activeLayer === 'regions';
+  const effectiveShowDepts = quizMode ? quizLayer === 'departements' : activeLayer === 'departements';
 
   return (
     <div className="relative w-full">
       {!quizMode && (
-        <div className="flex gap-4 mb-2 px-2">
-          <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={showRegions}
-              onChange={(e) => setShowRegions(e.target.checked)}
-              className="rounded"
-            />
-            <span className="flex items-center gap-1">
-              <span className="inline-block w-3 h-3 rounded-sm border border-green-500 bg-green-100" />
-              Régions
-            </span>
-          </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={showDepts}
-              onChange={(e) => setShowDepts(e.target.checked)}
-              className="rounded"
-            />
-            <span className="flex items-center gap-1">
-              <span className="inline-block w-3 h-3 rounded-sm border border-blue-500 bg-blue-100" />
-              Départements
-            </span>
-          </label>
+        <div className="flex gap-1 mb-2 px-2 bg-gray-100 p-1 rounded-lg w-fit">
+          {(['departements', 'regions'] as const).map((layer) => (
+            <button
+              key={layer}
+              type="button"
+              onClick={() => setActiveLayer(layer)}
+              className={[
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                activeLayer === layer
+                  ? 'bg-white shadow-sm text-gray-800'
+                  : 'text-gray-500 hover:text-gray-700',
+              ].join(' ')}
+            >
+              <span className={`inline-block w-3 h-3 rounded-sm border ${layer === 'regions' ? 'border-green-500 bg-green-100' : 'border-blue-500 bg-blue-100'}`} />
+              {layer === 'regions' ? 'Régions' : 'Départements'}
+            </button>
+          ))}
         </div>
       )}
 
@@ -128,7 +116,6 @@ export default function CarteFrance({
         style={{ width: '100%', height: 'auto' }}
         className="block"
       >
-        {/* Metropolitan France — régions */}
         <CoucheRegions
           features={features.regions}
           pathGen={PATH_GEN}
@@ -138,7 +125,6 @@ export default function CarteFrance({
           onHover={handleRegionHover}
           onClick={onFeatureClick ? handleRegionClick : undefined}
         />
-        {/* Metropolitan France — départements */}
         <CoucheDepts
           features={metroDepts}
           pathGen={PATH_GEN}
@@ -148,8 +134,6 @@ export default function CarteFrance({
           onHover={handleDeptHover}
           onClick={onFeatureClick ? handleDeptClick : undefined}
         />
-
-        {/* Insets for Outre-mer */}
         <InsetOutreMer
           allDepts={features.departements}
           allRegions={features.regions}
@@ -160,32 +144,22 @@ export default function CarteFrance({
           onHover={handleDeptHover}
           onClick={onFeatureClick ? handleInsetClick : undefined}
         />
-
-        {/* Dashed border around DROM insets area */}
         <rect
-          x={8}
-          y={424}
-          width={292}
-          height={120}
-          fill="none"
-          stroke="#cbd5e1"
-          strokeWidth={0.5}
-          strokeDasharray="4 2"
-          rx={3}
+          x={8} y={424} width={292} height={120}
+          fill="none" stroke="#cbd5e1" strokeWidth={0.5} strokeDasharray="4 2" rx={3}
         />
         <text x={12} y={421} fontSize={8} fill="#94a3b8">
           Départements et régions d'outre-mer
         </text>
       </svg>
 
-      {/* Floating tooltip */}
-      {tooltip.visible && !quizMode && (
+      {/* Tooltip via ref — jamais de setState sur mousemove */}
+      {!quizMode && (
         <div
+          ref={tooltipRef}
           className="fixed z-50 pointer-events-none bg-gray-800 text-white text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap"
-          style={{ left: tooltip.x + 12, top: tooltip.y - 30 }}
-        >
-          {tooltip.content}
-        </div>
+          style={{ display: 'none' }}
+        />
       )}
     </div>
   );

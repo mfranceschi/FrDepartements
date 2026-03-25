@@ -7,6 +7,13 @@ type SortDir = 'asc' | 'desc';
 
 const regionMap = new Map(REGIONS.map((r) => [r.code, r.nom]));
 
+// 2A et 2B remplacent le département 20 : les trier en position 20.x
+function codeToSortKey(code: string): number {
+  if (code === '2A') return 20.1;
+  if (code === '2B') return 20.2;
+  return parseInt(code, 10);
+}
+
 export default function TableauFlat() {
   const [filter, setFilter] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('code');
@@ -35,7 +42,7 @@ export default function TableauFlat() {
     return [...filtered].sort((a, b) => {
       let cmp = 0;
       if (sortKey === 'code') {
-        cmp = a.code.localeCompare(b.code, 'fr', { numeric: true });
+        cmp = codeToSortKey(a.code) - codeToSortKey(b.code);
       } else if (sortKey === 'nom') {
         cmp = a.nom.localeCompare(b.nom, 'fr');
       } else {

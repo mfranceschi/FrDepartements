@@ -64,7 +64,7 @@ function SingleInset({
   onHover,
   onClick,
 }: SingleInsetProps) {
-  const { x, y, width, height, nom, code } = config;
+  const { x, y, width, height, nom } = config;
   const padding = 4;
 
   const deptPath = useMemo(() => {

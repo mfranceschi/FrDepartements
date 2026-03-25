@@ -5,7 +5,7 @@ import TableauFlat from '../components/tableau/TableauFlat';
 type Tab = 'regions' | 'liste';
 
 export default function TableauPage() {
-  const [activeTab, setActiveTab] = useState<Tab>('regions');
+  const [activeTab, setActiveTab] = useState<Tab>('liste');
 
   const tabClass = (tab: Tab) =>
     [
