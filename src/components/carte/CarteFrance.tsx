@@ -4,6 +4,7 @@ import type { Feature } from 'geojson';
 import CoucheRegions from './CoucheRegions';
 import CoucheDepts from './CoucheDepts';
 import InsetOutreMer from './InsetOutreMer';
+import InsetIleDeFrance from './InsetIleDeFrance';
 
 export interface CarteFranceProps {
   features: {
@@ -89,9 +90,9 @@ export default function CarteFrance({
   const effectiveShowDepts = quizMode ? quizLayer === 'departements' : activeLayer === 'departements';
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full h-full flex flex-col">
       {!quizMode && (
-        <div className="flex gap-1 mb-2 px-2 bg-gray-100 p-1 rounded-lg w-fit">
+        <div className="flex gap-1 mb-2 px-2 bg-gray-100 p-1 rounded-lg w-fit shrink-0">
           {(['departements', 'regions'] as const).map((layer) => (
             <button
               key={layer}
@@ -113,8 +114,9 @@ export default function CarteFrance({
 
       <svg
         viewBox="0 0 900 700"
-        style={{ width: '100%', height: 'auto' }}
-        className="block"
+        preserveAspectRatio="xMidYMid meet"
+        style={{ width: '100%', height: '100%', minHeight: 0 }}
+        className="block flex-1"
       >
         <CoucheRegions
           features={features.regions}
@@ -143,6 +145,14 @@ export default function CarteFrance({
           highlightCode={highlightCode}
           onHover={handleDeptHover}
           onClick={onFeatureClick ? handleInsetClick : undefined}
+        />
+        <InsetIleDeFrance
+          features={metroDepts}
+          visible={effectiveShowDepts}
+          quizMode={quizMode}
+          highlightCode={highlightCode}
+          onHover={handleDeptHover}
+          onClick={onFeatureClick ? handleDeptClick : undefined}
         />
         <rect
           x={8} y={424} width={292} height={120}

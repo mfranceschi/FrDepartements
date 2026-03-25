@@ -55,11 +55,11 @@ export default function QuizPage() {
   };
 
   return (
-    <main className="max-w-3xl mx-auto p-4">
+    <main className="flex-1 min-h-0 overflow-y-auto"><div className="max-w-3xl mx-auto p-4">
       {phase === 'config' && <QuizConfig onStart={handleStart} />}
       {phase === 'session' && config !== null && (
         <QuizSession config={config} onRestart={handleRestart} />
       )}
-    </main>
+    </div></main>
   );
 }

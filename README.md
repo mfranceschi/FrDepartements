@@ -1,73 +1,61 @@
-# React + TypeScript + Vite
+# Départements & Régions de France
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Application web monopage pour explorer et apprendre les départements et régions français. Interface entièrement en français.
 
-Currently, two official plugins are available:
+## Fonctionnalités
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+### Carte interactive
+- Carte SVG de la France métropolitaine avec projection conique conforme (D3.js)
+- Bascule entre la couche **Départements** et la couche **Régions**
+- Infobulle au survol (nom + numéro)
+- Clic sur un territoire : panneau latéral avec nom, code et région parente
+- **Inset Île-de-France** agrandi pour les 8 petits départements de la région parisienne
+- **Insets Outre-mer** : Guadeloupe, Martinique, Guyane, La Réunion, Mayotte
 
-## React Compiler
+### Tableau de référence
+- **Liste complète** : 101 départements triables (numéro, nom, région) et filtrables en temps réel
+- **Vue par région** : accordéon affichant les départements groupés par région, régions d'outre-mer séparées en bas
+- Ordre de tri numérique correct pour 2A et 2B (positionnés en 20)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Quiz géographique
+5 types de questions, configurables avant chaque session :
 
-## Expanding the ESLint configuration
+| Type | Question | Saisie |
+|---|---|---|
+| Trouver un département | « Cliquez sur le département *Finistère* (29) » | Clic sur la carte |
+| Trouver une région | « Cliquez sur la région *Bretagne* » | Clic sur la carte |
+| Deviner le numéro | « Quel est le numéro du département *Gironde* ? » | QCM 4 choix |
+| Deviner le nom | « Quel département porte le numéro *33* ? » | QCM 4 choix |
+| Deviner la région | « Dans quelle région se trouve la *Gironde* ? » | QCM 4 choix |
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+**Configuration de session :**
+- Sélection des types de questions actifs
+- Difficulté des QCM : *Facile* (distracteurs aléatoires) ou *Difficile* (distracteurs de la même région)
+- Longueur : 10 / 25 (défaut) / 50 / Tout
+- Navigation clavier : touches `1`–`4` pour répondre, `Entrée` pour passer à la question suivante
+- Feedback immédiat avec animation après chaque réponse
+- Score en temps réel et récapitulatif de fin de session
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Stack technique
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+| | |
+|---|---|
+| Framework | React 19 + Vite |
+| Langage | TypeScript |
+| Carte | D3.js + GeoJSON |
+| Style | Tailwind CSS v4 |
+| Routing | React Router v6 |
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Aucun backend — tout tourne dans le navigateur depuis des fichiers statiques.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Données
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- Contours géographiques : [france-geojson](https://github.com/gregoiredavid/france-geojson) (gregoiredavid)
+- 18 régions (13 métropolitaines + 5 DROM) et 101 départements (96 métropolitains + 5 DROM)
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Lancer le projet
+
+```bash
+npm install
+npm run dev
 ```

@@ -7,7 +7,7 @@ import TableauPage from './pages/TableauPage';
 export default function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen flex flex-col">
+      <div className="h-screen flex flex-col">
         <Nav />
         <Routes>
           <Route path="/carte" element={<CartePage />} />

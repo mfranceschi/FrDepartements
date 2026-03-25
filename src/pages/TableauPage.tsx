@@ -16,7 +16,7 @@ export default function TableauPage() {
     ].join(' ');
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+    <main className="flex-1 min-h-0 overflow-y-auto"><div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
       {/* Titre */}
       <div>
         <h1 className="text-2xl font-semibold text-gray-900">
@@ -47,6 +47,6 @@ export default function TableauPage() {
 
       {/* Contenu */}
       {activeTab === 'regions' ? <AccordionRegions /> : <TableauFlat />}
-    </main>
+    </div></main>
   );
 }
