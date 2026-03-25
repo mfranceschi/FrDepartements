@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Edit(*)"
+      "Bash(npm install:*)",
+      "Bash(curl -sL \"https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/regions.geojson\" -o \"c:/Users/mfran/Desktop/MahSandbox/FrDepartements/src/geo/regions.json\")",
+      "Bash(curl -sL \"https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/departements.geojson\" -o \"c:/Users/mfran/Desktop/MahSandbox/FrDepartements/src/geo/departements.json\")",
+      "Bash(npx tsc:*)"
     ]
   }
 }
