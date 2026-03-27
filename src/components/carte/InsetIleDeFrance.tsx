@@ -1,5 +1,5 @@
 import { memo, useMemo } from 'react';
-import * as d3 from 'd3';
+import { geoMercator, geoPath } from 'd3';
 import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from 'geojson';
 import type { GeoPermissibleObjects } from 'd3';
 
@@ -48,14 +48,13 @@ export default memo(function InsetIleDeFrance({
       features: idfFeatures,
     };
 
-    const proj = d3
-      .geoMercator()
+    const proj = geoMercator()
       .fitExtent(
         [[PAD, PAD], [W - PAD, H - PAD - 14]],
         collection as GeoPermissibleObjects,
       );
 
-    const generator = d3.geoPath(proj);
+    const generator = geoPath(proj);
 
     return {
       gen: generator,

@@ -10,6 +10,7 @@ jobs:
   build:
     name: Build & Check
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -27,10 +28,13 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Test
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Unit tests
         run: npm test
 
-      - name: Type check & Build
+      - name: Build
         run: npm run build
 
       - name: Check bundle size
@@ -39,7 +43,52 @@ jobs:
           find dist/assets -type f | sort | xargs ls -lh | awk '{print $5, $9}'
           TOTAL=$(du -sb dist | cut -f1)
           echo "Total dist size: $(du -sh dist | cut -f1)"
-          if [ "$TOTAL" -gt 5242880 ]; then
-            echo "WARNING: dist exceeds 5 MB"
+          # Limite relevée à 6 MB : les fichiers GeoJSON (depts + régions) pèsent ~5 MB
+          # à eux seuls, et le service worker PWA (Workbox) ajoute ~150 KB supplémentaires.
+          # Pour réduire le bundle, envisager : simplification des GeoJSON ou lazy-loading.
+          if [ "$TOTAL" -gt 6291456 ]; then
+            echo "ERROR: dist exceeds 6 MB"
             exit 1
           fi
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 1
+
+  e2e:
+    name: E2E Tests (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Les tests E2E tournent après le build pour ne pas bloquer le merge en cas
+    # d'échec isolé dû à l'environnement (flakiness réseau, etc.)
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

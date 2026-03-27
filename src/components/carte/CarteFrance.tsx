@@ -1,5 +1,12 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import * as d3 from 'd3';
+import {
+  geoConicConformal,
+  geoPath,
+  zoom as d3zoom,
+  zoomIdentity,
+  select,
+} from 'd3';
+import type { GeoPath, GeoPermissibleObjects, ZoomBehavior, D3ZoomEvent } from 'd3';
 import type { Feature } from 'geojson';
 import CoucheRegions from './CoucheRegions';
 import CoucheDepts from './CoucheDepts';
@@ -22,14 +29,13 @@ export interface CarteFranceProps {
 
 const DROM_CODES = new Set(['971', '972', '973', '974', '976']);
 
-const PROJECTION = d3
-  .geoConicConformal()
+const PROJECTION = geoConicConformal()
   .center([2.5, 46.5])
   .scale(3000)
   .translate([520, 340]);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const PATH_GEN: d3.GeoPath<any, d3.GeoPermissibleObjects> = d3.geoPath(PROJECTION);
+const PATH_GEN: GeoPath<any, GeoPermissibleObjects> = geoPath(PROJECTION);
 
 interface ZoomTransform { x: number; y: number; k: number }
 
@@ -48,26 +54,25 @@ export default function CarteFrance({
   const [transform, setTransform] = useState<ZoomTransform>({ x: 0, y: 0, k: 1 });
 
   const svgRef = useRef<SVGSVGElement>(null);
-  const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | undefined>(undefined);
+  const zoomRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | undefined>(undefined);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
   // Setup d3.zoom
   useEffect(() => {
     if (!svgRef.current) return;
-    const zoom = d3
-      .zoom<SVGSVGElement, unknown>()
+    const zoomBehavior = d3zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.5, 8])
-      .on('zoom', (event: d3.D3ZoomEvent<SVGSVGElement, unknown>) => {
+      .on('zoom', (event: D3ZoomEvent<SVGSVGElement, unknown>) => {
         const { x, y, k } = event.transform;
         setTransform({ x, y, k });
       });
 
-    zoomRef.current = zoom;
-    d3.select(svgRef.current).call(zoom);
+    zoomRef.current = zoomBehavior;
+    select(svgRef.current).call(zoomBehavior);
 
     return () => {
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      d3.select(svgRef.current).on('.zoom', null);
+      select(svgRef.current).on('.zoom', null);
     };
   }, []);
 
@@ -91,9 +96,9 @@ export default function CarteFrance({
     const scale = 4;
     const tx = svgW / 2 - scale * centroid[0];
     const ty = svgH / 2 - scale * centroid[1];
-    const newTransform = d3.zoomIdentity.translate(tx, ty).scale(scale);
+    const newTransform = zoomIdentity.translate(tx, ty).scale(scale);
 
-    d3.select(svgRef.current)
+    select(svgRef.current)
       .transition()
       .duration(500)
       .call(zoomRef.current.transform, newTransform);
@@ -101,17 +106,17 @@ export default function CarteFrance({
 
   const handleZoomIn = useCallback(() => {
     if (!svgRef.current || !zoomRef.current) return;
-    d3.select(svgRef.current).transition().duration(250).call(zoomRef.current.scaleBy, 1.5);
+    select(svgRef.current).transition().duration(250).call(zoomRef.current.scaleBy, 1.5);
   }, []);
 
   const handleZoomOut = useCallback(() => {
     if (!svgRef.current || !zoomRef.current) return;
-    d3.select(svgRef.current).transition().duration(250).call(zoomRef.current.scaleBy, 1 / 1.5);
+    select(svgRef.current).transition().duration(250).call(zoomRef.current.scaleBy, 1 / 1.5);
   }, []);
 
   const handleZoomReset = useCallback(() => {
     if (!svgRef.current || !zoomRef.current) return;
-    d3.select(svgRef.current).transition().duration(300).call(zoomRef.current.transform, d3.zoomIdentity);
+    select(svgRef.current).transition().duration(300).call(zoomRef.current.transform, zoomIdentity);
   }, []);
 
   const metroDepts = useMemo(

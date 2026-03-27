@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import * as d3 from 'd3';
+import { geoMercator, geoPath } from 'd3';
 import type { Feature } from 'geojson';
 import type { GeoPermissibleObjects } from 'd3';
 
@@ -75,21 +75,21 @@ function SingleInset({
 
   const deptPath = useMemo(() => {
     if (!deptFeature) return null;
-    const proj = d3.geoMercator().fitExtent(
+    const proj = geoMercator().fitExtent(
       [[padding, padding], [width - padding, height - padding - 12]],
       deptFeature as GeoPermissibleObjects,
     );
-    const gen = d3.geoPath(proj);
+    const gen = geoPath(proj);
     return gen(deptFeature as GeoPermissibleObjects);
   }, [deptFeature, width, height]);
 
   const regionPath = useMemo(() => {
     if (!regionFeature) return null;
-    const proj = d3.geoMercator().fitExtent(
+    const proj = geoMercator().fitExtent(
       [[padding, padding], [width - padding, height - padding - 12]],
       regionFeature as GeoPermissibleObjects,
     );
-    const gen = d3.geoPath(proj);
+    const gen = geoPath(proj);
     return gen(regionFeature as GeoPermissibleObjects);
   }, [regionFeature, width, height]);
 

@@ -4,6 +4,11 @@ import { REGIONS } from '../data/regions';
 import type { QuizConfig, Question, Choice, SessionState, QuizMode, AnswerRecord } from '../quiz/types';
 
 // ─── Fisher-Yates shuffle ────────────────────────────────────────────────────
+
+/**
+ * Mélange un tableau de manière aléatoire uniforme (algorithme Fisher-Yates).
+ * Retourne une nouvelle copie du tableau — l'original n'est pas muté.
+ */
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -13,6 +18,16 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+/**
+ * Sélectionne `n` éléments aléatoires depuis `arr`, en excluant les codes
+ * présents dans `excludeCodes`. Si le pool filtré contient moins de `n`
+ * éléments, retourne autant que possible.
+ *
+ * @param arr        Pool source
+ * @param n          Nombre d'éléments à retourner
+ * @param excludeCodes  Codes à exclure (ex : la bonne réponse)
+ * @param getCode    Fonction extraisant le code d'un élément
+ */
 function pickRandom<T>(arr: T[], n: number, excludeCodes: Set<string>, getCode: (item: T) => string): T[] {
   const candidates = arr.filter((item) => !excludeCodes.has(getCode(item)));
   return shuffle(candidates).slice(0, n);
@@ -23,6 +38,11 @@ function pickRandom<T>(arr: T[], n: number, excludeCodes: Set<string>, getCode: 
 interface DeptChoice { code: string; nom: string; regionCode: string }
 interface RegionChoice { code: string; nom: string }
 
+/**
+ * Construit 4 choix QCM pour un mode « Deviner le nom » en difficulté **facile** :
+ * les 3 distractors sont tirés aléatoirement parmi tous les départements,
+ * toutes régions confondues.
+ */
 function buildDeptChoicesFacile(correct: DeptChoice, allDepts: DeptChoice[]): Choice[] {
   const exclude = new Set([correct.code]);
   const distractors = pickRandom(allDepts, 3, exclude, (d) => d.code);
@@ -32,6 +52,12 @@ function buildDeptChoicesFacile(correct: DeptChoice, allDepts: DeptChoice[]): Ch
   ]);
 }
 
+/**
+ * Construit 4 choix QCM pour un mode « Deviner le nom » en difficulté **difficile** :
+ * les distractors sont prioritairement pris dans la même région que le département
+ * cible (voisins proches), ce qui rend la discrimination plus difficile.
+ * Si la région ne fournit pas assez de candidats, le reste est complété aléatoirement.
+ */
 function buildDeptChoicesDifficile(correct: DeptChoice, allDepts: DeptChoice[]): Choice[] {
   const exclude = new Set([correct.code]);
   const sameRegion = allDepts.filter(
@@ -53,6 +79,10 @@ function buildDeptChoicesDifficile(correct: DeptChoice, allDepts: DeptChoice[]):
   ]);
 }
 
+/**
+ * Construit 4 choix QCM pour un mode « Deviner le code » en difficulté **facile** :
+ * les labels affichés sont les codes (ex. « 75 », « 13 »), distractors aléatoires.
+ */
 function buildCodeChoicesFacile(correct: DeptChoice, allDepts: DeptChoice[]): Choice[] {
   const exclude = new Set([correct.code]);
   const distractors = pickRandom(allDepts, 3, exclude, (d) => d.code);
@@ -62,6 +92,11 @@ function buildCodeChoicesFacile(correct: DeptChoice, allDepts: DeptChoice[]): Ch
   ]);
 }
 
+/**
+ * Construit 4 choix QCM pour un mode « Deviner le code » en difficulté **difficile** :
+ * les distractors sont des codes de départements de la même région, ce qui crée
+ * des confusions entre numéros proches (ex. 75 vs 77, 78, 91…).
+ */
 function buildCodeChoicesDifficile(correct: DeptChoice, allDepts: DeptChoice[]): Choice[] {
   const exclude = new Set([correct.code]);
   const sameRegion = allDepts.filter(
@@ -83,6 +118,12 @@ function buildCodeChoicesDifficile(correct: DeptChoice, allDepts: DeptChoice[]):
   ]);
 }
 
+/**
+ * Construit 4 choix QCM pour un mode « Deviner la région » (difficulté unique) :
+ * les distractors sont des régions métropolitaines tirées aléatoirement.
+ * Ce mode n'utilise qu'une seule difficulté car les régions sont peu nombreuses
+ * (13 en métropole) et toutes assez distinctes.
+ */
 function buildRegionChoicesFacile(correctRegion: RegionChoice, allRegions: RegionChoice[]): Choice[] {
   const exclude = new Set([correctRegion.code]);
   const distractors = pickRandom(allRegions, 3, exclude, (r) => r.code);
@@ -97,6 +138,21 @@ function buildRegionChoicesFacile(correctRegion: RegionChoice, allRegions: Regio
 const CARTE_MODES = new Set<QuizMode>(['TrouverDeptCarte', 'TrouverRegionCarte']);
 const QCM_MODES = new Set<QuizMode>(['DevinerCodeDept', 'DevinerNomDept', 'DevinerRegionDept']);
 
+/**
+ * Génère la liste ordonnée de questions pour une session à partir de la
+ * configuration utilisateur.
+ *
+ * **Équilibrage carte / QCM** : quand les deux familles de modes sont activées
+ * simultanément, les questions sont réparties à 50/50 (arrondi supérieur pour
+ * la carte). Cela évite qu'un type n'écrase l'autre quand le pool carte est
+ * plus grand que le pool QCM.
+ *
+ * **Choix multiples** : les questions QCM incluent leurs `choices` pré-construits
+ * ici afin que le rendu n'ait aucune logique de génération à exécuter.
+ *
+ * **Longueur `'tout'`** : quand l'utilisateur sélectionne « tout », la session
+ * contient l'intégralité des éléments combinés des pools sélectionnés.
+ */
 function generateQuestions(config: QuizConfig): Question[] {
   const allDepts = DEPARTEMENTS.map((d) => ({
     code: d.code,
@@ -198,6 +254,10 @@ function generateQuestions(config: QuizConfig): Question[] {
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
 
+/**
+ * Construit l'état initial d'une session à partir de la configuration.
+ * Appelé au démarrage et lors d'un redémarrage complet (`restart`).
+ */
 function buildInitialSession(config: QuizConfig): SessionState {
   return {
     questions: generateQuestions(config),
@@ -210,6 +270,21 @@ function buildInitialSession(config: QuizConfig): SessionState {
   };
 }
 
+/**
+ * Hook principal gérant l'intégralité de l'état d'une session de quiz.
+ *
+ * @param config  Configuration choisie par l'utilisateur (modes, difficulté, longueur).
+ *
+ * @returns
+ * - `session`           État courant de la session (questions, score, index, etc.)
+ * - `submitAnswer`      Enregistre la réponse de l'utilisateur pour la question courante.
+ *                       Sans effet si la question est déjà répondue ou la session terminée.
+ * - `nextQuestion`      Avance à la question suivante (ou marque la session comme terminée).
+ *                       Sans effet si aucune réponse n'a encore été soumise.
+ * - `restart`           Génère une nouvelle session complète avec la même configuration.
+ * - `restartWithErrors` Repart uniquement sur les questions mal répondues (mode révision),
+ *                       les choix étant re-mélangés. Sans effet s'il n'y a pas d'erreurs.
+ */
 export function useQuiz(config: QuizConfig): {
   session: SessionState;
   submitAnswer: (code: string) => void;
@@ -298,4 +373,3 @@ export function useQuiz(config: QuizConfig): {
 
   return { session, submitAnswer, nextQuestion, restart, restartWithErrors };
 }
-

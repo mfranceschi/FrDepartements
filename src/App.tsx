@@ -4,6 +4,7 @@ import Nav from './components/Nav';
 import CartePage from './pages/CartePage';
 import QuizPage from './pages/QuizPage';
 import TableauPage from './pages/TableauPage';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const VALID_PATHS = new Set(['/carte', '/quiz', '/tableau']);
 
@@ -21,13 +22,13 @@ function AppInner() {
     <div className="h-screen flex flex-col">
       <Nav />
       <div className="flex-1 min-h-0 overflow-hidden" style={{ display: pathname === '/carte' ? 'contents' : 'none' }}>
-        <CartePage />
+        <ErrorBoundary name="Carte"><CartePage /></ErrorBoundary>
       </div>
       <div className="flex-1 min-h-0 overflow-hidden" style={{ display: pathname === '/quiz' ? 'contents' : 'none' }}>
-        <QuizPage />
+        <ErrorBoundary name="Quiz"><QuizPage /></ErrorBoundary>
       </div>
       <div className="flex-1 min-h-0 overflow-hidden" style={{ display: pathname === '/tableau' ? 'contents' : 'none' }}>
-        <TableauPage />
+        <ErrorBoundary name="Tableau"><TableauPage /></ErrorBoundary>
       </div>
     </div>
   );

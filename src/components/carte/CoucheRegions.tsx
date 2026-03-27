@@ -1,11 +1,11 @@
 import { memo, useMemo } from 'react';
 import type { Feature } from 'geojson';
-import type * as d3 from 'd3';
+import type { GeoPath, GeoPermissibleObjects } from 'd3';
 
 interface CoucheRegionsProps {
   features: Feature[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  pathGen: d3.GeoPath<any, d3.GeoPermissibleObjects>;
+  pathGen: GeoPath<any, GeoPermissibleObjects>;
   visible: boolean;
   quizMode?: boolean;
   highlightCode?: string;
