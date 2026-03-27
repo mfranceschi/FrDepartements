@@ -17,18 +17,18 @@ test.describe('Carte interactive', () => {
   });
 
   test('affiche les boutons de zoom', async ({ page }) => {
-    await expect(page.getByTitle('Zoomer')).toBeVisible();
-    await expect(page.getByTitle('Dézoomer')).toBeVisible();
-    await expect(page.getByTitle('Réinitialiser le zoom')).toBeVisible();
+    // exact:true évite que "Dézoomer" soit aussi matché par la recherche partielle "Zoomer"
+    await expect(page.getByTitle('Zoomer', { exact: true })).toBeVisible();
+    await expect(page.getByTitle('Dézoomer', { exact: true })).toBeVisible();
+    await expect(page.getByTitle('Réinitialiser le zoom', { exact: true })).toBeVisible();
   });
 
   test('peut zoomer via le bouton +', async ({ page }) => {
-    // Clique plusieurs fois pour zoomer
-    const zoomInBtn = page.getByTitle('Zoomer');
+    const zoomInBtn = page.getByTitle('Zoomer', { exact: true });
     await zoomInBtn.click();
     await zoomInBtn.click();
-    // La carte doit toujours être visible après zoom
-    await expect(page.locator('svg')).toBeVisible();
+    // La carte principale (pas les icônes SVG) doit toujours être visible après zoom
+    await expect(page.locator('svg.block')).toBeVisible();
   });
 
   test('affiche le sélecteur de couche Départements / Régions', async ({ page }) => {
@@ -59,8 +59,8 @@ test.describe('Carte interactive', () => {
     await expect(suggestion).toBeVisible({ timeout: 3_000 });
     await suggestion.click();
 
-    // La sidebar doit afficher les infos du Finistère (code 29)
-    await expect(page.getByText(/finistère/i)).toBeVisible();
+    // La sidebar doit afficher le titre "Finistère" (heading dans le panneau)
+    await expect(page.getByRole('heading', { name: /finistère/i })).toBeVisible();
   });
 
   test('cliquer directement sur un path SVG de la couche depts met à jour la sidebar', async ({ page }) => {

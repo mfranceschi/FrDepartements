@@ -14,19 +14,18 @@ test.describe('Tableau des départements', () => {
     await expect(page.getByRole('button', { name: /liste/i })).toBeVisible();
   });
 
-  test("affiche l'accordéon par région par défaut", async ({ page }) => {
-    // L'onglet "Par région" est actif par défaut
+  test("affiche l'accordéon par région après sélection de l'onglet", async ({ page }) => {
+    // L'onglet par défaut est "Liste complète" ; on bascule sur "Par région"
+    await page.getByRole('button', { name: /par région/i }).click();
     // Des boutons d'accordéon (noms de régions) doivent être présents
     const regionButtons = page.getByRole('button').filter({ hasNotText: /par région|liste/i });
     await expect(regionButtons.first()).toBeVisible({ timeout: 5_000 });
   });
 
-  test("bascule vers l'onglet Liste complète", async ({ page }) => {
+  test("affiche la liste complète après sélection de l'onglet Liste", async ({ page }) => {
     await page.getByRole('button', { name: /liste/i }).click();
-    // Un tableau ou une liste doit s'afficher avec 101 lignes
-    await expect(page.getByRole('table').or(page.locator('tbody tr').first())).toBeVisible({
-      timeout: 5_000,
-    });
+    // Le tableau doit apparaître (défaut = liste, mais on vérifie explicitement)
+    await expect(page.getByRole('table')).toBeVisible({ timeout: 5_000 });
   });
 
   test('filtre les départements par nom dans la liste', async ({ page }) => {
@@ -53,13 +52,14 @@ test.describe('Tableau des départements', () => {
   });
 
   test("l'accordéon peut s'ouvrir sur une région", async ({ page }) => {
-    // Reste sur l'onglet "Par région"
+    // Bascule sur l'onglet "Par région"
+    await page.getByRole('button', { name: /par région/i }).click();
     const firstAccordionBtn = page.getByRole('button').filter({ hasNotText: /par région|liste/i }).first();
     await expect(firstAccordionBtn).toBeVisible({ timeout: 5_000 });
     await firstAccordionBtn.click();
 
-    // Des lignes de département doivent apparaître dans l'accordéon ouvert
-    await expect(page.locator('tbody tr, [role="row"]').first()).toBeVisible({ timeout: 3_000 });
+    // Des éléments de liste (<li>) doivent apparaître dans l'accordéon ouvert
+    await expect(page.locator('li').first()).toBeVisible({ timeout: 3_000 });
   });
 
   test('affiche 101 départements au total dans la liste complète', async ({ page }) => {

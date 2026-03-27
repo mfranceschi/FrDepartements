@@ -11,7 +11,9 @@
       "Bash(npm test:*)",
       "Bash(npx vitest:*)",
       "Bash(wc -l \"c:\\\\Users\\\\mfran\\\\Desktop\\\\MahSandbox\\\\FrDepartements\\\\src\\\\tests\"/*.test.tsx)",
-      "Bash(xargs wc:*)"
+      "Bash(xargs wc:*)",
+      "Bash(node -e \":*)",
+      "Bash(npx playwright:*)"
     ]
   }
 }

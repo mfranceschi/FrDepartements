@@ -30,11 +30,26 @@ async function answerCurrentQuestion(page: Page): Promise<{ type: string; correc
   const type = await detectQuestionType(page);
 
   if (type === 'TrouverDeptCarte') {
-    // force:true contourne les checks de visibilité et dispatche le clic
-    // directement sur l'élément SVG, déclenchant le handler React onClick
-    await page.locator('.couche-depts path').first().click({ force: true });
+    // La CartePage (display:none) contient aussi des .couche-depts paths ;
+    // on cherche le premier path ayant un bounding-box non nul (= visible).
+    // dispatchEvent bubbles jusqu'au React root et déclenche le handler onClick.
+    await page.evaluate(() => {
+      for (const p of document.querySelectorAll('.couche-depts path')) {
+        if ((p as Element).getBoundingClientRect().width > 0) {
+          p.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+          return;
+        }
+      }
+    });
   } else if (type === 'TrouverRegionCarte') {
-    await page.locator('.couche-regions path').first().click({ force: true });
+    await page.evaluate(() => {
+      for (const p of document.querySelectorAll('.couche-regions path')) {
+        if ((p as Element).getBoundingClientRect().width > 0) {
+          p.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+          return;
+        }
+      }
+    });
   } else {
     // QCM : raccourci clavier « 1 » → answers choices[0]
     // (DevinerCodeDept, DevinerNomDept, DevinerRegionDept)
@@ -70,31 +85,13 @@ test.describe('Quiz – parcours complet', () => {
   test('démarre une session et affiche la première question', async ({ page }) => {
     await page.getByRole('button', { name: /commencer|démarrer|lancer/i }).click();
     // La progression 1/N doit apparaître
-    await expect(page.getByText(/1\s*\/\s*\d+/)).toBeVisible();
+    await expect(page.getByText(/Question\s+1\s*\//)).toBeVisible();
   });
 
-  test('répond à une question QCM et voit le feedback', async ({ page }) => {
-    // Configure une session courte en mode QCM uniquement
-    // On sélectionne "Deviner le nom" si la case existe, sinon on démarre direct
-    const devinNom = page.getByLabel(/nom/i).first();
-    if (await devinNom.isVisible()) {
-      // Désélectionne tout sauf DevinerNomDept pour avoir un QCM
-      await devinNom.check();
-    }
-
+  test('répond à une question et voit le feedback', async ({ page }) => {
     await page.getByRole('button', { name: /commencer|démarrer|lancer/i }).click();
-
-    // Attend qu'une question QCM soit visible (choix sous forme de boutons)
-    const choiceButtons = page.getByRole('button').filter({ hasNotText: /zoom|reset|suivant/i });
-    await expect(choiceButtons.first()).toBeVisible({ timeout: 10_000 });
-
-    // Clique sur le premier choix disponible
-    await choiceButtons.first().click();
-
-    // Un feedback (correct ou incorrect) doit apparaître
-    await expect(page.getByText(/correct|bravo|dommage|erreur|réponse/i).or(
-      page.locator('[class*="correct"],[class*="wrong"],[class*="error"]')
-    )).toBeVisible({ timeout: 5_000 });
+    // answerCurrentQuestion détecte le type, répond et vérifie le feedback
+    await answerCurrentQuestion(page);
   });
 
   test('peut avancer à la question suivante après avoir répondu', async ({ page }) => {
@@ -118,7 +115,7 @@ test.describe('Quiz – parcours complet', () => {
   test('modal de confirmation lors de la navigation pendant un quiz en cours', async ({ page }) => {
     await page.getByRole('button', { name: /commencer|démarrer|lancer/i }).click();
     // Attend que la session démarre
-    await expect(page.getByText(/1\s*\/\s*\d+/)).toBeVisible({ timeout: 8_000 });
+    await expect(page.getByText(/Question\s+1\s*\//)).toBeVisible({ timeout: 8_000 });
 
     // Tente de naviguer vers une autre page
     await page.getByRole('link', { name: /tableau/i }).click();
@@ -131,7 +128,7 @@ test.describe('Quiz – parcours complet', () => {
 
   test('peut quitter le quiz via la modal de confirmation', async ({ page }) => {
     await page.getByRole('button', { name: /commencer|démarrer|lancer/i }).click();
-    await expect(page.getByText(/1\s*\/\s*\d+/)).toBeVisible({ timeout: 8_000 });
+    await expect(page.getByText(/Question\s+1\s*\//)).toBeVisible({ timeout: 8_000 });
 
     await page.getByRole('link', { name: /tableau/i }).click();
 
@@ -226,7 +223,8 @@ test.describe('Quiz entier – 5 types de questions, score et évaluations cohé
 
     // ── 5. Cohérence du score brut ──────────────────────────────────────────
     // Le gros chiffre affiché (X / 10) doit correspondre à nos corrects tracés.
-    const scoreEl = page.locator('p').filter({ hasText: / \/ 10/ });
+    // On cible le <p> de grande taille (text-6xl) qui affiche le score.
+    const scoreEl = page.locator('p.text-6xl').first();
     const rawScoreText = await scoreEl.textContent() ?? '';
     // parseInt("8 / 10") → 8  (s'arrête au premier caractère non numérique)
     expect(parseInt(rawScoreText)).toBe(trackedCorrect);
@@ -245,11 +243,13 @@ test.describe('Quiz entier – 5 types de questions, score et évaluations cohé
 
     await expect(page.getByText('Par catégorie')).toBeVisible();
 
-    // La meilleure (↑) et la moins bonne (↓) catégorie doivent être affichées
-    await expect(page.locator('text=↑')).toBeVisible();
-    await expect(page.locator('text=↓')).toBeVisible();
+    // La meilleure (↑) et la moins bonne (↓) catégorie doivent être affichées.
+    // .first() car d'autres pages (display:none) peuvent avoir des ↑ dans leurs tableaux.
+    await expect(page.locator('text=↑').first()).toBeVisible();
+    await expect(page.locator('text=↓').first()).toBeVisible();
 
-    // Les libellés de catégories visibles correspondent aux types rencontrés
+    // CategoryStats affiche uniquement la meilleure (↑) et la moins bonne (↓) catégorie.
+    // On vérifie que leurs libellés sont bien issus des modes rencontrés.
     const MODE_LABELS: Record<string, string> = {
       TrouverDeptCarte:  'Dept. sur carte',
       TrouverRegionCarte:'Région sur carte',
@@ -257,12 +257,12 @@ test.describe('Quiz entier – 5 types de questions, score et évaluations cohé
       DevinerNomDept:    'Nom de dept.',
       DevinerRegionDept: "Région d'un dept.",
     };
-    for (const mode of seenModes) {
-      const label = MODE_LABELS[mode];
-      if (label) {
-        await expect(page.getByText(label).first()).toBeVisible();
-      }
-    }
+    const validLabels = new Set([...seenModes].map(m => MODE_LABELS[m]).filter(Boolean));
+    // Le texte dans le bloc ↑ doit être le label d'un des modes joués
+    const bestLabel = await page.locator('text=↑').first().locator('..').locator('p.font-semibold').textContent();
+    expect(validLabels.has(bestLabel ?? '')).toBe(true);
+    const worstLabel = await page.locator('text=↓').first().locator('..').locator('p.font-semibold').textContent();
+    expect(validLabels.has(worstLabel ?? '')).toBe(true);
 
     // ── 8. Bouton « Revoir mes erreurs » cohérent avec le comptage ──────────
     if (trackedWrong > 0) {
