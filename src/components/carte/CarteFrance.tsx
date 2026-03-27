@@ -249,35 +249,35 @@ export default function CarteFrance({
             onHover={handleDeptHover}
             onClick={onFeatureClick ? handleDeptClick : undefined}
           />
-          <InsetOutreMer
-            allDepts={features.departements}
-            allRegions={features.regions}
-            showDepts={effectiveShowDepts}
-            showRegions={effectiveShowRegions}
-            quizMode={quizMode}
-            highlightDeptCode={highlightDeptCode}
-            highlightRegionCode={highlightRegionCode}
-            scale={transform.k}
-            onHover={handleDeptHover}
-            onClick={onFeatureClick ? handleInsetClick : undefined}
-          />
-          <InsetIleDeFrance
-            features={metroDepts}
-            visible={effectiveShowDepts}
-            quizMode={quizMode}
-            highlightCode={highlightDeptCode}
-            scale={transform.k}
-            onHover={handleDeptHover}
-            onClick={onFeatureClick ? handleDeptClick : undefined}
-          />
-          <rect
-            x={8} y={424} width={292} height={270}
-            fill="none" stroke="#cbd5e1" strokeWidth={0.5} strokeDasharray="4 2" rx={3}
-          />
-          <text x={12} y={421} fontSize={14 / transform.k} fill="#94a3b8">
-            Départements et régions d'outre-mer
-          </text>
         </g>
+
+        {/* Overlays fixes — ne bougent pas avec le zoom/pan */}
+        <InsetOutreMer
+          allDepts={features.departements}
+          allRegions={features.regions}
+          showDepts={effectiveShowDepts}
+          showRegions={effectiveShowRegions}
+          quizMode={quizMode}
+          highlightDeptCode={highlightDeptCode}
+          highlightRegionCode={highlightRegionCode}
+          onHover={handleDeptHover}
+          onClick={onFeatureClick ? handleInsetClick : undefined}
+        />
+        <InsetIleDeFrance
+          features={metroDepts}
+          visible={effectiveShowDepts}
+          quizMode={quizMode}
+          highlightCode={highlightDeptCode}
+          onHover={handleDeptHover}
+          onClick={onFeatureClick ? handleDeptClick : undefined}
+        />
+        <rect
+          x={8} y={424} width={292} height={270}
+          fill="none" stroke="#cbd5e1" strokeWidth={0.5} strokeDasharray="4 2" rx={3}
+        />
+        <text x={12} y={421} fontSize={11} fill="#94a3b8">
+          Départements et régions d'outre-mer
+        </text>
       </svg>
 
       {!quizMode && (

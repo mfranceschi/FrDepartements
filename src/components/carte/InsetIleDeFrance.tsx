@@ -13,15 +13,12 @@ const W = 175;
 const H = 160;
 const PAD = 6;
 
-// Boîte de zoom approximative sur la carte principale (coordonnées SVG estimées)
-const ZOOM_BOX = { x: 482, y: 212, w: 68, h: 46 };
 
 interface InsetIleDeFranceProps {
   features: Feature[];
   visible: boolean;
   quizMode?: boolean;
   highlightCode?: string;
-  scale?: number;
   onHover: (feature: Feature | null, x: number, y: number) => void;
   onClick?: (code: string) => void;
 }
@@ -31,7 +28,6 @@ export default memo(function InsetIleDeFrance({
   visible,
   quizMode = false,
   highlightCode,
-  scale = 1,
   onHover,
   onClick,
 }: InsetIleDeFranceProps) {
@@ -69,27 +65,8 @@ export default memo(function InsetIleDeFrance({
   if (!visible) return null;
   if (!gen || paths.length === 0) return null;
 
-  // Bas-gauche de la zoom box → coin haut-droit de l'inset (ligne de connexion)
-  const lineX1 = ZOOM_BOX.x;
-  const lineY1 = ZOOM_BOX.y + ZOOM_BOX.h;
-  const lineX2 = X + W;
-  const lineY2 = Y;
-
   return (
     <>
-      {/* Boîte de zoom sur la carte principale */}
-      <rect
-        x={ZOOM_BOX.x} y={ZOOM_BOX.y}
-        width={ZOOM_BOX.w} height={ZOOM_BOX.h}
-        fill="none" stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="3 2" rx={2}
-      />
-
-      {/* Ligne de connexion */}
-      <line
-        x1={lineX1} y1={lineY1} x2={lineX2} y2={lineY2}
-        stroke="#f59e0b" strokeWidth={0.8} strokeDasharray="4 3" opacity={0.7}
-      />
-
       {/* Inset */}
       <g transform={`translate(${X}, ${Y})`}>
         <rect
@@ -116,7 +93,7 @@ export default memo(function InsetIleDeFrance({
           );
         })}
 
-        <text x={W / 2} y={H - 3} fontSize={14 / scale} fill="#92400e" textAnchor="middle">
+        <text x={W / 2} y={H - 3} fontSize={11} fill="#92400e" textAnchor="middle">
           Île-de-France (agrandie)
         </text>
       </g>

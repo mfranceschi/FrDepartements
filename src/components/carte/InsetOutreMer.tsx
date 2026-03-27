@@ -44,7 +44,6 @@ interface InsetOutreMerProps {
   quizMode?: boolean;
   highlightDeptCode?: string;
   highlightRegionCode?: string;
-  scale?: number;
   onHover: (feature: Feature | null, x: number, y: number) => void;
   onClick?: (code: string, type: 'departement' | 'region') => void;
 }
@@ -58,7 +57,6 @@ interface SingleInsetProps {
   quizMode: boolean;
   highlightDeptCode?: string;
   highlightRegionCode?: string;
-  scale: number;
   onHover: (feature: Feature | null, x: number, y: number) => void;
   onClick?: (code: string, type: 'departement' | 'region') => void;
 }
@@ -72,7 +70,6 @@ function SingleInset({
   quizMode,
   highlightDeptCode,
   highlightRegionCode,
-  scale,
   onHover,
   onClick,
 }: SingleInsetProps) {
@@ -121,7 +118,7 @@ function SingleInset({
           y={height / 2}
           textAnchor="middle"
           dominantBaseline="middle"
-          fontSize={14 / scale}
+          fontSize={11}
           fill="#64748b"
         >
           {nom}
@@ -180,7 +177,7 @@ function SingleInset({
           x={width / 2}
           y={height - 2}
           textAnchor="middle"
-          fontSize={14 / scale}
+          fontSize={11}
           fill="#374151"
           fontWeight="500"
         >
@@ -199,7 +196,6 @@ export default function InsetOutreMer({
   quizMode = false,
   highlightDeptCode,
   highlightRegionCode,
-  scale = 1,
   onHover,
   onClick,
 }: InsetOutreMerProps) {
@@ -228,7 +224,7 @@ export default function InsetOutreMer({
           key={label}
           x={12}
           y={y}
-          fontSize={9 / scale}
+          fontSize={9}
           fill="#94a3b8"
           fontStyle="italic"
           fontWeight="500"
@@ -251,7 +247,6 @@ export default function InsetOutreMer({
             quizMode={quizMode}
             highlightDeptCode={highlightDeptCode}
             highlightRegionCode={highlightRegionCode}
-            scale={scale}
             onHover={onHover}
             onClick={onClick}
           />
