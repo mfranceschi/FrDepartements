@@ -6,8 +6,9 @@ import type { GeoPermissibleObjects } from 'd3';
 const IDF_CODES = new Set(['75', '77', '78', '91', '92', '93', '94', '95']);
 
 // Position et taille de l'inset dans le SVG 900x700
-const X = 718;
-const Y = 18;
+// Placé à gauche, au-dessus des DROM (qui commencent à y=430)
+const X = 10;
+const Y = 150;
 const W = 175;
 const H = 160;
 const PAD = 6;
@@ -20,6 +21,7 @@ interface InsetIleDeFranceProps {
   visible: boolean;
   quizMode?: boolean;
   highlightCode?: string;
+  scale?: number;
   onHover: (feature: Feature | null, x: number, y: number) => void;
   onClick?: (code: string) => void;
 }
@@ -29,6 +31,7 @@ export default memo(function InsetIleDeFrance({
   visible,
   quizMode = false,
   highlightCode,
+  scale = 1,
   onHover,
   onClick,
 }: InsetIleDeFranceProps) {
@@ -68,11 +71,11 @@ export default memo(function InsetIleDeFrance({
 
   if (!gen || paths.length === 0) return null;
 
-  // Coin haut-droit de la zoom box → coin bas-gauche de l'inset (ligne de connexion)
-  const lineX1 = ZOOM_BOX.x + ZOOM_BOX.w;
-  const lineY1 = ZOOM_BOX.y;
-  const lineX2 = X;
-  const lineY2 = Y + H;
+  // Bas-gauche de la zoom box → coin haut-droit de l'inset (ligne de connexion)
+  const lineX1 = ZOOM_BOX.x;
+  const lineY1 = ZOOM_BOX.y + ZOOM_BOX.h;
+  const lineX2 = X + W;
+  const lineY2 = Y;
 
   return (
     <>
@@ -115,7 +118,7 @@ export default memo(function InsetIleDeFrance({
           );
         })}
 
-        <text x={W / 2} y={H - 3} fontSize={8} fill="#92400e" textAnchor="middle">
+        <text x={W / 2} y={H - 3} fontSize={14 / scale} fill="#92400e" textAnchor="middle">
           Île-de-France (agrandie)
         </text>
       </g>

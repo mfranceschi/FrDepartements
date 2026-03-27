@@ -1,7 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { DEPARTEMENTS } from '../data/departements';
 import { REGIONS } from '../data/regions';
-import type { QuizConfig, Question, Choice, SessionState, QuizMode } from '../quiz/types';
+import type { QuizConfig, Question, Choice, SessionState, QuizMode, AnswerRecord } from '../quiz/types';
+
+const STORAGE_KEY = 'quiz_session_v1';
 
 // ─── Fisher-Yates shuffle ────────────────────────────────────────────────────
 function shuffle<T>(arr: T[]): T[] {
@@ -23,10 +25,7 @@ function pickRandom<T>(arr: T[], n: number, excludeCodes: Set<string>, getCode: 
 interface DeptChoice { code: string; nom: string; regionCode: string }
 interface RegionChoice { code: string; nom: string }
 
-function buildDeptChoicesFacile(
-  correct: DeptChoice,
-  allDepts: DeptChoice[],
-): Choice[] {
+function buildDeptChoicesFacile(correct: DeptChoice, allDepts: DeptChoice[]): Choice[] {
   const exclude = new Set([correct.code]);
   const distractors = pickRandom(allDepts, 3, exclude, (d) => d.code);
   return shuffle([
@@ -35,10 +34,7 @@ function buildDeptChoicesFacile(
   ]);
 }
 
-function buildDeptChoicesDifficile(
-  correct: DeptChoice,
-  allDepts: DeptChoice[],
-): Choice[] {
+function buildDeptChoicesDifficile(correct: DeptChoice, allDepts: DeptChoice[]): Choice[] {
   const exclude = new Set([correct.code]);
   const sameRegion = allDepts.filter(
     (d) => d.regionCode === correct.regionCode && d.code !== correct.code,
@@ -59,10 +55,7 @@ function buildDeptChoicesDifficile(
   ]);
 }
 
-function buildCodeChoicesFacile(
-  correct: DeptChoice,
-  allDepts: DeptChoice[],
-): Choice[] {
+function buildCodeChoicesFacile(correct: DeptChoice, allDepts: DeptChoice[]): Choice[] {
   const exclude = new Set([correct.code]);
   const distractors = pickRandom(allDepts, 3, exclude, (d) => d.code);
   return shuffle([
@@ -71,10 +64,7 @@ function buildCodeChoicesFacile(
   ]);
 }
 
-function buildCodeChoicesDifficile(
-  correct: DeptChoice,
-  allDepts: DeptChoice[],
-): Choice[] {
+function buildCodeChoicesDifficile(correct: DeptChoice, allDepts: DeptChoice[]): Choice[] {
   const exclude = new Set([correct.code]);
   const sameRegion = allDepts.filter(
     (d) => d.regionCode === correct.regionCode && d.code !== correct.code,
@@ -95,10 +85,7 @@ function buildCodeChoicesDifficile(
   ]);
 }
 
-function buildRegionChoicesFacile(
-  correctRegion: RegionChoice,
-  allRegions: RegionChoice[],
-): Choice[] {
+function buildRegionChoicesFacile(correctRegion: RegionChoice, allRegions: RegionChoice[]): Choice[] {
   const exclude = new Set([correctRegion.code]);
   const distractors = pickRandom(allRegions, 3, exclude, (r) => r.code);
   return shuffle([
@@ -107,16 +94,10 @@ function buildRegionChoicesFacile(
   ]);
 }
 
-function buildRegionChoicesDifficile(
-  correctRegion: RegionChoice,
-  allRegions: RegionChoice[],
-): Choice[] {
-  // For region distractors in "difficile" mode we just use random metro regions
-  // (there's no "neighboring region" concept in the data model)
-  return buildRegionChoicesFacile(correctRegion, allRegions);
-}
-
 // ─── Question generation ─────────────────────────────────────────────────────
+
+const CARTE_MODES = new Set<QuizMode>(['TrouverDeptCarte', 'TrouverRegionCarte']);
+const QCM_MODES = new Set<QuizMode>(['DevinerCodeDept', 'DevinerNomDept', 'DevinerRegionDept']);
 
 function generateQuestions(config: QuizConfig): Question[] {
   const allDepts = DEPARTEMENTS.map((d) => ({
@@ -125,39 +106,56 @@ function generateQuestions(config: QuizConfig): Question[] {
     regionCode: d.regionCode,
     outresMer: d.outresMer,
   }));
-  const metroDepts = allDepts.filter((d) => !d.outresMer);
-  const metroRegions = REGIONS.filter((r) => !r.outresMer).map((r) => ({
-    code: r.code,
-    nom: r.nom,
-  }));
+  const allRegions = REGIONS.map((r) => ({ code: r.code, nom: r.nom, outresMer: r.outresMer }));
+  const metroRegions = allRegions.filter((r) => !r.outresMer);
 
   type PoolItem = { mode: QuizMode; code: string; nom: string; regionCode?: string };
-  const pool: PoolItem[] = [];
+
+  const cartePool: PoolItem[] = [];
+  const qcmPool: PoolItem[] = [];
+
+  const hasCarteMode = config.modes.some((m) => CARTE_MODES.has(m));
+  const hasQcmMode = config.modes.some((m) => QCM_MODES.has(m));
 
   for (const mode of config.modes) {
     switch (mode) {
       case 'TrouverDeptCarte':
-        metroDepts.forEach((d) =>
-          pool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }),
+        // Include all depts (metro + DROM) for map questions
+        allDepts.forEach((d) =>
+          cartePool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }),
         );
         break;
       case 'TrouverRegionCarte':
-        metroRegions.forEach((r) => pool.push({ mode, code: r.code, nom: r.nom }));
+        // Include all regions for map questions
+        allRegions.forEach((r) => cartePool.push({ mode, code: r.code, nom: r.nom }));
         break;
       case 'DevinerCodeDept':
       case 'DevinerNomDept':
       case 'DevinerRegionDept':
         allDepts.forEach((d) =>
-          pool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }),
+          qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }),
         );
         break;
     }
   }
 
-  const shuffled = shuffle(pool);
+  // Balance carte vs QCM at 50/50 when both families are selected
+  let selected: PoolItem[];
   const count =
-    config.sessionLength === 'tout' ? shuffled.length : Math.min(config.sessionLength, shuffled.length);
-  const selected = shuffled.slice(0, count);
+    config.sessionLength === 'tout'
+      ? cartePool.length + qcmPool.length
+      : config.sessionLength;
+
+  if (hasCarteMode && hasQcmMode) {
+    const half = Math.ceil(count / 2);
+    const carteSelected = shuffle(cartePool).slice(0, Math.min(half, cartePool.length));
+    const qcmSelected = shuffle(qcmPool).slice(0, Math.min(count - carteSelected.length, qcmPool.length));
+    selected = shuffle([...carteSelected, ...qcmSelected]);
+  } else if (hasCarteMode) {
+    selected = shuffle(cartePool).slice(0, Math.min(count, cartePool.length));
+  } else {
+    selected = shuffle(qcmPool).slice(0, Math.min(count, qcmPool.length));
+  }
 
   return selected.map((item, idx): Question => {
     const base: Question = {
@@ -188,10 +186,7 @@ function generateQuestions(config: QuizConfig): Question[] {
       case 'DevinerRegionDept': {
         const correctRegion = metroRegions.find((r) => r.code === item.regionCode);
         if (correctRegion) {
-          base.choices =
-            config.difficulty === 'facile'
-              ? buildRegionChoicesFacile(correctRegion, metroRegions)
-              : buildRegionChoicesDifficile(correctRegion, metroRegions);
+          base.choices = buildRegionChoicesFacile(correctRegion, metroRegions);
         }
         break;
       }
@@ -213,16 +208,36 @@ function buildInitialSession(config: QuizConfig): SessionState {
     answerState: 'pending',
     selectedCode: null,
     finished: false,
+    answerHistory: [],
   };
 }
 
-export function useQuiz(config: QuizConfig): {
+function loadStoredSession(): SessionState | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as SessionState;
+  } catch {
+    return null;
+  }
+}
+
+export function useQuiz(config: QuizConfig, restoreSession?: SessionState): {
   session: SessionState;
   submitAnswer: (code: string) => void;
   nextQuestion: () => void;
   restart: () => void;
 } {
-  const [session, setSession] = useState<SessionState>(() => buildInitialSession(config));
+  const [session, setSession] = useState<SessionState>(() => restoreSession ?? buildInitialSession(config));
+
+  // Persist session to localStorage on every change
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+    } catch {
+      // ignore storage errors
+    }
+  }, [session]);
 
   const submitAnswer = useCallback((code: string) => {
     setSession((prev) => {
@@ -236,8 +251,6 @@ export function useQuiz(config: QuizConfig): {
           correct = code === question.targetCode;
           break;
         case 'DevinerCodeDept':
-          correct = code === question.targetCode;
-          break;
         case 'DevinerNomDept':
           correct = code === question.targetCode;
           break;
@@ -246,11 +259,14 @@ export function useQuiz(config: QuizConfig): {
           break;
       }
 
+      const record: AnswerRecord = { mode: question.mode, correct };
+
       return {
         ...prev,
         answerState: correct ? 'correct' : 'wrong',
         score: correct ? prev.score + 1 : prev.score,
         selectedCode: code,
+        answerHistory: [...prev.answerHistory, record],
       };
     });
   }, []);
@@ -272,8 +288,11 @@ export function useQuiz(config: QuizConfig): {
   }, []);
 
   const restart = useCallback(() => {
-    setSession(buildInitialSession(config));
+    const newSession = buildInitialSession(config);
+    setSession(newSession);
   }, [config]);
 
   return { session, submitAnswer, nextQuestion, restart };
 }
+
+export { loadStoredSession, buildInitialSession as _buildInitialSession };

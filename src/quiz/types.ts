@@ -30,6 +30,11 @@ export interface Choice {
 
 export type AnswerState = 'pending' | 'correct' | 'wrong';
 
+export interface AnswerRecord {
+  mode: QuizMode;
+  correct: boolean;
+}
+
 export interface SessionState {
   questions: Question[];
   currentIndex: number;
@@ -37,4 +42,5 @@ export interface SessionState {
   answerState: AnswerState;
   selectedCode: string | null;
   finished: boolean;
+  answerHistory: AnswerRecord[];
 }

@@ -1,21 +1,27 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGeoData } from '../hooks/useGeoData';
-import { useQuiz } from '../hooks/useQuiz';
+import { useQuiz, loadStoredSession } from '../hooks/useQuiz';
 import QuizConfig from '../components/quiz/QuizConfig';
 import QuizShell from '../components/quiz/QuizShell';
-import type { QuizConfig as QuizConfigType } from '../quiz/types';
+import type { QuizConfig as QuizConfigType, SessionState } from '../quiz/types';
+
+const PHASE_KEY = 'quiz_phase_v1';
+const CONFIG_KEY = 'quiz_config_v1';
 
 type QuizPhase = 'config' | 'session';
 
-// Sub-component so useQuiz is only mounted during the session phase
 interface QuizSessionProps {
   config: QuizConfigType;
+  initialSession: SessionState | null;
   onRestart: () => void;
 }
 
-function QuizSession({ config, onRestart }: QuizSessionProps) {
+function QuizSession({ config, initialSession, onRestart }: QuizSessionProps) {
   const geoData = useGeoData();
-  const { session, submitAnswer, nextQuestion, restart } = useQuiz(config);
+  const { session, submitAnswer, nextQuestion, restart } = useQuiz(
+    config,
+    initialSession ?? undefined,
+  );
 
   const handleRestart = () => {
     restart();
@@ -42,8 +48,37 @@ function QuizSession({ config, onRestart }: QuizSessionProps) {
 }
 
 export default function QuizPage() {
-  const [phase, setPhase] = useState<QuizPhase>('config');
-  const [config, setConfig] = useState<QuizConfigType | null>(null);
+  const [phase, setPhase] = useState<QuizPhase>(() => {
+    const saved = localStorage.getItem(PHASE_KEY);
+    return saved === 'session' ? 'session' : 'config';
+  });
+
+  const [config, setConfig] = useState<QuizConfigType | null>(() => {
+    try {
+      const saved = localStorage.getItem(CONFIG_KEY);
+      return saved ? (JSON.parse(saved) as QuizConfigType) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Restore session only once at mount; after that useQuiz manages it via localStorage
+  const [initialSession, setInitialSession] = useState<SessionState | null>(() => {
+    if (localStorage.getItem(PHASE_KEY) === 'session') {
+      return loadStoredSession();
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    localStorage.setItem(PHASE_KEY, phase);
+  }, [phase]);
+
+  useEffect(() => {
+    if (config) {
+      localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+    }
+  }, [config]);
 
   const handleStart = (cfg: QuizConfigType) => {
     setConfig(cfg);
@@ -51,15 +86,23 @@ export default function QuizPage() {
   };
 
   const handleRestart = () => {
+    localStorage.removeItem('quiz_session_v1');
+    setInitialSession(null);
     setPhase('config');
   };
 
   return (
-    <main className="flex-1 min-h-0 overflow-y-auto"><div className="max-w-3xl mx-auto p-4">
-      {phase === 'config' && <QuizConfig onStart={handleStart} />}
-      {phase === 'session' && config !== null && (
-        <QuizSession config={config} onRestart={handleRestart} />
-      )}
-    </div></main>
+    <main className="flex-1 min-h-0 overflow-y-auto">
+      <div className="max-w-3xl mx-auto p-4">
+        {phase === 'config' && <QuizConfig onStart={handleStart} />}
+        {phase === 'session' && config !== null && (
+          <QuizSession
+            config={config}
+            initialSession={initialSession}
+            onRestart={handleRestart}
+          />
+        )}
+      </div>
+    </main>
   );
 }

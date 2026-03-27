@@ -128,9 +128,9 @@ export default function CartePage() {
   };
 
   return (
-    <main className="flex-1 flex flex-col lg:flex-row gap-0 min-h-0 overflow-hidden">
+    <main className="flex-1 flex flex-col lg:flex-row gap-0 min-h-0 overflow-hidden" style={{ height: '100%' }}>
       {/* Map */}
-      <div className="flex-1 min-w-0 min-h-0 p-2 overflow-hidden">
+      <div className="flex-1 min-w-0 min-h-0 p-2 overflow-hidden" style={{ height: '100%' }}>
         <CarteFrance
           features={features}
           onFeatureClick={handleFeatureClick}
