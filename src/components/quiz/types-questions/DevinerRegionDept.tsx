@@ -20,9 +20,9 @@ export default function DevinerRegionDept({
 
   useEffect(() => {
     if (answerState !== 'pending') {
-      setFlashing(true);
-      const t = setTimeout(() => setFlashing(false), 500);
-      return () => clearTimeout(t);
+      const t1 = setTimeout(() => setFlashing(true), 0);
+      const t2 = setTimeout(() => setFlashing(false), 500);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
     }
   }, [answerState]);
 

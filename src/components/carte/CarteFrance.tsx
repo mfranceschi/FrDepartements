@@ -48,7 +48,6 @@ export default function CarteFrance({
   const [transform, setTransform] = useState<ZoomTransform>({ x: 0, y: 0, k: 1 });
 
   const svgRef = useRef<SVGSVGElement>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | undefined>(undefined);
   const tooltipRef = useRef<HTMLDivElement>(null);
 

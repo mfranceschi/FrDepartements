@@ -1,8 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import App from '../App';
-import type { CarteFranceProps } from '../components/carte/CarteFrance';
-
 
 // Données géo vides mais valides pour éviter les erreurs de chargement
 vi.mock('../hooks/useGeoData', () => ({
@@ -15,7 +13,7 @@ vi.mock('../hooks/useGeoData', () => ({
 
 // CarteFrance : stub léger (évite D3 + SVG dans jsdom)
 vi.mock('../components/carte/CarteFrance', () => ({
-  default: (_props: CarteFranceProps) => <div data-testid="carte-france-stub" />,
+  default: () => <div data-testid="carte-france-stub" />,
 }));
 
 describe('App – smoke test', () => {

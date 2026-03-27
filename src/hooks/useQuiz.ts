@@ -215,6 +215,7 @@ export function useQuiz(config: QuizConfig): {
   submitAnswer: (code: string) => void;
   nextQuestion: () => void;
   restart: () => void;
+  restartWithErrors: () => void;
 } {
   const [session, setSession] = useState<SessionState>(() => buildInitialSession(config));
 

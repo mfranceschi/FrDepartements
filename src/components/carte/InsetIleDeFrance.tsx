@@ -35,8 +35,6 @@ export default memo(function InsetIleDeFrance({
   onHover,
   onClick,
 }: InsetIleDeFranceProps) {
-  if (!visible) return null;
-
   const idfFeatures = useMemo(
     () => features.filter((f) => IDF_CODES.has(f.properties?.code as string)),
     [features],
@@ -69,6 +67,7 @@ export default memo(function InsetIleDeFrance({
     };
   }, [idfFeatures]);
 
+  if (!visible) return null;
   if (!gen || paths.length === 0) return null;
 
   // Bas-gauche de la zoom box → coin haut-droit de l'inset (ligne de connexion)

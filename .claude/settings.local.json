@@ -8,7 +8,8 @@
       "Bash(npm run:*)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(npx vite:*)",
-      "Bash(npm test:*)"
+      "Bash(npm test:*)",
+      "Bash(npx vitest:*)"
     ]
   }
 }

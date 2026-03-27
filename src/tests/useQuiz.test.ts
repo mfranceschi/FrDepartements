@@ -90,10 +90,6 @@ describe('useQuiz – submitAnswer', () => {
     const dromQ = result.current.session.questions.find((q) => q.targetCode === '971');
     expect(dromQ).toBeDefined();
 
-    // Simuler un restart pour obtenir une session avec seulement Guadeloupe
-    const singleConfig: QuizConfig = { modes: ['TrouverDeptCarte'], difficulty: 'facile', sessionLength: 10 };
-    const { result: r2 } = renderHook(() => useQuiz(singleConfig));
-
     // On vérifie la logique : répondre '971' à une question dont targetCode est '971' → correct
     // On injecte directement la logique via submitAnswer sur la vraie session complète
     const idx = result.current.session.questions.findIndex((q) => q.targetCode === '971');

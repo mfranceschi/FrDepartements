@@ -104,5 +104,67 @@ describe('CartePage – panneau d\'informations', () => {
     expect(within(sidebar).getByText('971')).toBeInTheDocument();
     expect(within(sidebar).getByText('Département')).toBeInTheDocument();
   });
+});
 
+// ── Recherche dans la sidebar ─────────────────────────────────────────────────
+// useSearch utilise DEPARTEMENTS/REGIONS statiques — pas besoin de données géo.
+
+describe('CartePage – recherche dans la sidebar', () => {
+  function getSearchInput() {
+    return screen.getByPlaceholderText(/Rechercher un département/i);
+  }
+
+  it('affiche le champ de recherche', () => {
+    render(<CartePage />);
+    expect(getSearchInput()).toBeInTheDocument();
+  });
+
+  it('affiche des résultats en tapant un nom de département', () => {
+    render(<CartePage />);
+    fireEvent.change(getSearchInput(), { target: { value: 'Paris' } });
+    expect(screen.getByText('Paris', { selector: 'span.font-medium' })).toBeInTheDocument();
+  });
+
+  it('affiche des résultats en tapant un code département', () => {
+    render(<CartePage />);
+    fireEvent.change(getSearchInput(), { target: { value: '29' } });
+    expect(screen.getByText('Finistère', { selector: 'span.font-medium' })).toBeInTheDocument();
+  });
+
+  it('sélectionner un résultat affiche ses infos dans le panneau', () => {
+    render(<CartePage />);
+    fireEvent.change(getSearchInput(), { target: { value: 'Paris' } });
+
+    const resultBtn = screen.getByText('Paris', { selector: 'span.font-medium' }).closest('button')!;
+    fireEvent.mouseDown(resultBtn);
+
+    const sidebar = getSidebar();
+    expect(within(sidebar).getByRole('heading', { level: 2 })).toHaveTextContent('Paris');
+    expect(within(sidebar).getByText('75')).toBeInTheDocument();
+  });
+
+  it('efface la saisie après sélection d\'un résultat', () => {
+    render(<CartePage />);
+    fireEvent.change(getSearchInput(), { target: { value: 'Paris' } });
+    fireEvent.mouseDown(
+      screen.getByText('Paris', { selector: 'span.font-medium' }).closest('button')!,
+    );
+    expect(getSearchInput()).toHaveValue('');
+  });
+
+  it('le bouton ✕ vide le champ de recherche', () => {
+    render(<CartePage />);
+    fireEvent.change(getSearchInput(), { target: { value: 'Paris' } });
+    expect(screen.getByText('✕')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('✕'));
+    expect(getSearchInput()).toHaveValue('');
+    expect(screen.queryByText('Paris', { selector: 'span.font-medium' })).not.toBeInTheDocument();
+  });
+
+  it('un résultat de type région est aussi accessible', () => {
+    render(<CartePage />);
+    fireEvent.change(getSearchInput(), { target: { value: 'Bretagne' } });
+    expect(screen.getByText('Bretagne', { selector: 'span.font-medium' })).toBeInTheDocument();
+  });
 });
