@@ -122,7 +122,7 @@ export default function QuizPage() {
     <>
       {blocker.state === 'blocked' && (
         <NavigationBlockerModal
-          onConfirm={() => blocker.proceed()}
+          onConfirm={() => { handleRestart(); blocker.proceed(); }}
           onCancel={() => blocker.reset()}
         />
       )}

@@ -13,7 +13,9 @@ export interface CarteFranceProps {
   };
   onFeatureClick?: (code: string, type: 'departement' | 'region') => void;
   highlightCode?: string;
+  highlightType?: 'departement' | 'region';
   focusCode?: string;
+  focusType?: 'departement' | 'region';
   quizMode?: boolean;
   quizLayer?: 'departements' | 'regions';
 }
@@ -35,7 +37,9 @@ export default function CarteFrance({
   features,
   onFeatureClick,
   highlightCode,
+  highlightType,
   focusCode,
+  focusType,
   quizMode = false,
   quizLayer = 'departements',
 }: CarteFranceProps) {
@@ -72,8 +76,12 @@ export default function CarteFrance({
   useEffect(() => {
     if (!focusCode || !svgRef.current || !zoomRef.current) return;
 
-    const allFeatures = [...features.departements, ...features.regions];
-    const target = allFeatures.find((f) => f.properties?.code === focusCode);
+    // Les DROM départements sont dans l'inset — on ne zoome pas
+    if (focusType === 'departement' && DROM_CODES.has(focusCode)) return;
+
+    // Cherche dans le bon tableau selon le type
+    const pool = focusType === 'region' ? features.regions : features.departements;
+    const target = pool.find((f) => f.properties?.code === focusCode);
     if (!target) return;
 
     const centroid = PATH_GEN.centroid(target);
@@ -90,7 +98,7 @@ export default function CarteFrance({
       .transition()
       .duration(500)
       .call(zoomRef.current.transform, newTransform);
-  }, [focusCode, features]);
+  }, [focusCode, focusType, features]);
 
   const handleZoomIn = useCallback(() => {
     if (!svgRef.current || !zoomRef.current) return;
@@ -152,6 +160,10 @@ export default function CarteFrance({
 
   const effectiveShowRegions = quizMode ? quizLayer === 'regions' : activeLayer === 'regions';
   const effectiveShowDepts = quizMode ? quizLayer === 'departements' : activeLayer === 'departements';
+
+  // Restreint la surbrillance à la bonne couche pour éviter les collisions de codes
+  const highlightDeptCode = !highlightType || highlightType === 'departement' ? highlightCode : undefined;
+  const highlightRegionCode = !highlightType || highlightType === 'region' ? highlightCode : undefined;
 
   return (
     <div className="relative w-full h-full flex flex-col" style={{ minHeight: '480px' }}>
@@ -220,7 +232,7 @@ export default function CarteFrance({
             pathGen={PATH_GEN}
             visible={effectiveShowRegions}
             quizMode={quizMode}
-            highlightCode={highlightCode}
+            highlightCode={highlightRegionCode}
             onHover={handleRegionHover}
             onClick={onFeatureClick ? handleRegionClick : undefined}
           />
@@ -229,7 +241,7 @@ export default function CarteFrance({
             pathGen={PATH_GEN}
             visible={effectiveShowDepts}
             quizMode={quizMode}
-            highlightCode={highlightCode}
+            highlightCode={highlightDeptCode}
             onHover={handleDeptHover}
             onClick={onFeatureClick ? handleDeptClick : undefined}
           />
@@ -239,7 +251,8 @@ export default function CarteFrance({
             showDepts={effectiveShowDepts}
             showRegions={effectiveShowRegions}
             quizMode={quizMode}
-            highlightCode={highlightCode}
+            highlightDeptCode={highlightDeptCode}
+            highlightRegionCode={highlightRegionCode}
             scale={transform.k}
             onHover={handleDeptHover}
             onClick={onFeatureClick ? handleInsetClick : undefined}
@@ -248,7 +261,7 @@ export default function CarteFrance({
             features={metroDepts}
             visible={effectiveShowDepts}
             quizMode={quizMode}
-            highlightCode={highlightCode}
+            highlightCode={highlightDeptCode}
             scale={transform.k}
             onHover={handleDeptHover}
             onClick={onFeatureClick ? handleDeptClick : undefined}

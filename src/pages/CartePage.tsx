@@ -145,6 +145,7 @@ export default function CartePage() {
   const [selected, setSelected] = useState<SelectedInfo | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [focusCode, setFocusCode] = useState<string | undefined>(undefined);
+  const [focusType, setFocusType] = useState<'departement' | 'region' | undefined>(undefined);
   const [showResults, setShowResults] = useState(false);
 
   const searchResults = useSearch(searchQuery);
@@ -160,6 +161,7 @@ export default function CartePage() {
   const handleSearchSelect = (result: SearchResult) => {
     setSelected({ code: result.code, type: result.type });
     setFocusCode(result.code);
+    setFocusType(result.type);
     setSearchQuery('');
     setShowResults(false);
   };
@@ -204,7 +206,9 @@ export default function CartePage() {
           features={features}
           onFeatureClick={handleFeatureClick}
           highlightCode={selected?.code}
+          highlightType={selected?.type}
           focusCode={focusCode}
+          focusType={focusType}
         />
       </div>
 

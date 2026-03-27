@@ -36,7 +36,8 @@ interface InsetOutreMerProps {
   showDepts: boolean;
   showRegions: boolean;
   quizMode?: boolean;
-  highlightCode?: string;
+  highlightDeptCode?: string;
+  highlightRegionCode?: string;
   scale?: number;
   onHover: (feature: Feature | null, x: number, y: number) => void;
   onClick?: (code: string, type: 'departement' | 'region') => void;
@@ -49,7 +50,8 @@ interface SingleInsetProps {
   showDepts: boolean;
   showRegions: boolean;
   quizMode: boolean;
-  highlightCode?: string;
+  highlightDeptCode?: string;
+  highlightRegionCode?: string;
   scale: number;
   onHover: (feature: Feature | null, x: number, y: number) => void;
   onClick?: (code: string, type: 'departement' | 'region') => void;
@@ -62,7 +64,8 @@ function SingleInset({
   showDepts,
   showRegions,
   quizMode,
-  highlightCode,
+  highlightDeptCode,
+  highlightRegionCode,
   scale,
   onHover,
   onClick,
@@ -92,8 +95,8 @@ function SingleInset({
 
   const deptCode = deptFeature?.properties?.code as string | undefined;
   const regionCode = regionFeature?.properties?.code as string | undefined;
-  const isDeptHighlighted = deptCode !== undefined && deptCode === highlightCode;
-  const isRegionHighlighted = regionCode !== undefined && regionCode === highlightCode;
+  const isDeptHighlighted = deptCode !== undefined && deptCode === highlightDeptCode;
+  const isRegionHighlighted = regionCode !== undefined && regionCode === highlightRegionCode;
 
   // If no data available for this DROM, show placeholder
   if (!deptFeature && !regionFeature) {
@@ -188,7 +191,8 @@ export default function InsetOutreMer({
   showDepts,
   showRegions,
   quizMode = false,
-  highlightCode,
+  highlightDeptCode,
+  highlightRegionCode,
   scale = 1,
   onHover,
   onClick,
@@ -226,7 +230,8 @@ export default function InsetOutreMer({
             showDepts={showDepts}
             showRegions={showRegions}
             quizMode={quizMode}
-            highlightCode={highlightCode}
+            highlightDeptCode={highlightDeptCode}
+            highlightRegionCode={highlightRegionCode}
             scale={scale}
             onHover={onHover}
             onClick={onClick}

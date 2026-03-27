@@ -3,14 +3,6 @@ import { render, screen, within } from '@testing-library/react';
 import App from '../App';
 import type { CarteFranceProps } from '../components/carte/CarteFrance';
 
-// useBlocker n'est pas supporté par BrowserRouter (legacy) ; on le neutralise
-vi.mock('react-router-dom', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('react-router-dom')>();
-  return {
-    ...actual,
-    useBlocker: () => ({ state: 'unblocked' as const, proceed: vi.fn(), reset: vi.fn() }),
-  };
-});
 
 // Données géo vides mais valides pour éviter les erreurs de chargement
 vi.mock('../hooks/useGeoData', () => ({

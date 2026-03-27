@@ -1,4 +1,4 @@
-import { BrowserRouter, useLocation, useNavigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import Nav from './components/Nav';
 import CartePage from './pages/CartePage';
@@ -33,10 +33,8 @@ function AppInner() {
   );
 }
 
+const router = createBrowserRouter([{ path: '*', element: <AppInner /> }]);
+
 export default function App() {
-  return (
-    <BrowserRouter>
-      <AppInner />
-    </BrowserRouter>
-  );
+  return <RouterProvider router={router} />;
 }
