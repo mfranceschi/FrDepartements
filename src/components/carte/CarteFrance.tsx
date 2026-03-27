@@ -271,7 +271,7 @@ export default function CarteFrance({
             onClick={onFeatureClick ? handleDeptClick : undefined}
           />
           <rect
-            x={8} y={424} width={292} height={220}
+            x={8} y={424} width={292} height={270}
             fill="none" stroke="#cbd5e1" strokeWidth={0.5} strokeDasharray="4 2" rx={3}
           />
           <text x={12} y={421} fontSize={14 / transform.k} fill="#94a3b8">

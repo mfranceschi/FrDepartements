@@ -14,11 +14,17 @@ interface InsetConfig {
 }
 
 const INSET_CONFIGS: InsetConfig[] = [
-  { code: '971', nom: 'Guadeloupe',  type: 'departement', x: 10,  y: 430, width: 110, height: 90  },
-  { code: '972', nom: 'Martinique',  type: 'departement', x: 130, y: 430, width: 80,  height: 90  },
-  { code: '973', nom: 'Guyane',      type: 'departement', x: 10,  y: 530, width: 110, height: 110 },
-  { code: '974', nom: 'La Réunion',  type: 'departement', x: 130, y: 530, width: 80,  height: 80  },
-  { code: '976', nom: 'Mayotte',     type: 'departement', x: 220, y: 530, width: 70,  height: 80  },
+  { code: '971', nom: 'Guadeloupe', type: 'departement', x: 10,  y: 437, width: 137, height: 78 },
+  { code: '972', nom: 'Martinique', type: 'departement', x: 153, y: 437, width: 137, height: 78 },
+  { code: '973', nom: 'Guyane',     type: 'departement', x: 10,  y: 525, width: 280, height: 90 },
+  { code: '974', nom: 'La Réunion', type: 'departement', x: 10,  y: 625, width: 137, height: 62 },
+  { code: '976', nom: 'Mayotte',    type: 'departement', x: 153, y: 625, width: 137, height: 62 },
+];
+
+const GROUP_LABELS = [
+  { label: 'Antilles',         y: 433 },
+  { label: 'Amérique du Sud',  y: 521 },
+  { label: 'Océan Indien',     y: 621 },
 ];
 
 // Region codes corresponding to each DROM département
@@ -217,6 +223,19 @@ export default function InsetOutreMer({
 
   return (
     <g className="insets-outre-mer">
+      {GROUP_LABELS.map(({ label, y }) => (
+        <text
+          key={label}
+          x={12}
+          y={y}
+          fontSize={9 / scale}
+          fill="#94a3b8"
+          fontStyle="italic"
+          fontWeight="500"
+        >
+          {label}
+        </text>
+      ))}
       {INSET_CONFIGS.map((config) => {
         const deptFeature = deptsByCode.get(config.code) ?? null;
         const regionCode = DEPT_TO_REGION[config.code];
