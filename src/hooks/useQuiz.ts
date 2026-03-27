@@ -1,9 +1,7 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { DEPARTEMENTS } from '../data/departements';
 import { REGIONS } from '../data/regions';
 import type { QuizConfig, Question, Choice, SessionState, QuizMode, AnswerRecord } from '../quiz/types';
-
-const STORAGE_KEY = 'quiz_session_v1';
 
 // ─── Fisher-Yates shuffle ────────────────────────────────────────────────────
 function shuffle<T>(arr: T[]): T[] {
@@ -212,32 +210,13 @@ function buildInitialSession(config: QuizConfig): SessionState {
   };
 }
 
-function loadStoredSession(): SessionState | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as SessionState;
-  } catch {
-    return null;
-  }
-}
-
-export function useQuiz(config: QuizConfig, restoreSession?: SessionState): {
+export function useQuiz(config: QuizConfig): {
   session: SessionState;
   submitAnswer: (code: string) => void;
   nextQuestion: () => void;
   restart: () => void;
 } {
-  const [session, setSession] = useState<SessionState>(() => restoreSession ?? buildInitialSession(config));
-
-  // Persist session to localStorage on every change
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-    } catch {
-      // ignore storage errors
-    }
-  }, [session]);
+  const [session, setSession] = useState<SessionState>(() => buildInitialSession(config));
 
   const submitAnswer = useCallback((code: string) => {
     setSession((prev) => {
@@ -295,4 +274,3 @@ export function useQuiz(config: QuizConfig, restoreSession?: SessionState): {
   return { session, submitAnswer, nextQuestion, restart };
 }
 
-export { loadStoredSession, buildInitialSession as _buildInitialSession };

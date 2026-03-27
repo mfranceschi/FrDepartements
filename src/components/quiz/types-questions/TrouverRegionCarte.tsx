@@ -52,6 +52,7 @@ export default function TrouverRegionCarte({
       )}
 
       <CarteFrance
+        key={question.id}
         features={{ departements: deptFeatures, regions: regionFeatures }}
         quizMode={true}
         quizLayer="regions"
