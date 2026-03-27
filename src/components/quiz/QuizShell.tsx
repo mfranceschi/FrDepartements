@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import type { FeatureCollection } from 'geojson';
 import type { SessionState, QuizMode } from '../../quiz/types';
 import TrouverDeptCarte from './types-questions/TrouverDeptCarte';
@@ -16,6 +16,7 @@ interface QuizShellProps {
   onAnswer: (code: string) => void;
   onNext: () => void;
   onRestart: () => void;
+  onReviewErrors: () => void;
 }
 
 const QCM_MODES = new Set(['DevinerCodeDept', 'DevinerNomDept', 'DevinerRegionDept']);
@@ -104,6 +105,7 @@ export default function QuizShell({
   onAnswer,
   onNext,
   onRestart,
+  onReviewErrors,
 }: QuizShellProps) {
   const { questions, currentIndex, score, answerState, selectedCode, finished, answerHistory } = session;
   const total = questions.length;
@@ -111,13 +113,34 @@ export default function QuizShell({
   const answeredCount = currentIndex + (answered ? 1 : 0);
   const liveRatio = answeredCount > 0 ? score / answeredCount : 1;
 
+  // ─── Délai de mémorisation sur les questions carte ───────────────────────
+  const CARTE_MODES_SET = new Set(['TrouverDeptCarte', 'TrouverRegionCarte']);
+  const [nextEnabled, setNextEnabled] = useState(true);
+  const nextTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (nextTimerRef.current) clearTimeout(nextTimerRef.current);
+
+    if (answered && CARTE_MODES_SET.has(questions[currentIndex]?.mode)) {
+      setNextEnabled(false);
+      nextTimerRef.current = setTimeout(() => setNextEnabled(true), 1500);
+    } else {
+      setNextEnabled(true);
+    }
+
+    return () => {
+      if (nextTimerRef.current) clearTimeout(nextTimerRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answered, currentIndex]);
+
   // ─── Keyboard navigation ────────────────────────────────────────────────
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const question = questions[currentIndex];
       if (!question) return;
 
-      if ((e.key === 'Enter' || e.key === ' ') && answered) {
+      if ((e.key === 'Enter' || e.key === ' ') && answered && nextEnabled) {
         e.preventDefault();
         onNext();
         return;
@@ -134,13 +157,15 @@ export default function QuizShell({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [questions, currentIndex, answered, answerState, onAnswer, onNext]);
+  }, [questions, currentIndex, answered, answerState, onAnswer, onNext, nextEnabled]);
 
   // ─── Écran de fin ────────────────────────────────────────────────────────
   if (finished) {
     const ratio = total > 0 ? score / total : 0;
     const pct = Math.round(ratio * 100);
     const message = getResultMessage(score, total);
+
+    const wrongCount = answerHistory.filter((r) => !r.correct).length;
 
     return (
       <div className="flex flex-col items-center gap-6 py-12 px-6">
@@ -161,13 +186,28 @@ export default function QuizShell({
 
         <CategoryStats history={answerHistory} />
 
-        <button
-          type="button"
-          onClick={onRestart}
-          className="mt-4 px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Rejouer
-        </button>
+        <div className="flex flex-col items-center gap-3 mt-4">
+          {wrongCount > 0 && (
+            <button
+              type="button"
+              onClick={onReviewErrors}
+              className="px-8 py-3 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors"
+            >
+              Revoir mes erreurs ({wrongCount})
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onRestart}
+            className={`px-8 py-3 font-semibold rounded-lg transition-colors ${
+              wrongCount > 0
+                ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
+          >
+            Rejouer
+          </button>
+        </div>
       </div>
     );
   }
@@ -245,15 +285,22 @@ export default function QuizShell({
         <div className="flex flex-col items-center gap-1 pt-2">
           <button
             type="button"
-            onClick={onNext}
-            className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+            onClick={nextEnabled ? onNext : undefined}
+            disabled={!nextEnabled}
+            className={`px-8 py-3 font-semibold rounded-lg transition-colors ${
+              nextEnabled
+                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            }`}
           >
-            {isLastQuestion ? 'Voir le résultat' : 'Question suivante'}
+            {!nextEnabled ? 'Mémorisez…' : isLastQuestion ? 'Voir le résultat' : 'Question suivante'}
           </button>
-          <p className="text-xs text-gray-400">
-            ou appuyez sur{' '}
-            <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs">Entrée</kbd>
-          </p>
+          {nextEnabled && (
+            <p className="text-xs text-gray-400">
+              ou appuyez sur{' '}
+              <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs">Entrée</kbd>
+            </p>
+          )}
         </div>
       )}
     </div>

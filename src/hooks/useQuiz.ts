@@ -238,7 +238,7 @@ export function useQuiz(config: QuizConfig): {
           break;
       }
 
-      const record: AnswerRecord = { mode: question.mode, correct };
+      const record: AnswerRecord = { mode: question.mode, correct, question };
 
       return {
         ...prev,
@@ -271,6 +271,30 @@ export function useQuiz(config: QuizConfig): {
     setSession(newSession);
   }, [config]);
 
-  return { session, submitAnswer, nextQuestion, restart };
+  const restartWithErrors = useCallback(() => {
+    setSession((prev) => {
+      const wrongQuestions = prev.answerHistory
+        .filter((r) => !r.correct)
+        .map((r, idx): Question => ({
+          ...r.question,
+          id: `retry-${idx}-${r.question.targetCode}-${r.question.mode}`,
+          choices: r.question.choices ? shuffle([...r.question.choices]) : undefined,
+        }));
+
+      if (wrongQuestions.length === 0) return prev;
+
+      return {
+        questions: shuffle(wrongQuestions),
+        currentIndex: 0,
+        score: 0,
+        answerState: 'pending',
+        selectedCode: null,
+        finished: false,
+        answerHistory: [],
+      };
+    });
+  }, []);
+
+  return { session, submitAnswer, nextQuestion, restart, restartWithErrors };
 }
 

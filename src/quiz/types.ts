@@ -33,6 +33,7 @@ export type AnswerState = 'pending' | 'correct' | 'wrong';
 export interface AnswerRecord {
   mode: QuizMode;
   correct: boolean;
+  question: Question;
 }
 
 export interface SessionState {

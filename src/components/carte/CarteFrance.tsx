@@ -13,6 +13,7 @@ export interface CarteFranceProps {
   };
   onFeatureClick?: (code: string, type: 'departement' | 'region') => void;
   highlightCode?: string;
+  focusCode?: string;
   quizMode?: boolean;
   quizLayer?: 'departements' | 'regions';
 }
@@ -34,6 +35,7 @@ export default function CarteFrance({
   features,
   onFeatureClick,
   highlightCode,
+  focusCode,
   quizMode = false,
   quizLayer = 'departements',
 }: CarteFranceProps) {
@@ -65,6 +67,30 @@ export default function CarteFrance({
       d3.select(svgRef.current).on('.zoom', null);
     };
   }, []);
+
+  // Zoom programmatique vers un territoire (recherche sidebar)
+  useEffect(() => {
+    if (!focusCode || !svgRef.current || !zoomRef.current) return;
+
+    const allFeatures = [...features.departements, ...features.regions];
+    const target = allFeatures.find((f) => f.properties?.code === focusCode);
+    if (!target) return;
+
+    const centroid = PATH_GEN.centroid(target);
+    if (!centroid || isNaN(centroid[0]) || isNaN(centroid[1])) return;
+
+    const svgW = 900;
+    const svgH = 700;
+    const scale = 4;
+    const tx = svgW / 2 - scale * centroid[0];
+    const ty = svgH / 2 - scale * centroid[1];
+    const newTransform = d3.zoomIdentity.translate(tx, ty).scale(scale);
+
+    d3.select(svgRef.current)
+      .transition()
+      .duration(500)
+      .call(zoomRef.current.transform, newTransform);
+  }, [focusCode, features]);
 
   const handleZoomIn = useCallback(() => {
     if (!svgRef.current || !zoomRef.current) return;
