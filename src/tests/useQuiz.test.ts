@@ -32,6 +32,21 @@ describe('useQuiz – DROM dans les questions', () => {
     expect(DROM_CODES.every((c) => codes.includes(c))).toBe(true);
   });
 
+  it('exclut les DROM quand includeDrom est false', () => {
+    const config: QuizConfig = { modes: ['TrouverDeptCarte'], difficulty: 'facile', sessionLength: 'tout', includeDrom: false };
+    const { result } = renderHook(() => useQuiz(config));
+
+    const codes = result.current.session.questions.map((q) => q.targetCode);
+    expect(DROM_CODES.some((c) => codes.includes(c))).toBe(false);
+    expect(result.current.session.questions).toHaveLength(96); // 101 - 5 DROM
+  });
+
+  it('exclut les régions DROM quand includeDrom est false', () => {
+    const config: QuizConfig = { modes: ['TrouverRegionCarte'], difficulty: 'facile', sessionLength: 'tout', includeDrom: false };
+    const { result } = renderHook(() => useQuiz(config));
+    expect(result.current.session.questions).toHaveLength(13); // 18 - 5 DROM
+  });
+
   it('les questions DROM ont les bons codes (3 chiffres)', () => {
     const config: QuizConfig = { modes: ['TrouverDeptCarte'], difficulty: 'facile', sessionLength: 'tout' };
     const { result } = renderHook(() => useQuiz(config));
@@ -171,6 +186,105 @@ describe('useQuiz – QCM (DevinerNomDept)', () => {
     result.current.session.questions.forEach((q) => {
       expect(q.choices!.length).toBe(4);
     });
+  });
+});
+
+describe('useQuiz – QCM régions (DevinerRegionDept)', () => {
+  it('facile : génère 4 choix dont 1 correct', () => {
+    const config: QuizConfig = { modes: ['DevinerRegionDept'], difficulty: 'facile', sessionLength: 10 };
+    const { result } = renderHook(() => useQuiz(config));
+    result.current.session.questions.forEach((q) => {
+      expect(q.choices).toBeDefined();
+      expect(q.choices!.length).toBe(4);
+      expect(q.choices!.filter((c) => c.correct)).toHaveLength(1);
+    });
+  });
+
+  it('difficile : génère 4 choix dont 1 correct', () => {
+    const config: QuizConfig = { modes: ['DevinerRegionDept'], difficulty: 'difficile', sessionLength: 10 };
+    const { result } = renderHook(() => useQuiz(config));
+    result.current.session.questions.forEach((q) => {
+      expect(q.choices).toBeDefined();
+      expect(q.choices!.length).toBe(4);
+      expect(q.choices!.filter((c) => c.correct)).toHaveLength(1);
+    });
+  });
+
+  it('difficile : le choix correct correspond à la région cible', () => {
+    const config: QuizConfig = { modes: ['DevinerRegionDept'], difficulty: 'difficile', sessionLength: 10 };
+    const { result } = renderHook(() => useQuiz(config));
+    const q = result.current.session.questions[0];
+    const correctChoice = q.choices!.find((c) => c.correct)!;
+    act(() => { result.current.submitAnswer(correctChoice.code); });
+    expect(result.current.session.answerState).toBe('correct');
+  });
+});
+
+describe('useQuiz – QCM régions (DevinerNomRegionCarte)', () => {
+  it('facile : génère 4 choix dont 1 correct', () => {
+    const config: QuizConfig = { modes: ['DevinerNomRegionCarte'], difficulty: 'facile', sessionLength: 10 };
+    const { result } = renderHook(() => useQuiz(config));
+    result.current.session.questions.forEach((q) => {
+      expect(q.choices).toBeDefined();
+      expect(q.choices!.length).toBe(4);
+      expect(q.choices!.filter((c) => c.correct)).toHaveLength(1);
+    });
+  });
+
+  it('difficile : génère 4 choix dont 1 correct', () => {
+    const config: QuizConfig = { modes: ['DevinerNomRegionCarte'], difficulty: 'difficile', sessionLength: 10 };
+    const { result } = renderHook(() => useQuiz(config));
+    result.current.session.questions.forEach((q) => {
+      expect(q.choices).toBeDefined();
+      expect(q.choices!.length).toBe(4);
+      expect(q.choices!.filter((c) => c.correct)).toHaveLength(1);
+    });
+  });
+});
+
+describe('useQuiz – sessionLength "tout" = une question par entité', () => {
+  it('TrouverDeptCarte "tout" : exactement 101 questions (une par département)', () => {
+    const config: QuizConfig = { modes: ['TrouverDeptCarte'], difficulty: 'facile', sessionLength: 'tout' };
+    const { result } = renderHook(() => useQuiz(config));
+    expect(result.current.session.questions).toHaveLength(101);
+  });
+
+  it('TrouverRegionCarte "tout" : exactement 18 questions (une par région)', () => {
+    const config: QuizConfig = { modes: ['TrouverRegionCarte'], difficulty: 'facile', sessionLength: 'tout' };
+    const { result } = renderHook(() => useQuiz(config));
+    expect(result.current.session.questions).toHaveLength(18);
+  });
+
+  it('DevinerNomDept + DevinerCodeDept "tout" : 101 questions (pas 202)', () => {
+    const config: QuizConfig = { modes: ['DevinerNomDept', 'DevinerCodeDept'], difficulty: 'facile', sessionLength: 'tout' };
+    const { result } = renderHook(() => useQuiz(config));
+    expect(result.current.session.questions).toHaveLength(101);
+  });
+});
+
+describe('useQuiz – pas de doublon de département/région', () => {
+  it('un même département ne peut être l\'objet de deux questions (session courte)', () => {
+    const config: QuizConfig = { modes: ['DevinerNomDept', 'DevinerCodeDept'], difficulty: 'facile', sessionLength: 20 };
+    const { result } = renderHook(() => useQuiz(config));
+    const codes = result.current.session.questions.map((q) => q.targetCode);
+    const unique = new Set(codes);
+    expect(unique.size).toBe(codes.length);
+  });
+
+  it('un même département ne peut être l\'objet de deux questions (mode "tout")', () => {
+    const config: QuizConfig = { modes: ['DevinerNomDept', 'DevinerCodeDept'], difficulty: 'facile', sessionLength: 'tout' };
+    const { result } = renderHook(() => useQuiz(config));
+    const codes = result.current.session.questions.map((q) => q.targetCode);
+    const unique = new Set(codes);
+    expect(unique.size).toBe(codes.length);
+  });
+
+  it('modes mixtes carte+QCM : pas de doublon par code cible', () => {
+    const config: QuizConfig = { modes: ['TrouverDeptCarte', 'DevinerNomDept'], difficulty: 'facile', sessionLength: 20 };
+    const { result } = renderHook(() => useQuiz(config));
+    const codes = result.current.session.questions.map((q) => q.targetCode);
+    const unique = new Set(codes);
+    expect(unique.size).toBe(codes.length);
   });
 });
 

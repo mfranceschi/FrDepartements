@@ -7,7 +7,7 @@ describe('QuizConfig – affichage initial', () => {
   it('coche tous les modes par défaut', () => {
     render(<QuizConfig onStart={vi.fn()} />);
     const checkboxes = screen.getAllByRole('checkbox');
-    expect(checkboxes).toHaveLength(7);
+    expect(checkboxes).toHaveLength(8); // 7 modes + 1 DROM
     checkboxes.forEach((cb) => expect(cb).toBeChecked());
   });
 
@@ -40,20 +40,21 @@ describe('QuizConfig – interaction modes', () => {
 
   it('affiche un message d\'erreur si tous les modes sont décochés', () => {
     render(<QuizConfig onStart={vi.fn()} />);
-    screen.getAllByRole('checkbox').forEach((cb) => fireEvent.click(cb));
+    // Les 7 premières cases sont les modes (la 8e est DROM)
+    screen.getAllByRole('checkbox').slice(0, 7).forEach((cb) => fireEvent.click(cb));
     expect(screen.getByText(/Sélectionnez au moins un type de question/i)).toBeInTheDocument();
   });
 
   it('désactive le bouton "Commencer" si aucun mode sélectionné', () => {
     render(<QuizConfig onStart={vi.fn()} />);
-    screen.getAllByRole('checkbox').forEach((cb) => fireEvent.click(cb));
+    screen.getAllByRole('checkbox').slice(0, 7).forEach((cb) => fireEvent.click(cb));
     expect(screen.getByRole('button', { name: /Commencer/i })).toBeDisabled();
   });
 
   it('réactive le bouton en re-cochant au moins un mode', () => {
     render(<QuizConfig onStart={vi.fn()} />);
     const checkboxes = screen.getAllByRole('checkbox');
-    checkboxes.forEach((cb) => fireEvent.click(cb));
+    checkboxes.slice(0, 7).forEach((cb) => fireEvent.click(cb));
     fireEvent.click(checkboxes[0]); // on en recoche un
     expect(screen.getByRole('button', { name: /Commencer/i })).not.toBeDisabled();
   });
@@ -94,6 +95,7 @@ describe('QuizConfig – soumission', () => {
     expect(config.modes).toHaveLength(7);
     expect(config.difficulty).toBe('facile');
     expect(config.sessionLength).toBe(25);
+    expect(config.includeDrom).toBe(true);
   });
 
   it('transmet la difficulté et la longueur choisies', () => {
@@ -107,6 +109,16 @@ describe('QuizConfig – soumission', () => {
     const config: QuizConfigType = onStart.mock.calls[0][0];
     expect(config.difficulty).toBe('difficile');
     expect(config.sessionLength).toBe(50);
+  });
+
+  it('transmet includeDrom: false quand la case DROM est décochée', () => {
+    const onStart = vi.fn();
+    render(<QuizConfig onStart={onStart} />);
+    const dromCheckbox = screen.getByRole('checkbox', { name: /outre-mer/i });
+    fireEvent.click(dromCheckbox);
+    fireEvent.click(screen.getByRole('button', { name: /Commencer/i }));
+    const config: QuizConfigType = onStart.mock.calls[0][0];
+    expect(config.includeDrom).toBe(false);
   });
 
   it('transmet uniquement les modes cochés', () => {

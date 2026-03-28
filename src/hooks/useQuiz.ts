@@ -119,10 +119,8 @@ function buildCodeChoicesDifficile(correct: DeptChoice, allDepts: DeptChoice[]):
 }
 
 /**
- * Construit 4 choix QCM pour un mode « Deviner la région » (difficulté unique) :
- * les distractors sont des régions métropolitaines tirées aléatoirement.
- * Ce mode n'utilise qu'une seule difficulté car les régions sont peu nombreuses
- * (13 en métropole) et toutes assez distinctes.
+ * Construit 4 choix QCM pour un mode « Deviner la région » en difficulté **facile** :
+ * les distractors sont des régions tirées aléatoirement parmi toutes les régions.
  */
 function buildRegionChoicesFacile(correctRegion: RegionChoice, allRegions: RegionChoice[]): Choice[] {
   const exclude = new Set([correctRegion.code]);
@@ -130,6 +128,53 @@ function buildRegionChoicesFacile(correctRegion: RegionChoice, allRegions: Regio
   return shuffle([
     { code: correctRegion.code, label: correctRegion.nom, correct: true },
     ...distractors.map((r) => ({ code: r.code, label: r.nom, correct: false })),
+  ]);
+}
+
+/**
+ * Adjacence géographique des régions métropolitaines françaises.
+ * Utilisée en mode difficile pour proposer des régions voisines comme distractors.
+ */
+const REGION_ADJACENCY: Record<string, string[]> = {
+  '11': ['28', '32', '44', '27', '24'],              // Île-de-France
+  '24': ['11', '28', '52', '53', '75', '84', '27'],  // Centre-Val de Loire
+  '27': ['11', '44', '84', '24'],                    // Bourgogne-Franche-Comté
+  '28': ['11', '32', '53', '52', '24'],              // Normandie
+  '32': ['11', '28', '44'],                          // Hauts-de-France
+  '44': ['11', '32', '27'],                          // Grand Est
+  '52': ['28', '53', '75', '24'],                    // Pays de la Loire
+  '53': ['28', '52'],                                // Bretagne
+  '75': ['24', '52', '84', '76'],                    // Nouvelle-Aquitaine
+  '76': ['75', '84', '93'],                          // Occitanie
+  '84': ['24', '27', '75', '76', '93'],              // Auvergne-Rhône-Alpes
+  '93': ['84', '76', '94'],                          // Provence-Alpes-Côte d'Azur
+  '94': ['93'],                                      // Corse
+};
+
+/**
+ * Construit 4 choix QCM pour un mode « Deviner la région » en difficulté **difficile** :
+ * les distractors sont prioritairement des régions géographiquement voisines,
+ * ce qui rend la discrimination plus difficile (ex. Occitanie vs Nouvelle-Aquitaine).
+ * Pour les régions DROM (sans voisinage défini), repli sur des distractors aléatoires.
+ * Si les voisines ne sont pas assez nombreuses, complément aléatoire.
+ */
+function buildRegionChoicesDifficile(correctRegion: RegionChoice, allRegions: RegionChoice[]): Choice[] {
+  const exclude = new Set([correctRegion.code]);
+  const adjacentCodes = REGION_ADJACENCY[correctRegion.code] ?? [];
+  const adjacent = allRegions.filter((r) => adjacentCodes.includes(r.code));
+  const distractors: RegionChoice[] = shuffle(adjacent).slice(0, 3);
+  if (distractors.length < 3) {
+    const remaining = pickRandom(
+      allRegions.filter((r) => !adjacentCodes.includes(r.code)),
+      3 - distractors.length,
+      exclude,
+      (r) => r.code,
+    );
+    distractors.push(...remaining);
+  }
+  return shuffle([
+    { code: correctRegion.code, label: correctRegion.nom, correct: true },
+    ...distractors.slice(0, 3).map((r) => ({ code: r.code, label: r.nom, correct: false })),
   ]);
 }
 
@@ -154,13 +199,14 @@ const QCM_MODES = new Set<QuizMode>(['DevinerNomRegionCarte', 'DevinerNomDeptCar
  * contient l'intégralité des éléments combinés des pools sélectionnés.
  */
 function generateQuestions(config: QuizConfig): Question[] {
-  const allDepts = DEPARTEMENTS.map((d) => ({
-    code: d.code,
-    nom: d.nom,
-    regionCode: d.regionCode,
-    outresMer: d.outresMer,
-  }));
-  const allRegions = REGIONS.map((r) => ({ code: r.code, nom: r.nom, outresMer: r.outresMer }));
+  const dromEnabled = config.includeDrom !== false;
+
+  const allDepts = DEPARTEMENTS
+    .filter((d) => dromEnabled || !d.outresMer)
+    .map((d) => ({ code: d.code, nom: d.nom, regionCode: d.regionCode, outresMer: d.outresMer }));
+  const allRegions = REGIONS
+    .filter((r) => dromEnabled || !r.outresMer)
+    .map((r) => ({ code: r.code, nom: r.nom, outresMer: r.outresMer }));
   const metroRegions = allRegions.filter((r) => !r.outresMer);
 
   type PoolItem = { mode: QuizMode; code: string; nom: string; regionCode?: string };
@@ -193,30 +239,60 @@ function generateQuestions(config: QuizConfig): Question[] {
         break;
       case 'DevinerCodeDept':
       case 'DevinerNomDept':
-      case 'DevinerRegionDept':
         allDepts.forEach((d) =>
           qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }),
         );
         break;
+      case 'DevinerRegionDept':
+        // Exclut les DROM : leurs régions ne font pas partie des 13 régions métropolitaines
+        allDepts
+          .filter((d) => !d.outresMer)
+          .forEach((d) =>
+            qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }),
+          );
+        break;
     }
   }
 
-  // Balance carte vs QCM at 50/50 when both families are selected
+  // Déduplique un pool par code d'entité (régions ou départements).
+  // Après mélange, on ne garde que la première occurrence de chaque code :
+  // une même région/département ne peut être l'objet que d'une seule question.
+  function deduplicateByCode(items: PoolItem[]): PoolItem[] {
+    const seen = new Set<string>();
+    return items.filter((item) => {
+      if (seen.has(item.code)) return false;
+      seen.add(item.code);
+      return true;
+    });
+  }
+
+  // Sélection avec équilibrage carte / QCM à 50/50 quand les deux familles sont actives.
+  // « tout » = une question par entité unique (région ou département), pas la somme brute.
   let selected: PoolItem[];
-  const count =
-    config.sessionLength === 'tout'
-      ? cartePool.length + qcmPool.length
-      : config.sessionLength;
 
   if (hasCarteMode && hasQcmMode) {
-    const half = Math.ceil(count / 2);
-    const carteSelected = shuffle(cartePool).slice(0, Math.min(half, cartePool.length));
-    const qcmSelected = shuffle(qcmPool).slice(0, Math.min(count - carteSelected.length, qcmPool.length));
-    selected = shuffle([...carteSelected, ...qcmSelected]);
+    if (config.sessionLength === 'tout') {
+      // Une question par entité unique, mode assigné aléatoirement
+      selected = deduplicateByCode(shuffle([...cartePool, ...qcmPool]));
+    } else {
+      const count = config.sessionLength;
+      const half = Math.ceil(count / 2);
+      const carteDedup = deduplicateByCode(shuffle(cartePool));
+      const qcmDedup = deduplicateByCode(shuffle(qcmPool));
+      const carteSelected = carteDedup.slice(0, Math.min(half, carteDedup.length));
+      const carteSelectedCodes = new Set(carteSelected.map((i) => i.code));
+      const qcmFiltered = qcmDedup.filter((i) => !carteSelectedCodes.has(i.code));
+      const qcmSelected = qcmFiltered.slice(0, Math.min(count - carteSelected.length, qcmFiltered.length));
+      selected = shuffle([...carteSelected, ...qcmSelected]);
+    }
   } else if (hasCarteMode) {
-    selected = shuffle(cartePool).slice(0, Math.min(count, cartePool.length));
+    const dedup = deduplicateByCode(shuffle(cartePool));
+    const count = config.sessionLength === 'tout' ? dedup.length : config.sessionLength;
+    selected = dedup.slice(0, Math.min(count, dedup.length));
   } else {
-    selected = shuffle(qcmPool).slice(0, Math.min(count, qcmPool.length));
+    const dedup = deduplicateByCode(shuffle(qcmPool));
+    const count = config.sessionLength === 'tout' ? dedup.length : config.sessionLength;
+    selected = dedup.slice(0, Math.min(count, dedup.length));
   }
 
   return selected.map((item, idx): Question => {
@@ -248,7 +324,10 @@ function generateQuestions(config: QuizConfig): Question[] {
       case 'DevinerNomRegionCarte': {
         const correctRegion = allRegions.find((r) => r.code === item.code);
         if (correctRegion) {
-          base.choices = buildRegionChoicesFacile(correctRegion, allRegions);
+          base.choices =
+            config.difficulty === 'facile'
+              ? buildRegionChoicesFacile(correctRegion, allRegions)
+              : buildRegionChoicesDifficile(correctRegion, allRegions);
         }
         break;
       }
@@ -263,7 +342,10 @@ function generateQuestions(config: QuizConfig): Question[] {
       case 'DevinerRegionDept': {
         const correctRegion = metroRegions.find((r) => r.code === item.regionCode);
         if (correctRegion) {
-          base.choices = buildRegionChoicesFacile(correctRegion, metroRegions);
+          base.choices =
+            config.difficulty === 'facile'
+              ? buildRegionChoicesFacile(correctRegion, metroRegions)
+              : buildRegionChoicesDifficile(correctRegion, metroRegions);
         }
         break;
       }

@@ -28,6 +28,7 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
   const [selectedModes, setSelectedModes] = useState<Set<QuizMode>>(new Set(ALL_MODES));
   const [difficulty, setDifficulty] = useState<Difficulty>('facile');
   const [sessionLength, setSessionLength] = useState<SessionLength>(25);
+  const [includeDrom, setIncludeDrom] = useState(true);
 
   const toggleMode = (mode: QuizMode) => {
     setSelectedModes((prev) => {
@@ -52,6 +53,7 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
       modes: Array.from(selectedModes),
       difficulty,
       sessionLength: effectiveSessionLength,
+      includeDrom,
     });
   };
 
@@ -101,6 +103,18 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
               ))}
             </div>
           </div>
+        </div>
+
+        <div className="mt-4 pt-3 border-t border-gray-100">
+          <label className="flex items-center gap-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={includeDrom}
+              onChange={() => setIncludeDrom((prev) => !prev)}
+              className="w-4 h-4 rounded accent-blue-600 shrink-0"
+            />
+            <span className="text-sm">Inclure les départements et régions d'outre-mer (DROM)</span>
+          </label>
         </div>
 
         {selectedModes.size === 0 && (
