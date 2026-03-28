@@ -264,7 +264,7 @@ describe('useQuiz – sessionLength "tout" = une question par entité', () => {
 
 describe('useQuiz – pas de doublon de département/région', () => {
   it('un même département ne peut être l\'objet de deux questions (session courte)', () => {
-    const config: QuizConfig = { modes: ['DevinerNomDept', 'DevinerCodeDept'], difficulty: 'facile', sessionLength: 20 };
+    const config: QuizConfig = { modes: ['DevinerNomDept', 'DevinerCodeDept'], difficulty: 'facile', sessionLength: 25 };
     const { result } = renderHook(() => useQuiz(config));
     const codes = result.current.session.questions.map((q) => q.targetCode);
     const unique = new Set(codes);
@@ -280,7 +280,7 @@ describe('useQuiz – pas de doublon de département/région', () => {
   });
 
   it('modes mixtes carte+QCM : pas de doublon par code cible', () => {
-    const config: QuizConfig = { modes: ['TrouverDeptCarte', 'DevinerNomDept'], difficulty: 'facile', sessionLength: 20 };
+    const config: QuizConfig = { modes: ['TrouverDeptCarte', 'DevinerNomDept'], difficulty: 'facile', sessionLength: 25 };
     const { result } = renderHook(() => useQuiz(config));
     const codes = result.current.session.questions.map((q) => q.targetCode);
     const unique = new Set(codes);
