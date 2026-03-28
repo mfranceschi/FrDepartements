@@ -21,9 +21,8 @@ const GROUP_INSET_CONFIGS: GroupInsetConfig[] = [
   {
     id: 'antilles',
     x: INSET_X, y: insetY(0), width: INSET_W, height: INSET_H,
-    // Guadeloupe + Martinique + Petites Antilles (Dominique, Sainte-Lucie, Barbade, Antigua…)
-    // Borne sud abaissée à 10°N pour inclure Grenade et Trinidad & Tobago
-    geoBounds: [-63, 10, -59, 18.5],
+    // Guadeloupe + Martinique + voisins immédiats (Dominique, Sainte-Lucie, Antigua…)
+    geoBounds: [-63, 13, -59.5, 17.5],
     territories: [
       { code: '971', nom: 'Guadeloupe' },
       { code: '972', nom: 'Martinique' },
@@ -41,11 +40,12 @@ const GROUP_INSET_CONFIGS: GroupInsetConfig[] = [
   {
     id: 'ocean-indien',
     x: INSET_X, y: insetY(2), width: INSET_W, height: INSET_H,
-    // La Réunion + Mayotte + Madagascar + Comores + Maurice + Seychelles
-    geoBounds: [38, -28, 62, -4],
+    // La Réunion + Mayotte + Madagascar + Comores + Maurice
+    // Centré sur les îles : évite les 1500 km de côte africaine peu pertinente
+    geoBounds: [42, -24, 58, -10],
     territories: [
-      { code: '974', nom: 'La Réunion' },
-      { code: '976', nom: 'Mayotte' },
+      { code: '974', nom: 'La Réunion', targetSizePx: 20 },
+      { code: '976', nom: 'Mayotte',    targetSizePx: 18 },
     ],
   },
 ];

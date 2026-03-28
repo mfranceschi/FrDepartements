@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { geoMercator, geoPath } from 'd3';
 import type { Feature } from 'geojson';
 import type { GeoPermissibleObjects } from 'd3';
@@ -6,6 +6,8 @@ import type { GeoPermissibleObjects } from 'd3';
 export interface GroupTerritoryConfig {
   code: string;
   nom: string;
+  /** Si fourni, le territoire est rendu agrandi à cette taille (px) centré sur son centroïde */
+  targetSizePx?: number;
 }
 
 export interface GroupInsetConfig {
@@ -103,7 +105,9 @@ export default function GroupInset({
     });
   }, [worldFeatures, geoBounds]);
 
-  // Compute centroid + paths for each territory using the global projection
+  // Compute centroid + paths for each territory
+  // Si targetSizePx est fourni : projection locale centrée sur le centroïde (zoom léger)
+  // Sinon : projection globale (échelle réelle)
   const territoryData = useMemo(
     () =>
       territories.map((terr) => {
@@ -112,33 +116,43 @@ export default function GroupInset({
         const regionFeature = regionCode ? (regionsByCode.get(regionCode) ?? null) : null;
         const mainFeature = deptFeature || regionFeature;
 
-        if (!mainFeature) {
-          return { ...terr, deptFeature, regionFeature, regionCode, centroid: null,
-            deptGlobalPath: null, regionGlobalPath: null };
-        }
+        const empty = { ...terr, deptFeature, regionFeature, regionCode,
+          centroid: null, deptPath: null, regionPath: null, pathTransform: null, labelY: 0 };
+
+        if (!mainFeature) return empty;
 
         const centroid = globalPathGen.centroid(mainFeature as GeoPermissibleObjects);
-        if (!centroid || isNaN(centroid[0]) || isNaN(centroid[1])) {
-          return { ...terr, deptFeature, regionFeature, regionCode, centroid: null,
-            deptGlobalPath: null, regionGlobalPath: null };
+        if (!centroid || isNaN(centroid[0]) || isNaN(centroid[1])) return empty;
+
+        const sz = terr.targetSizePx;
+        let deptPath: string | null;
+        let regionPath: string | null;
+        let pathTransform: string | null;
+        let labelY: number;
+
+        if (sz) {
+          const localProj = geoMercator().fitExtent(
+            [[0, 0], [sz, sz]], mainFeature as GeoPermissibleObjects,
+          );
+          const localGen = geoPath(localProj);
+          deptPath    = deptFeature   ? localGen(deptFeature   as GeoPermissibleObjects) : null;
+          regionPath  = regionFeature ? localGen(regionFeature as GeoPermissibleObjects) : null;
+          pathTransform = `translate(${centroid[0] - sz / 2}, ${centroid[1] - sz / 2})`;
+          labelY = Math.min(centroid[1] + sz / 2 + 9, height - 2);
+        } else {
+          deptPath    = deptFeature   ? globalPathGen(deptFeature   as GeoPermissibleObjects) : null;
+          regionPath  = regionFeature ? globalPathGen(regionFeature as GeoPermissibleObjects) : null;
+          pathTransform = null;
+          labelY = Math.min(centroid[1] + 12, height - 2);
         }
 
-        return {
-          ...terr,
-          deptFeature,
-          regionFeature,
-          regionCode,
-          centroid,
-          deptGlobalPath: deptFeature
-            ? globalPathGen(deptFeature as GeoPermissibleObjects)
-            : null,
-          regionGlobalPath: regionFeature
-            ? globalPathGen(regionFeature as GeoPermissibleObjects)
-            : null,
-        };
+        return { ...terr, deptFeature, regionFeature, regionCode,
+          centroid, deptPath, regionPath, pathTransform, labelY };
       }),
-    [territories, deptsByCode, regionsByCode, deptToRegion, globalPathGen],
+    [territories, deptsByCode, regionsByCode, deptToRegion, globalPathGen, height],
   );
+
+  const [hoverName, setHoverName] = useState<{ name: string; cx: number; cy: number } | null>(null);
 
   const clipId = `clip-group-${id}`;
 
@@ -153,25 +167,37 @@ export default function GroupInset({
       {/* Background (océan) */}
       <rect width={width} height={height} fill="#f0f9ff" stroke="#7dd3fc" strokeWidth={0.8} rx={2} />
 
-      {/* Contexte mondial — non interactif */}
-      <g clipPath={`url(#${clipId})`} style={{ pointerEvents: 'none' }}>
+      {/* Contexte mondial */}
+      <g clipPath={`url(#${clipId})`}>
         {contextFeatures.map((f, i) => {
           const d = globalPathGen(f as GeoPermissibleObjects);
           if (!d) return null;
+          const countryName = (f.properties?.NAME_FR ?? f.properties?.NAME) as string | undefined;
           return (
-            <path key={i} d={d} fill="#e2e8e0" stroke="#b8c0b4" strokeWidth={0.4} />
+            <path
+              key={i}
+              d={d}
+              fill="#e2e8e0"
+              stroke="#b8c0b4"
+              strokeWidth={0.4}
+              onMouseEnter={!quizMode && countryName ? () => {
+                const c = globalPathGen.centroid(f as GeoPermissibleObjects);
+                if (c && !isNaN(c[0])) setHoverName({ name: countryName, cx: c[0], cy: c[1] });
+              } : undefined}
+              onMouseLeave={!quizMode && countryName ? () => setHoverName(null) : undefined}
+            />
           );
         })}
       </g>
 
-      {/* Territoires à l'échelle réelle (projection globale) */}
+      {/* Territoires (échelle réelle ou légèrement zoomés si targetSizePx défini) */}
       {territoryData.map((td) => {
         if (!td.centroid) return null;
 
         const {
           code, nom, centroid,
           deptFeature, regionFeature, regionCode,
-          deptGlobalPath, regionGlobalPath,
+          deptPath, regionPath, pathTransform, labelY,
         } = td;
 
         const deptCode = deptFeature?.properties?.code as string | undefined;
@@ -183,10 +209,10 @@ export default function GroupInset({
 
         return (
           <g key={code}>
-            <g clipPath={`url(#${clipId})`}>
-              {showRegions && regionGlobalPath && (
+            <g clipPath={`url(#${clipId})`} transform={pathTransform ?? undefined}>
+              {showRegions && regionPath && (
                 <path
-                  d={regionGlobalPath}
+                  d={regionPath}
                   fill={isRegionHighlighted ? '#4ade80' : isRegionWrong ? '#fca5a5' : '#e8f4e8'}
                   stroke={isRegionWrong ? '#dc2626' : '#6aaa6a'}
                   strokeWidth={0.8}
@@ -194,15 +220,15 @@ export default function GroupInset({
                   onMouseMove={(e) => {
                     if (!quizMode && regionFeature) onHover(regionFeature, e.clientX, e.clientY);
                   }}
-                  onMouseLeave={() => onHover(null, 0, 0)}
+                  onMouseLeave={() => { onHover(null, 0, 0); }}
                   onClick={() => {
                     if (onClick && regionCode) onClick(regionCode, 'region');
                   }}
                 />
               )}
-              {showDepts && deptGlobalPath && (
+              {showDepts && deptPath && (
                 <path
-                  d={deptGlobalPath}
+                  d={deptPath}
                   fill={isDeptHighlighted ? '#60a5fa' : isDeptWrong ? '#fca5a5' : '#dbeafe'}
                   stroke={isDeptWrong ? '#dc2626' : '#3b82f6'}
                   strokeWidth={0.5}
@@ -210,7 +236,7 @@ export default function GroupInset({
                   onMouseMove={(e) => {
                     if (!quizMode && deptFeature) onHover(deptFeature, e.clientX, e.clientY);
                   }}
-                  onMouseLeave={() => onHover(null, 0, 0)}
+                  onMouseLeave={() => { onHover(null, 0, 0); }}
                   onClick={() => {
                     if (onClick) onClick(code, 'departement');
                   }}
@@ -218,11 +244,10 @@ export default function GroupInset({
               )}
             </g>
 
-            {/* Nom du territoire */}
             {!quizMode && (
               <text
                 x={centroid[0]}
-                y={Math.min(centroid[1] + 12, height - 2)}
+                y={labelY}
                 textAnchor="middle"
                 fontSize={11}
                 fill="#374151"
@@ -234,6 +259,31 @@ export default function GroupInset({
           </g>
         );
       })}
+
+      {/* Tooltip nom au survol */}
+      {hoverName && (() => {
+        const PAD = 5;
+        const TH = 15;
+        const TW = Math.min(hoverName.name.length * 6.5 + PAD * 2, width - 4);
+        const cx = Math.max(0, Math.min(hoverName.cx, width));
+        const cy = Math.max(0, Math.min(hoverName.cy, height));
+        const tx = Math.max(2, Math.min(cx - TW / 2, width - TW - 2));
+        const ty = cy - TH - 8 < 2 ? cy + 6 : cy - TH - 8;
+        return (
+          <g style={{ pointerEvents: 'none' }}>
+            <rect x={tx} y={ty} width={TW} height={TH} rx={3} fill="rgba(15,23,42,0.85)" />
+            <text
+              x={tx + TW / 2} y={ty + TH - 3}
+              textAnchor="middle"
+              fontSize={10}
+              fill="#f1f5f9"
+              fontWeight="600"
+            >
+              {hoverName.name}
+            </text>
+          </g>
+        );
+      })()}
     </g>
   );
 }
