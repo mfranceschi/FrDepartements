@@ -66,7 +66,7 @@ export default function GroupInset({
   onHover,
   onClick,
 }: GroupInsetProps) {
-  const { id, x, y, width, height, geoBounds, territories } = config;
+  const { x, y, width, height, geoBounds, territories } = config;
   const padding = 4;
 
   const globalProj = useMemo(
@@ -80,9 +80,12 @@ export default function GroupInset({
 
   const globalPathGen = useMemo(() => geoPath(globalProj), [globalProj]);
 
-  // Filter world features whose bounding box intersects geoBounds
+  // Filter world features whose bounding box intersects geoBounds (+ marge de 6°)
+  // La marge permet d'inclure des pays dont le bord dépasse légèrement la fenêtre
+  // (ex. Guyana dont l'extrémité est est à -56.5° pour une borne ouest à -56°)
   const contextFeatures = useMemo(() => {
     const [w, s, e, n] = geoBounds;
+    const M = 6;
     return worldFeatures.filter((f) => {
       if (!f.geometry) return false;
       const geom = f.geometry;
@@ -101,7 +104,7 @@ export default function GroupInset({
         if (lat < minLat) minLat = lat;
         if (lat > maxLat) maxLat = lat;
       }
-      return maxLng >= w && minLng <= e && maxLat >= s && minLat <= n;
+      return maxLng >= w - M && minLng <= e + M && maxLat >= s - M && minLat <= n + M;
     });
   }, [worldFeatures, geoBounds]);
 
@@ -154,41 +157,34 @@ export default function GroupInset({
 
   const [hoverName, setHoverName] = useState<{ name: string; cx: number; cy: number } | null>(null);
 
-  const clipId = `clip-group-${id}`;
-
   return (
-    <g transform={`translate(${x}, ${y})`}>
-      <defs>
-        <clipPath id={clipId}>
-          <rect width={width} height={height} />
-        </clipPath>
-      </defs>
+    // Le SVG imbriqué crée un viewport indépendant : overflow="hidden" clip nativement
+    // tout débordement (ex. Brésil, Madagascar), sans clipPath ni ID globaux.
+    <svg x={x} y={y} width={width} height={height} overflow="hidden">
 
       {/* Background (océan) */}
       <rect width={width} height={height} fill="#f0f9ff" stroke="#7dd3fc" strokeWidth={0.8} rx={2} />
 
       {/* Contexte mondial */}
-      <g clipPath={`url(#${clipId})`}>
-        {contextFeatures.map((f, i) => {
-          const d = globalPathGen(f as GeoPermissibleObjects);
-          if (!d) return null;
-          const countryName = (f.properties?.NAME_FR ?? f.properties?.NAME) as string | undefined;
-          return (
-            <path
-              key={i}
-              d={d}
-              fill="#e2e8e0"
-              stroke="#b8c0b4"
-              strokeWidth={0.4}
-              onMouseEnter={!quizMode && countryName ? () => {
-                const c = globalPathGen.centroid(f as GeoPermissibleObjects);
-                if (c && !isNaN(c[0])) setHoverName({ name: countryName, cx: c[0], cy: c[1] });
-              } : undefined}
-              onMouseLeave={!quizMode && countryName ? () => setHoverName(null) : undefined}
-            />
-          );
-        })}
-      </g>
+      {contextFeatures.map((f, i) => {
+        const d = globalPathGen(f as GeoPermissibleObjects);
+        if (!d) return null;
+        const countryName = (f.properties?.NAME_FR ?? f.properties?.NAME) as string | undefined;
+        return (
+          <path
+            key={i}
+            d={d}
+            fill="#e2e8e0"
+            stroke="#b8c0b4"
+            strokeWidth={0.4}
+            onMouseEnter={!quizMode && countryName ? () => {
+              const c = globalPathGen.centroid(f as GeoPermissibleObjects);
+              if (c && !isNaN(c[0])) setHoverName({ name: countryName, cx: c[0], cy: c[1] });
+            } : undefined}
+            onMouseLeave={!quizMode && countryName ? () => setHoverName(null) : undefined}
+          />
+        );
+      })}
 
       {/* Territoires (échelle réelle ou légèrement zoomés si targetSizePx défini) */}
       {territoryData.map((td) => {
@@ -209,7 +205,7 @@ export default function GroupInset({
 
         return (
           <g key={code}>
-            <g clipPath={`url(#${clipId})`} transform={pathTransform ?? undefined}>
+            <g transform={pathTransform ?? undefined}>
               {showRegions && regionPath && (
                 <path
                   d={regionPath}
@@ -284,6 +280,6 @@ export default function GroupInset({
           </g>
         );
       })()}
-    </g>
+    </svg>
   );
 }

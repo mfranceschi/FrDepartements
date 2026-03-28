@@ -25,7 +25,7 @@ type SessionLength = 10 | 25 | 50 | 'tout';
 const SESSION_LENGTHS: SessionLength[] = [10, 25, 50, 'tout'];
 
 export default function QuizConfig({ onStart }: QuizConfigProps) {
-  const [selectedModes, setSelectedModes] = useState<Set<QuizMode>>(new Set(ALL_MODES));
+  const [selectedModes, setSelectedModes] = useState<Set<QuizMode>>(new Set<QuizMode>(['TrouverDeptCarte']));
   const [difficulty, setDifficulty] = useState<Difficulty>('facile');
   const [sessionLength, setSessionLength] = useState<SessionLength>(25);
   const [includeDrom, setIncludeDrom] = useState(true);
@@ -37,6 +37,19 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
         next.delete(mode);
       } else {
         next.add(mode);
+      }
+      return next;
+    });
+  };
+
+  const toggleGroup = (modes: QuizMode[]) => {
+    setSelectedModes((prev) => {
+      const allChecked = modes.every((m) => prev.has(m));
+      const next = new Set(prev);
+      if (allChecked) {
+        modes.forEach((m) => next.delete(m));
+      } else {
+        modes.forEach((m) => next.add(m));
       }
       return next;
     });
@@ -70,7 +83,11 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
         <div className="grid grid-cols-[2fr_3fr] gap-4">
           {/* Groupe Région */}
           <div>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Région</p>
+            <button
+              type="button"
+              onClick={() => toggleGroup(REGION_MODES.map((m) => m.mode))}
+              className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 hover:text-blue-600 cursor-pointer select-none text-left"
+            >Région</button>
             <div className="flex flex-col gap-2 pl-1">
               {REGION_MODES.map(({ mode, label }) => (
                 <label key={mode} className="flex items-center gap-3 cursor-pointer select-none">
@@ -88,7 +105,11 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
 
           {/* Groupe Département */}
           <div>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Département</p>
+            <button
+              type="button"
+              onClick={() => toggleGroup(DEPT_MODES.map((m) => m.mode))}
+              className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 hover:text-blue-600 cursor-pointer select-none text-left"
+            >Département</button>
             <div className="flex flex-col gap-2 pl-1">
               {DEPT_MODES.map(({ mode, label }) => (
                 <label key={mode} className="flex items-center gap-3 cursor-pointer select-none">

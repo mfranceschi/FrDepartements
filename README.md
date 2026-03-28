@@ -8,7 +8,7 @@ Application web progressive (PWA) pour explorer et apprendre les 101 départemen
 - Visualisation SVG de la France avec D3.js
 - Zoom et panoramique
 - Survol / clic sur un département ou une région pour afficher ses informations
-- Encarts dédiés pour l'Île-de-France et les territoires d'outre-mer
+- Encarts dédiés pour l'Île-de-France et les territoires d'outre-mer (Antilles, Guyane, Océan Indien) avec contexte géographique mondial (pays voisins)
 
 ### Quiz
 Cinq modes d'entraînement configurables :
@@ -67,7 +67,7 @@ npm run dev
 ```
 src/
 ├── components/
-│   ├── carte/          # Carte SVG (couches depts, régions, encarts)
+│   ├── carte/          # Carte SVG (couches depts, régions, encarts) — GroupInset pour les DROM
 │   ├── quiz/           # Shell quiz + 5 types de questions
 │   └── tableau/        # Tableau et accordéon par région
 ├── pages/              # CartePage, QuizPage, TableauPage

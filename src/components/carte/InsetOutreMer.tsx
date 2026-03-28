@@ -5,8 +5,8 @@ import GroupInset, { type GroupInsetConfig } from './GroupInset';
 const INSET_X    = 910;
 const INSET_W    = 283;
 const INSET_H    = 175;
-const INSET_GAP  = 6;   // px entre la baseline du label et le haut de l'inset
-const LABEL_H    = 12;  // hauteur réservée au label au-dessus de chaque inset
+const INSET_GAP  = 4;   // px entre la baseline du label et le haut de l'inset
+const LABEL_H    = 16;  // hauteur réservée au label au-dessus de chaque inset
 const SECTION_H  = LABEL_H + INSET_GAP + INSET_H; // = 193
 const FIRST_Y    = 138; // y du premier label DROM (après IDF : Y=8, H=120, +10 gap)
 
@@ -130,10 +130,9 @@ export default function InsetOutreMer({
           key={label}
           x={x}
           y={y}
-          fontSize={11}
-          fill="#94a3b8"
-          fontStyle="italic"
-          fontWeight="500"
+          fontSize={13}
+          fill="#475569"
+          fontWeight="600"
         >
           {label}
         </text>
