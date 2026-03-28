@@ -1,13 +1,18 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import TrouverDeptCarte from '../components/quiz/types-questions/TrouverDeptCarte';
+import QuestionTrouverDeptCarte from '../components/quiz/types-questions/QuestionTrouverDeptCarte';
 import type { CarteFranceProps } from '../components/carte/CarteFrance';
 import type { Question } from '../quiz/types';
 
-const GEO_DATA = {
+const GEO_STUB = {
   departements: { type: 'FeatureCollection' as const, features: [] },
   regions: { type: 'FeatureCollection' as const, features: [] },
+  loading: false,
 };
+
+vi.mock('../hooks/useGeoData', () => ({
+  useGeoData: () => GEO_STUB,
+}));
 
 // CarteFrance : expose wrongCode et highlightCode via data-testid, simule les clics
 vi.mock('../components/carte/CarteFrance', () => ({
@@ -35,12 +40,11 @@ const makeQuestion = (code: string, nom: string): Question => ({
   targetNom: nom,
 });
 
-describe('TrouverDeptCarte – quiz de localisation sur carte', () => {
+describe('QuestionTrouverDeptCarte – quiz de localisation sur carte', () => {
   it('affiche l\'énoncé avec le nom et le code du département cible', () => {
     render(
-      <TrouverDeptCarte
+      <QuestionTrouverDeptCarte
         question={makeQuestion('971', 'Guadeloupe')}
-        geoData={GEO_DATA}
         answerState="pending"
         selectedCode={null}
         onAnswer={vi.fn()}
@@ -53,9 +57,8 @@ describe('TrouverDeptCarte – quiz de localisation sur carte', () => {
   it('appelle onAnswer avec le bon code au clic sur la carte (DROM Guadeloupe)', () => {
     const onAnswer = vi.fn();
     render(
-      <TrouverDeptCarte
+      <QuestionTrouverDeptCarte
         question={makeQuestion('971', 'Guadeloupe')}
-        geoData={GEO_DATA}
         answerState="pending"
         selectedCode={null}
         onAnswer={onAnswer}
@@ -69,9 +72,8 @@ describe('TrouverDeptCarte – quiz de localisation sur carte', () => {
   it('appelle onAnswer avec un mauvais code quand on clique sur le mauvais département', () => {
     const onAnswer = vi.fn();
     render(
-      <TrouverDeptCarte
+      <QuestionTrouverDeptCarte
         question={makeQuestion('971', 'Guadeloupe')}
-        geoData={GEO_DATA}
         answerState="pending"
         selectedCode={null}
         onAnswer={onAnswer}
@@ -83,9 +85,8 @@ describe('TrouverDeptCarte – quiz de localisation sur carte', () => {
 
   it('affiche "Bonne réponse !" quand answerState est "correct"', () => {
     render(
-      <TrouverDeptCarte
+      <QuestionTrouverDeptCarte
         question={makeQuestion('971', 'Guadeloupe')}
-        geoData={GEO_DATA}
         answerState="correct"
         selectedCode="971"
         onAnswer={vi.fn()}
@@ -96,9 +97,8 @@ describe('TrouverDeptCarte – quiz de localisation sur carte', () => {
 
   it('affiche "Mauvaise réponse." quand answerState est "wrong"', () => {
     render(
-      <TrouverDeptCarte
+      <QuestionTrouverDeptCarte
         question={makeQuestion('971', 'Guadeloupe')}
-        geoData={GEO_DATA}
         answerState="wrong"
         selectedCode="75"
         onAnswer={vi.fn()}
@@ -110,9 +110,8 @@ describe('TrouverDeptCarte – quiz de localisation sur carte', () => {
   it('ne déclenche pas onAnswer si la question est déjà répondue', () => {
     const onAnswer = vi.fn();
     render(
-      <TrouverDeptCarte
+      <QuestionTrouverDeptCarte
         question={makeQuestion('971', 'Guadeloupe')}
-        geoData={GEO_DATA}
         answerState="correct"
         selectedCode="971"
         onAnswer={onAnswer}
@@ -125,9 +124,8 @@ describe('TrouverDeptCarte – quiz de localisation sur carte', () => {
   it('fonctionne aussi pour un département métropolitain (Paris 75)', () => {
     const onAnswer = vi.fn();
     render(
-      <TrouverDeptCarte
+      <QuestionTrouverDeptCarte
         question={makeQuestion('75', 'Paris')}
-        geoData={GEO_DATA}
         answerState="pending"
         selectedCode={null}
         onAnswer={onAnswer}
@@ -138,26 +136,12 @@ describe('TrouverDeptCarte – quiz de localisation sur carte', () => {
     expect(onAnswer).toHaveBeenCalledWith('75');
   });
 
-  it('affiche le message de chargement si les données géo sont absentes', () => {
-    render(
-      <TrouverDeptCarte
-        question={makeQuestion('971', 'Guadeloupe')}
-        geoData={{ departements: null, regions: null }}
-        answerState="pending"
-        selectedCode={null}
-        onAnswer={vi.fn()}
-      />,
-    );
-    expect(screen.getByText(/Chargement de la carte/i)).toBeInTheDocument();
-  });
-
   // ─── Surbrillance rouge/vert ────────────────────────────────────────────────
 
   it('passe wrongCode=sélection et highlightCode=cible à CarteFrance après une mauvaise réponse', () => {
     render(
-      <TrouverDeptCarte
+      <QuestionTrouverDeptCarte
         question={makeQuestion('971', 'Guadeloupe')}
-        geoData={GEO_DATA}
         answerState="wrong"
         selectedCode="75"
         onAnswer={vi.fn()}
@@ -169,9 +153,8 @@ describe('TrouverDeptCarte – quiz de localisation sur carte', () => {
 
   it('ne passe pas wrongCode à CarteFrance après une bonne réponse', () => {
     render(
-      <TrouverDeptCarte
+      <QuestionTrouverDeptCarte
         question={makeQuestion('971', 'Guadeloupe')}
-        geoData={GEO_DATA}
         answerState="correct"
         selectedCode="971"
         onAnswer={vi.fn()}
@@ -183,9 +166,8 @@ describe('TrouverDeptCarte – quiz de localisation sur carte', () => {
 
   it('ne passe ni wrongCode ni highlightCode tant que la question est en attente', () => {
     render(
-      <TrouverDeptCarte
+      <QuestionTrouverDeptCarte
         question={makeQuestion('971', 'Guadeloupe')}
-        geoData={GEO_DATA}
         answerState="pending"
         selectedCode={null}
         onAnswer={vi.fn()}

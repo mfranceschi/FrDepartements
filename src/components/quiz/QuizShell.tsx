@@ -1,20 +1,15 @@
 import { useEffect, useState, useRef } from 'react';
-import type { FeatureCollection } from 'geojson';
 import type { SessionState, QuizMode } from '../../quiz/types';
-import TrouverDeptCarte from './types-questions/TrouverDeptCarte';
-import TrouverRegionCarte from './types-questions/TrouverRegionCarte';
-import DevinerNomRegionCarte from './types-questions/DevinerNomRegionCarte';
-import DevinerNomDeptCarte from './types-questions/DevinerNomDeptCarte';
-import DevinerCodeDept from './types-questions/DevinerCodeDept';
-import DevinerNomDept from './types-questions/DevinerNomDept';
-import DevinerRegionDept from './types-questions/DevinerRegionDept';
+import QuestionTrouverDeptCarte from './types-questions/QuestionTrouverDeptCarte';
+import QuestionTrouverRegionCarte from './types-questions/QuestionTrouverRegionCarte';
+import QuestionDevinerNomRegionCarte from './types-questions/QuestionDevinerNomRegionCarte';
+import QuestionDevinerNomDeptCarte from './types-questions/QuestionDevinerNomDeptCarte';
+import QuestionDevinerCodeDept from './types-questions/QuestionDevinerCodeDept';
+import QuestionDevinerNomDept from './types-questions/QuestionDevinerNomDept';
+import QuestionDevinerRegionDept from './types-questions/QuestionDevinerRegionDept';
 
 interface QuizShellProps {
   session: SessionState;
-  geoData: {
-    departements: FeatureCollection | null;
-    regions: FeatureCollection | null;
-  };
   onAnswer: (code: string) => void;
   onNext: () => void;
   onRestart: () => void;
@@ -105,7 +100,6 @@ function CategoryStats({ history }: { history: SessionState['answerHistory'] }) 
 
 export default function QuizShell({
   session,
-  geoData,
   onAnswer,
   onNext,
   onRestart,
@@ -244,43 +238,39 @@ export default function QuizShell({
 
       <div className="w-full">
         {question.mode === 'TrouverDeptCarte' && (
-          <TrouverDeptCarte
+          <QuestionTrouverDeptCarte
             question={question}
-            geoData={geoData}
             answerState={answerState}
             selectedCode={selectedCode}
             onAnswer={onAnswer}
           />
         )}
         {question.mode === 'TrouverRegionCarte' && (
-          <TrouverRegionCarte
+          <QuestionTrouverRegionCarte
             question={question}
-            geoData={geoData}
             answerState={answerState}
             selectedCode={selectedCode}
             onAnswer={onAnswer}
           />
         )}
         {question.mode === 'DevinerNomRegionCarte' && (
-          <DevinerNomRegionCarte
+          <QuestionDevinerNomRegionCarte
             question={question}
-            geoData={geoData}
             answerState={answerState}
             selectedCode={selectedCode}
             onAnswer={onAnswer}
           />
         )}
         {question.mode === 'DevinerNomDeptCarte' && (
-          <DevinerNomDeptCarte
+          <QuestionDevinerNomDeptCarte
             question={question}
-            geoData={geoData}
             answerState={answerState}
             selectedCode={selectedCode}
             onAnswer={onAnswer}
           />
         )}
         {question.mode === 'DevinerCodeDept' && (
-          <DevinerCodeDept
+          <QuestionDevinerCodeDept
             question={question}
             answerState={answerState}
             selectedCode={selectedCode}
@@ -288,7 +278,7 @@ export default function QuizShell({
           />
         )}
         {question.mode === 'DevinerNomDept' && (
-          <DevinerNomDept
+          <QuestionDevinerNomDept
             question={question}
             answerState={answerState}
             selectedCode={selectedCode}
@@ -296,7 +286,7 @@ export default function QuizShell({
           />
         )}
         {question.mode === 'DevinerRegionDept' && (
-          <DevinerRegionDept
+          <QuestionDevinerRegionDept
             question={question}
             answerState={answerState}
             selectedCode={selectedCode}

@@ -1,13 +1,18 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import TrouverRegionCarte from '../components/quiz/types-questions/TrouverRegionCarte';
+import QuestionTrouverRegionCarte from '../components/quiz/types-questions/QuestionTrouverRegionCarte';
 import type { CarteFranceProps } from '../components/carte/CarteFrance';
 import type { Question } from '../quiz/types';
 
-const GEO_DATA = {
+const GEO_STUB = {
   departements: { type: 'FeatureCollection' as const, features: [] },
   regions: { type: 'FeatureCollection' as const, features: [] },
+  loading: false,
 };
+
+vi.mock('../hooks/useGeoData', () => ({
+  useGeoData: () => GEO_STUB,
+}));
 
 // Labels neutres pour éviter les ambiguïtés avec les textes du composant testé
 vi.mock('../components/carte/CarteFrance', () => ({
@@ -35,12 +40,11 @@ const makeQuestion = (code: string, nom: string): Question => ({
   targetNom: nom,
 });
 
-describe('TrouverRegionCarte – quiz de localisation de région', () => {
+describe('QuestionTrouverRegionCarte – quiz de localisation de région', () => {
   it('affiche l\'énoncé avec le nom de la région cible', () => {
     render(
-      <TrouverRegionCarte
+      <QuestionTrouverRegionCarte
         question={makeQuestion('11', 'Île-de-France')}
-        geoData={GEO_DATA}
         answerState="pending"
         selectedCode={null}
         onAnswer={vi.fn()}
@@ -53,9 +57,8 @@ describe('TrouverRegionCarte – quiz de localisation de région', () => {
   it('appelle onAnswer avec le code correct au clic', () => {
     const onAnswer = vi.fn();
     render(
-      <TrouverRegionCarte
+      <QuestionTrouverRegionCarte
         question={makeQuestion('11', 'Île-de-France')}
-        geoData={GEO_DATA}
         answerState="pending"
         selectedCode={null}
         onAnswer={onAnswer}
@@ -68,9 +71,8 @@ describe('TrouverRegionCarte – quiz de localisation de région', () => {
 
   it('affiche "Bonne réponse !" quand answerState est "correct"', () => {
     render(
-      <TrouverRegionCarte
+      <QuestionTrouverRegionCarte
         question={makeQuestion('84', 'Auvergne-Rhône-Alpes')}
-        geoData={GEO_DATA}
         answerState="correct"
         selectedCode="84"
         onAnswer={vi.fn()}
@@ -81,9 +83,8 @@ describe('TrouverRegionCarte – quiz de localisation de région', () => {
 
   it('affiche "Mauvaise réponse." quand answerState est "wrong"', () => {
     render(
-      <TrouverRegionCarte
+      <QuestionTrouverRegionCarte
         question={makeQuestion('84', 'Auvergne-Rhône-Alpes')}
-        geoData={GEO_DATA}
         answerState="wrong"
         selectedCode="11"
         onAnswer={vi.fn()}
@@ -95,9 +96,8 @@ describe('TrouverRegionCarte – quiz de localisation de région', () => {
   it('ne déclenche pas onAnswer si la question est déjà répondue', () => {
     const onAnswer = vi.fn();
     render(
-      <TrouverRegionCarte
+      <QuestionTrouverRegionCarte
         question={makeQuestion('11', 'Île-de-France')}
-        geoData={GEO_DATA}
         answerState="wrong"
         selectedCode="84"
         onAnswer={onAnswer}
@@ -110,9 +110,8 @@ describe('TrouverRegionCarte – quiz de localisation de région', () => {
   it('fonctionne pour une région DROM (Guadeloupe, code 01)', () => {
     const onAnswer = vi.fn();
     render(
-      <TrouverRegionCarte
+      <QuestionTrouverRegionCarte
         question={makeQuestion('01', 'Guadeloupe')}
-        geoData={GEO_DATA}
         answerState="pending"
         selectedCode={null}
         onAnswer={onAnswer}
@@ -127,9 +126,8 @@ describe('TrouverRegionCarte – quiz de localisation de région', () => {
 
   it('passe wrongCode=sélection et highlightCode=cible à CarteFrance après une mauvaise réponse', () => {
     render(
-      <TrouverRegionCarte
+      <QuestionTrouverRegionCarte
         question={makeQuestion('84', 'Auvergne-Rhône-Alpes')}
-        geoData={GEO_DATA}
         answerState="wrong"
         selectedCode="11"
         onAnswer={vi.fn()}
@@ -141,9 +139,8 @@ describe('TrouverRegionCarte – quiz de localisation de région', () => {
 
   it('ne passe pas wrongCode à CarteFrance après une bonne réponse', () => {
     render(
-      <TrouverRegionCarte
+      <QuestionTrouverRegionCarte
         question={makeQuestion('84', 'Auvergne-Rhône-Alpes')}
-        geoData={GEO_DATA}
         answerState="correct"
         selectedCode="84"
         onAnswer={vi.fn()}
@@ -155,9 +152,8 @@ describe('TrouverRegionCarte – quiz de localisation de région', () => {
 
   it('ne passe ni wrongCode ni highlightCode tant que la question est en attente', () => {
     render(
-      <TrouverRegionCarte
+      <QuestionTrouverRegionCarte
         question={makeQuestion('84', 'Auvergne-Rhône-Alpes')}
-        geoData={GEO_DATA}
         answerState="pending"
         selectedCode={null}
         onAnswer={vi.fn()}

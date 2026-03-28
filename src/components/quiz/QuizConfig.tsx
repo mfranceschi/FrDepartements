@@ -18,7 +18,6 @@ const DEPT_MODES: { mode: QuizMode; label: string }[] = [
   { mode: 'DevinerRegionDept', label: 'Deviner la région d\'un département' },
 ];
 
-const ALL_MODES: QuizMode[] = [...REGION_MODES, ...DEPT_MODES].map((m) => m.mode);
 const REGION_MODE_SET = new Set<QuizMode>(REGION_MODES.map((m) => m.mode));
 
 type SessionLength = 10 | 25 | 50 | 'tout';

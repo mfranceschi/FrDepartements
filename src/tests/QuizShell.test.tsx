@@ -3,10 +3,6 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import QuizShell from '../components/quiz/QuizShell';
 import type { SessionState } from '../quiz/types';
 
-const GEO_DATA = {
-  departements: { type: 'FeatureCollection' as const, features: [] },
-  regions: { type: 'FeatureCollection' as const, features: [] },
-};
 
 // Session terminée avec score parfait (10/10)
 function makeFinishedSession(score: number, total: number): SessionState {
@@ -73,7 +69,6 @@ describe('QuizShell – écran de fin', () => {
     render(
       <QuizShell
         session={makeFinishedSession(8, 10)}
-        geoData={GEO_DATA}
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
@@ -89,7 +84,6 @@ describe('QuizShell – écran de fin', () => {
     render(
       <QuizShell
         session={makeFinishedSession(10, 10)}
-        geoData={GEO_DATA}
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
@@ -103,7 +97,6 @@ describe('QuizShell – écran de fin', () => {
     render(
       <QuizShell
         session={makeFinishedSession(7, 10)}
-        geoData={GEO_DATA}
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
@@ -117,7 +110,6 @@ describe('QuizShell – écran de fin', () => {
     render(
       <QuizShell
         session={makeFinishedSession(3, 10)}
-        geoData={GEO_DATA}
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
@@ -131,7 +123,6 @@ describe('QuizShell – écran de fin', () => {
     render(
       <QuizShell
         session={makeFinishedSession(5, 10)}
-        geoData={GEO_DATA}
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
@@ -145,7 +136,6 @@ describe('QuizShell – écran de fin', () => {
     render(
       <QuizShell
         session={makeFinishedSession(6, 10)}
-        geoData={GEO_DATA}
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
@@ -159,7 +149,6 @@ describe('QuizShell – écran de fin', () => {
     render(
       <QuizShell
         session={makeFinishedSession(10, 10)}
-        geoData={GEO_DATA}
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
@@ -174,7 +163,6 @@ describe('QuizShell – écran de fin', () => {
     render(
       <QuizShell
         session={makeFinishedSession(10, 10)}
-        geoData={GEO_DATA}
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={onRestart}
@@ -190,7 +178,6 @@ describe('QuizShell – écran de fin', () => {
     render(
       <QuizShell
         session={makeFinishedSession(8, 10)}
-        geoData={GEO_DATA}
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
@@ -209,7 +196,6 @@ describe('QuizShell – session en cours', () => {
     render(
       <QuizShell
         session={makeActiveSession()}
-        geoData={GEO_DATA}
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
@@ -224,7 +210,6 @@ describe('QuizShell – session en cours', () => {
     render(
       <QuizShell
         session={session}
-        geoData={GEO_DATA}
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
@@ -239,7 +224,6 @@ describe('QuizShell – session en cours', () => {
     render(
       <QuizShell
         session={makeActiveSession()}
-        geoData={GEO_DATA}
         onAnswer={onAnswer}
         onNext={vi.fn()}
         onRestart={vi.fn()}

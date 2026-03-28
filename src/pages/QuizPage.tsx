@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useBlocker } from 'react-router-dom';
-import { useGeoData } from '../hooks/useGeoData';
 import { useQuiz } from '../hooks/useQuiz';
 import QuizConfig from '../components/quiz/QuizConfig';
 import QuizShell from '../components/quiz/QuizShell';
@@ -15,7 +14,6 @@ interface QuizSessionProps {
 }
 
 function QuizSession({ config, onRestart, onFinished }: QuizSessionProps) {
-  const geoData = useGeoData();
   const { session, submitAnswer, nextQuestion, restart, restartWithErrors } = useQuiz(config);
 
   // Remonte l'état "terminé" vers QuizPage pour le blocker
@@ -33,18 +31,9 @@ function QuizSession({ config, onRestart, onFinished }: QuizSessionProps) {
     onFinished(false);
   };
 
-  if (geoData.loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <p className="text-gray-500">Chargement des données géographiques…</p>
-      </div>
-    );
-  }
-
   return (
     <QuizShell
       session={session}
-      geoData={{ departements: geoData.departements, regions: geoData.regions }}
       onAnswer={submitAnswer}
       onNext={nextQuestion}
       onRestart={handleRestart}

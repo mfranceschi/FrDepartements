@@ -10,9 +10,9 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import DevinerCodeDept from '../components/quiz/types-questions/DevinerCodeDept';
-import DevinerNomDept from '../components/quiz/types-questions/DevinerNomDept';
-import DevinerRegionDept from '../components/quiz/types-questions/DevinerRegionDept';
+import DevinerCodeDept from '../components/quiz/types-questions/QuestionDevinerCodeDept';
+import DevinerNomDept from '../components/quiz/types-questions/QuestionDevinerNomDept';
+import DevinerRegionDept from '../components/quiz/types-questions/QuestionDevinerRegionDept';
 import type { Question } from '../quiz/types';
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────

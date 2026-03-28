@@ -2,24 +2,9 @@ import { useMemo, useState } from 'react';
 import { geoMercator, geoPath } from 'd3';
 import type { Feature } from 'geojson';
 import type { GeoPermissibleObjects } from 'd3';
+import type { GroupInsetConfig, GroupTerritoryConfig } from './types';
 
-export interface GroupTerritoryConfig {
-  code: string;
-  nom: string;
-  /** Si fourni, le territoire est rendu agrandi à cette taille (px) centré sur son centroïde */
-  targetSizePx?: number;
-}
-
-export interface GroupInsetConfig {
-  id: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  /** [lng_west, lat_south, lng_east, lat_north] */
-  geoBounds: [number, number, number, number];
-  territories: GroupTerritoryConfig[];
-}
+export type { GroupInsetConfig, GroupTerritoryConfig };
 
 interface GroupInsetProps {
   config: GroupInsetConfig;

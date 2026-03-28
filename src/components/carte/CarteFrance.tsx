@@ -12,6 +12,7 @@ import CoucheRegions from './CoucheRegions';
 import CoucheDepts from './CoucheDepts';
 import InsetOutreMer from './InsetOutreMer';
 import InsetIleDeFrance from './InsetIleDeFrance';
+import { DROM_CODES } from '../../data/dromsConfig';
 
 export interface CarteFranceProps {
   features: {
@@ -28,8 +29,6 @@ export interface CarteFranceProps {
   quizMode?: boolean;
   quizLayer?: 'departements' | 'regions';
 }
-
-const DROM_CODES = new Set(['971', '972', '973', '974', '976']);
 
 const PROJECTION = geoConicConformal()
   .center([2.5, 46.5])

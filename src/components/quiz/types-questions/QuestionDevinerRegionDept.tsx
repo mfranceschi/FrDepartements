@@ -9,7 +9,7 @@ interface DevinerRegionDeptProps {
   onAnswer: (code: string) => void;
 }
 
-export default function DevinerRegionDept({
+export default function QuestionDevinerRegionDept({
   question,
   answerState,
   selectedCode,

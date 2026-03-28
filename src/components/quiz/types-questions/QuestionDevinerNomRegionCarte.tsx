@@ -1,26 +1,23 @@
 import { useEffect, useState } from 'react';
-import type { Feature, FeatureCollection } from 'geojson';
+import type { Feature } from 'geojson';
 import CarteFrance from '../../carte/CarteFrance';
+import { useGeoData } from '../../../hooks/useGeoData';
 import type { Question, AnswerState } from '../../../quiz/types';
 
-interface DevinerNomRegionCarteProps {
+interface QuestionDevinerNomRegionCarteProps {
   question: Question;
-  geoData: {
-    departements: FeatureCollection | null;
-    regions: FeatureCollection | null;
-  };
   answerState: AnswerState;
   selectedCode: string | null;
   onAnswer: (code: string) => void;
 }
 
-export default function DevinerNomRegionCarte({
+export default function QuestionDevinerNomRegionCarte({
   question,
-  geoData,
   answerState,
   selectedCode,
   onAnswer,
-}: DevinerNomRegionCarteProps) {
+}: QuestionDevinerNomRegionCarteProps) {
+  const geoData = useGeoData();
   const choices = question.choices ?? [];
   const [flashing, setFlashing] = useState(false);
 

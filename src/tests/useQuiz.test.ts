@@ -305,3 +305,45 @@ describe('useQuiz – restart', () => {
     expect(result.current.session.finished).toBe(false);
   });
 });
+
+describe('useQuiz – QCM (DevinerCodeDept)', () => {
+  it('les labels des choix sont des codes (pas des noms)', () => {
+    const config: QuizConfig = { modes: ['DevinerCodeDept'], difficulty: 'facile', sessionLength: 10 };
+    const { result } = renderHook(() => useQuiz(config));
+    result.current.session.questions.forEach((q) => {
+      q.choices!.forEach((c) => {
+        expect(c.label).toBe(c.code);
+      });
+    });
+  });
+});
+
+describe('useQuiz – QCM (DevinerNomDeptCarte)', () => {
+  it('génère des choices pour DevinerNomDeptCarte', () => {
+    const config: QuizConfig = { modes: ['DevinerNomDeptCarte'], difficulty: 'facile', sessionLength: 10 };
+    const { result } = renderHook(() => useQuiz(config));
+    result.current.session.questions.forEach((q) => {
+      expect(q.choices).toBeDefined();
+      expect(q.choices!.length).toBe(4);
+      expect(q.choices!.filter((c) => c.correct)).toHaveLength(1);
+    });
+  });
+});
+
+describe('useQuiz – restartWithErrors après session terminée', () => {
+  it('finished repasse à false après restartWithErrors', () => {
+    const config: QuizConfig = { modes: ['TrouverDeptCarte'], difficulty: 'facile', sessionLength: 10 };
+    const { result } = renderHook(() => useQuiz(config));
+    const total = result.current.session.questions.length;
+
+    for (let i = 0; i < total; i++) {
+      act(() => { result.current.submitAnswer('__FAUX__'); });
+      act(() => { result.current.nextQuestion(); });
+    }
+    expect(result.current.session.finished).toBe(true);
+
+    act(() => { result.current.restartWithErrors(); });
+    expect(result.current.session.finished).toBe(false);
+    expect(result.current.session.currentIndex).toBe(0);
+  });
+});

@@ -8,7 +8,7 @@ interface DevinerNomDeptProps {
   onAnswer: (code: string) => void;
 }
 
-export default function DevinerNomDept({
+export default function QuestionDevinerNomDept({
   question,
   answerState,
   selectedCode,

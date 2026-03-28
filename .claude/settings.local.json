@@ -14,7 +14,9 @@
       "Bash(xargs wc:*)",
       "Bash(node -e \":*)",
       "Bash(npx playwright:*)",
-      "Bash(npx tsx:*)"
+      "Bash(npx tsx:*)",
+      "Bash(/tmp/simple_check.sh:*)",
+      "Bash(__NEW_LINE_2c22be42394636d9__ bash:*)"
     ]
   }
 }
