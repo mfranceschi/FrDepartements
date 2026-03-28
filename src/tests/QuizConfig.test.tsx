@@ -7,7 +7,7 @@ describe('QuizConfig – affichage initial', () => {
   it('coche tous les modes par défaut', () => {
     render(<QuizConfig onStart={vi.fn()} />);
     const checkboxes = screen.getAllByRole('checkbox');
-    expect(checkboxes).toHaveLength(5);
+    expect(checkboxes).toHaveLength(7);
     checkboxes.forEach((cb) => expect(cb).toBeChecked());
   });
 
@@ -91,7 +91,7 @@ describe('QuizConfig – soumission', () => {
 
     expect(onStart).toHaveBeenCalledOnce();
     const config: QuizConfigType = onStart.mock.calls[0][0];
-    expect(config.modes).toHaveLength(5);
+    expect(config.modes).toHaveLength(7);
     expect(config.difficulty).toBe('facile');
     expect(config.sessionLength).toBe(25);
   });

@@ -15,6 +15,8 @@ async function detectQuestionType(page: Page): Promise<string> {
   if (text.includes('Quel est le numéro'))           return 'DevinerCodeDept';
   if (text.includes('porte le numéro'))              return 'DevinerNomDept';
   if (text.includes('Dans quelle région'))           return 'DevinerRegionDept';
+  if (text.includes('Quel est ce département'))      return 'DevinerNomDeptCarte';
+  if (text.includes('Quelle est cette région'))      return 'DevinerNomRegionCarte';
   return 'unknown';
 }
 
@@ -141,12 +143,12 @@ test.describe('Quiz – parcours complet', () => {
   });
 });
 
-// ─── Quiz entier : 5 types de questions, score et évaluations cohérents ───────
+// ─── Quiz entier : 7 types de questions, score et évaluations cohérents ───────
 
 /**
  * Ce bloc teste un quiz complet en conditions réelles :
  *
- * - Configuration avec les **5 types de questions** simultanément activés
+ * - Configuration avec les **7 types de questions** simultanément activés
  * - Session de **10 questions** (répartition garantie 5 carte / 5 QCM par l'algo)
  * - Réponse à chaque question en détectant dynamiquement son type
  * - Enregistrement du résultat (correct / incorrect) pour chaque question
@@ -157,7 +159,7 @@ test.describe('Quiz – parcours complet', () => {
  * - Vérification que le bouton « Revoir mes erreurs (N) » reflète exactement
  *   le nombre d'erreurs comptabilisé pendant le quiz
  */
-test.describe('Quiz entier – 5 types de questions, score et évaluations cohérents', () => {
+test.describe('Quiz entier – 7 types de questions, score et évaluations cohérents', () => {
   // Timeout généreux : délai "Mémorisez…" (1.5 s) × jusqu'à 5 questions carte
   // + chargement GeoJSON + délais réseau CI
   test.setTimeout(90_000);
@@ -251,11 +253,13 @@ test.describe('Quiz entier – 5 types de questions, score et évaluations cohé
     // CategoryStats affiche uniquement la meilleure (↑) et la moins bonne (↓) catégorie.
     // On vérifie que leurs libellés sont bien issus des modes rencontrés.
     const MODE_LABELS: Record<string, string> = {
-      TrouverDeptCarte:  'Dept. sur carte',
-      TrouverRegionCarte:'Région sur carte',
-      DevinerCodeDept:   'Numéro de dept.',
-      DevinerNomDept:    'Nom de dept.',
-      DevinerRegionDept: "Région d'un dept.",
+      TrouverDeptCarte:    'Dept. sur carte',
+      TrouverRegionCarte:  'Région sur carte',
+      DevinerNomDeptCarte: 'Nom de dept. (carte)',
+      DevinerNomRegionCarte: 'Nom de région',
+      DevinerCodeDept:     'Numéro de dept.',
+      DevinerNomDept:      'Nom de dept.',
+      DevinerRegionDept:   "Région d'un dept.",
     };
     const validLabels = new Set([...seenModes].map(m => MODE_LABELS[m]).filter(Boolean));
     // Le texte dans le bloc ↑ doit être le label d'un des modes joués

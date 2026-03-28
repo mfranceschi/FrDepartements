@@ -15,14 +15,14 @@ test.describe('Navigation', () => {
     await expect(page.locator('svg')).toBeVisible();
   });
 
-  test('redirige / vers /carte', async ({ page }) => {
+  test('redirige / vers /quiz', async ({ page }) => {
     await page.goto('/');
-    await expect(page).toHaveURL('/carte');
+    await expect(page).toHaveURL('/quiz');
   });
 
-  test('redirige une URL invalide vers /carte', async ({ page }) => {
+  test('redirige une URL invalide vers /quiz', async ({ page }) => {
     await page.goto('/inexistant');
-    await expect(page).toHaveURL('/carte');
+    await expect(page).toHaveURL('/quiz');
   });
 
   test('navigue vers la page Quiz', async ({ page }) => {

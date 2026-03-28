@@ -29,6 +29,6 @@ describe('App – smoke test', () => {
   it('redirige vers /quiz par défaut et affiche la page quiz', () => {
     render(<App />);
     // La page quiz est visible (les 3 pages sont montées, seule /quiz est affichée)
-    expect(screen.getByText('Départements de France')).toBeInTheDocument();
+    expect(screen.getByText('Quiz départements et régions de France')).toBeInTheDocument();
   });
 });

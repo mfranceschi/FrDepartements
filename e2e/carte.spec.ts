@@ -7,8 +7,9 @@ import { test, expect } from '@playwright/test';
 test.describe('Carte interactive', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/carte');
-    // Attend que la carte SVG soit rendue (GeoJSON chargé)
-    await expect(page.locator('svg')).toBeVisible({ timeout: 15_000 });
+    // Attend que la carte SVG principale soit rendue (GeoJSON chargé, spinner disparu)
+    // svg.block = CarteFrance SVG, pas le spinner de chargement
+    await expect(page.locator('svg.block')).toBeVisible({ timeout: 15_000 });
   });
 
   test('affiche la carte SVG avec les départements', async ({ page }) => {
