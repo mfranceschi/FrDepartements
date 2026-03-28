@@ -136,7 +136,7 @@ function buildRegionChoicesFacile(correctRegion: RegionChoice, allRegions: Regio
 // ─── Question generation ─────────────────────────────────────────────────────
 
 const CARTE_MODES = new Set<QuizMode>(['TrouverDeptCarte', 'TrouverRegionCarte']);
-const QCM_MODES = new Set<QuizMode>(['DevinerCodeDept', 'DevinerNomDept', 'DevinerRegionDept']);
+const QCM_MODES = new Set<QuizMode>(['DevinerNomRegionCarte', 'DevinerNomDeptCarte', 'DevinerCodeDept', 'DevinerNomDept', 'DevinerRegionDept']);
 
 /**
  * Génère la liste ordonnée de questions pour une session à partir de la
@@ -182,6 +182,14 @@ function generateQuestions(config: QuizConfig): Question[] {
       case 'TrouverRegionCarte':
         // Include all regions for map questions
         allRegions.forEach((r) => cartePool.push({ mode, code: r.code, nom: r.nom }));
+        break;
+      case 'DevinerNomRegionCarte':
+        allRegions.forEach((r) => qcmPool.push({ mode, code: r.code, nom: r.nom }));
+        break;
+      case 'DevinerNomDeptCarte':
+        allDepts.forEach((d) =>
+          qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }),
+        );
         break;
       case 'DevinerCodeDept':
       case 'DevinerNomDept':
@@ -230,6 +238,21 @@ function generateQuestions(config: QuizConfig): Question[] {
         break;
       }
       case 'DevinerNomDept': {
+        const deptItem: DeptChoice = { code: item.code, nom: item.nom, regionCode: item.regionCode ?? '' };
+        base.choices =
+          config.difficulty === 'facile'
+            ? buildDeptChoicesFacile(deptItem, allDepts)
+            : buildDeptChoicesDifficile(deptItem, allDepts);
+        break;
+      }
+      case 'DevinerNomRegionCarte': {
+        const correctRegion = allRegions.find((r) => r.code === item.code);
+        if (correctRegion) {
+          base.choices = buildRegionChoicesFacile(correctRegion, allRegions);
+        }
+        break;
+      }
+      case 'DevinerNomDeptCarte': {
         const deptItem: DeptChoice = { code: item.code, nom: item.nom, regionCode: item.regionCode ?? '' };
         base.choices =
           config.difficulty === 'facile'
@@ -303,8 +326,8 @@ export function useQuiz(config: QuizConfig): {
       switch (question.mode) {
         case 'TrouverDeptCarte':
         case 'TrouverRegionCarte':
-          correct = code === question.targetCode;
-          break;
+        case 'DevinerNomRegionCarte':
+        case 'DevinerNomDeptCarte':
         case 'DevinerCodeDept':
         case 'DevinerNomDept':
           correct = code === question.targetCode;

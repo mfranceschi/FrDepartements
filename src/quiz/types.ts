@@ -1,6 +1,8 @@
 export type QuizMode =
   | 'TrouverDeptCarte'
   | 'TrouverRegionCarte'
+  | 'DevinerNomRegionCarte'
+  | 'DevinerNomDeptCarte'
   | 'DevinerCodeDept'
   | 'DevinerNomDept'
   | 'DevinerRegionDept';

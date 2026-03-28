@@ -81,6 +81,8 @@ interface InsetOutreMerProps {
   quizMode?: boolean;
   highlightDeptCode?: string;
   highlightRegionCode?: string;
+  wrongDeptCode?: string;
+  wrongRegionCode?: string;
   onHover: (feature: Feature | null, x: number, y: number) => void;
   onClick?: (code: string, type: 'departement' | 'region') => void;
 }
@@ -94,6 +96,8 @@ interface SingleInsetProps {
   quizMode: boolean;
   highlightDeptCode?: string;
   highlightRegionCode?: string;
+  wrongDeptCode?: string;
+  wrongRegionCode?: string;
   onHover: (feature: Feature | null, x: number, y: number) => void;
   onClick?: (code: string, type: 'departement' | 'region') => void;
 }
@@ -107,6 +111,8 @@ function SingleInset({
   quizMode,
   highlightDeptCode,
   highlightRegionCode,
+  wrongDeptCode,
+  wrongRegionCode,
   onHover,
   onClick,
 }: SingleInsetProps) {
@@ -137,6 +143,8 @@ function SingleInset({
   const regionCode = regionFeature?.properties?.code as string | undefined;
   const isDeptHighlighted = deptCode !== undefined && deptCode === highlightDeptCode;
   const isRegionHighlighted = regionCode !== undefined && regionCode === highlightRegionCode;
+  const isDeptWrong = deptCode !== undefined && deptCode === wrongDeptCode;
+  const isRegionWrong = regionCode !== undefined && regionCode === wrongRegionCode;
 
   if (!deptFeature && !regionFeature) {
     return (
@@ -157,8 +165,8 @@ function SingleInset({
       {showRegions && regionPath && (
         <path
           d={regionPath}
-          fill={isRegionHighlighted ? '#4ade80' : '#e8f4e8'}
-          stroke="#6aaa6a"
+          fill={isRegionHighlighted ? '#4ade80' : isRegionWrong ? '#fca5a5' : '#e8f4e8'}
+          stroke={isRegionWrong ? '#dc2626' : '#6aaa6a'}
           strokeWidth={0.8}
           style={{ cursor: onClick ? 'pointer' : 'default' }}
           onMouseMove={(e) => {
@@ -174,8 +182,8 @@ function SingleInset({
       {showDepts && deptPath && (
         <path
           d={deptPath}
-          fill={isDeptHighlighted ? '#60a5fa' : '#dbeafe'}
-          stroke="#3b82f6"
+          fill={isDeptHighlighted ? '#60a5fa' : isDeptWrong ? '#fca5a5' : '#dbeafe'}
+          stroke={isDeptWrong ? '#dc2626' : '#3b82f6'}
           strokeWidth={0.5}
           style={{ cursor: onClick ? 'pointer' : 'default' }}
           onMouseMove={(e) => {
@@ -206,6 +214,8 @@ export default function InsetOutreMer({
   quizMode = false,
   highlightDeptCode,
   highlightRegionCode,
+  wrongDeptCode,
+  wrongRegionCode,
   onHover,
   onClick,
 }: InsetOutreMerProps) {
@@ -269,6 +279,8 @@ export default function InsetOutreMer({
           quizMode={quizMode}
           highlightDeptCode={highlightDeptCode}
           highlightRegionCode={highlightRegionCode}
+          wrongDeptCode={wrongDeptCode}
+          wrongRegionCode={wrongRegionCode}
           onHover={onHover}
           onClick={onClick}
         />
@@ -289,6 +301,8 @@ export default function InsetOutreMer({
             quizMode={quizMode}
             highlightDeptCode={highlightDeptCode}
             highlightRegionCode={highlightRegionCode}
+            wrongDeptCode={wrongDeptCode}
+            wrongRegionCode={wrongRegionCode}
             onHover={onHover}
             onClick={onClick}
           />

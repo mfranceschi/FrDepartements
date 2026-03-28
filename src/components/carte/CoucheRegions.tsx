@@ -9,6 +9,7 @@ interface CoucheRegionsProps {
   visible: boolean;
   quizMode?: boolean;
   highlightCode?: string;
+  wrongCode?: string;
   onHover: (feature: Feature | null, x: number, y: number) => void;
   onClick?: (code: string) => void;
 }
@@ -19,6 +20,7 @@ export default memo(function CoucheRegions({
   visible,
   quizMode = false,
   highlightCode,
+  wrongCode,
   onHover,
   onClick,
 }: CoucheRegionsProps) {
@@ -35,13 +37,14 @@ export default memo(function CoucheRegions({
       {paths.map(({ feature, d, code }) => {
         if (!d) return null;
         const isHighlighted = code !== undefined && code === highlightCode;
+        const isWrong = code !== undefined && code === wrongCode;
 
         return (
           <path
             key={code ?? d}
             d={d}
-            fill={isHighlighted ? '#4ade80' : '#e8f4e8'}
-            stroke="#6aaa6a"
+            fill={isHighlighted ? '#4ade80' : isWrong ? '#fca5a5' : '#e8f4e8'}
+            stroke={isWrong ? '#dc2626' : '#6aaa6a'}
             strokeWidth={1}
             style={{ cursor: onClick ? 'pointer' : 'default' }}
             onMouseMove={(e) => { if (!quizMode) onHover(feature, e.clientX, e.clientY); }}

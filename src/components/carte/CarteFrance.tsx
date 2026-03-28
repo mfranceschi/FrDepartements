@@ -21,6 +21,8 @@ export interface CarteFranceProps {
   onFeatureClick?: (code: string, type: 'departement' | 'region') => void;
   highlightCode?: string;
   highlightType?: 'departement' | 'region';
+  wrongCode?: string;
+  wrongType?: 'departement' | 'region';
   focusCode?: string;
   focusType?: 'departement' | 'region';
   quizMode?: boolean;
@@ -44,6 +46,8 @@ export default function CarteFrance({
   onFeatureClick,
   highlightCode,
   highlightType,
+  wrongCode,
+  wrongType,
   focusCode,
   focusType,
   quizMode = false,
@@ -168,6 +172,8 @@ export default function CarteFrance({
   // Restreint la surbrillance à la bonne couche pour éviter les collisions de codes
   const highlightDeptCode = !highlightType || highlightType === 'departement' ? highlightCode : undefined;
   const highlightRegionCode = !highlightType || highlightType === 'region' ? highlightCode : undefined;
+  const wrongDeptCode = !wrongType || wrongType === 'departement' ? wrongCode : undefined;
+  const wrongRegionCode = !wrongType || wrongType === 'region' ? wrongCode : undefined;
 
   return (
     <div className="relative w-full h-full flex flex-col" style={{ minHeight: '480px' }}>
@@ -237,6 +243,7 @@ export default function CarteFrance({
             visible={effectiveShowRegions}
             quizMode={quizMode}
             highlightCode={highlightRegionCode}
+            wrongCode={wrongRegionCode}
             onHover={handleRegionHover}
             onClick={onFeatureClick ? handleRegionClick : undefined}
           />
@@ -246,6 +253,7 @@ export default function CarteFrance({
             visible={effectiveShowDepts}
             quizMode={quizMode}
             highlightCode={highlightDeptCode}
+            wrongCode={wrongDeptCode}
             onHover={handleDeptHover}
             onClick={onFeatureClick ? handleDeptClick : undefined}
           />
@@ -260,6 +268,8 @@ export default function CarteFrance({
           quizMode={quizMode}
           highlightDeptCode={highlightDeptCode}
           highlightRegionCode={highlightRegionCode}
+          wrongDeptCode={wrongDeptCode}
+          wrongRegionCode={wrongRegionCode}
           onHover={handleDeptHover}
           onClick={onFeatureClick ? handleInsetClick : undefined}
         />

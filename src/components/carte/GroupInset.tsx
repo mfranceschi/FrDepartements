@@ -31,6 +31,8 @@ interface GroupInsetProps {
   quizMode: boolean;
   highlightDeptCode?: string;
   highlightRegionCode?: string;
+  wrongDeptCode?: string;
+  wrongRegionCode?: string;
   onHover: (feature: Feature | null, x: number, y: number) => void;
   onClick?: (code: string, type: 'departement' | 'region') => void;
 }
@@ -58,6 +60,8 @@ export default function GroupInset({
   quizMode,
   highlightDeptCode,
   highlightRegionCode,
+  wrongDeptCode,
+  wrongRegionCode,
   onHover,
   onClick,
 }: GroupInsetProps) {
@@ -182,6 +186,8 @@ export default function GroupInset({
         const regCode  = regionFeature?.properties?.code as string | undefined;
         const isDeptHighlighted   = deptCode !== undefined && deptCode === highlightDeptCode;
         const isRegionHighlighted = regCode  !== undefined && regCode  === highlightRegionCode;
+        const isDeptWrong         = deptCode !== undefined && deptCode === wrongDeptCode;
+        const isRegionWrong       = regCode  !== undefined && regCode  === wrongRegionCode;
 
         const tx = centroid[0] - sz / 2;
         const ty = centroid[1] - sz / 2;
@@ -193,8 +199,8 @@ export default function GroupInset({
               {showRegions && regionLocalPath && (
                 <path
                   d={regionLocalPath}
-                  fill={isRegionHighlighted ? '#4ade80' : '#e8f4e8'}
-                  stroke="#6aaa6a"
+                  fill={isRegionHighlighted ? '#4ade80' : isRegionWrong ? '#fca5a5' : '#e8f4e8'}
+                  stroke={isRegionWrong ? '#dc2626' : '#6aaa6a'}
                   strokeWidth={0.8}
                   style={{ cursor: onClick ? 'pointer' : 'default' }}
                   onMouseMove={(e) => {
@@ -209,8 +215,8 @@ export default function GroupInset({
               {showDepts && deptLocalPath && (
                 <path
                   d={deptLocalPath}
-                  fill={isDeptHighlighted ? '#60a5fa' : '#dbeafe'}
-                  stroke="#3b82f6"
+                  fill={isDeptHighlighted ? '#60a5fa' : isDeptWrong ? '#fca5a5' : '#dbeafe'}
+                  stroke={isDeptWrong ? '#dc2626' : '#3b82f6'}
                   strokeWidth={0.5}
                   style={{ cursor: onClick ? 'pointer' : 'default' }}
                   onMouseMove={(e) => {

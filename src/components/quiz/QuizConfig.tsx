@@ -5,15 +5,21 @@ interface QuizConfigProps {
   onStart: (config: QuizConfig) => void;
 }
 
-const MODE_LABELS: { mode: QuizMode; label: string }[] = [
-  { mode: 'TrouverDeptCarte', label: 'Trouver un département sur la carte' },
+const REGION_MODES: { mode: QuizMode; label: string }[] = [
   { mode: 'TrouverRegionCarte', label: 'Trouver une région sur la carte' },
+  { mode: 'DevinerNomRegionCarte', label: 'Deviner le nom d\'une région sur la carte' },
+];
+
+const DEPT_MODES: { mode: QuizMode; label: string }[] = [
+  { mode: 'TrouverDeptCarte', label: 'Trouver un département sur la carte' },
+  { mode: 'DevinerNomDeptCarte', label: 'Deviner le nom d\'un département sur la carte' },
   { mode: 'DevinerCodeDept', label: 'Deviner le numéro d\'un département' },
   { mode: 'DevinerNomDept', label: 'Deviner le nom d\'un département' },
   { mode: 'DevinerRegionDept', label: 'Deviner la région d\'un département' },
 ];
 
-const ALL_MODES: QuizMode[] = MODE_LABELS.map((m) => m.mode);
+const ALL_MODES: QuizMode[] = [...REGION_MODES, ...DEPT_MODES].map((m) => m.mode);
+const REGION_MODE_SET = new Set<QuizMode>(REGION_MODES.map((m) => m.mode));
 
 type SessionLength = 10 | 25 | 50 | 'tout';
 const SESSION_LENGTHS: SessionLength[] = [10, 25, 50, 'tout'];
@@ -35,44 +41,68 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
     });
   };
 
+  const onlyRegionModes =
+    selectedModes.size > 0 && [...selectedModes].every((m) => REGION_MODE_SET.has(m));
+
+  const effectiveSessionLength: SessionLength = onlyRegionModes ? 'tout' : sessionLength;
+
   const handleStart = () => {
     if (selectedModes.size === 0) return;
     onStart({
       modes: Array.from(selectedModes),
       difficulty,
-      sessionLength,
+      sessionLength: effectiveSessionLength,
     });
   };
 
   return (
-    <div className="max-w-lg mx-auto p-6">
+    <div className="max-w-3xl mx-auto p-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Départements de France</h1>
-        <p className="text-gray-600 text-sm">
-          Testez vos connaissances sur les départements et régions français. Vous pouvez aussi explorer la{' '}
-          <span className="font-medium text-gray-800">Carte</span> ou le{' '}
-          <span className="font-medium text-gray-800">Tableau</span> via les onglets ci-dessus.
-        </p>
+        <h1 className="text-3xl font-bold">Quiz départements et régions de France</h1>
       </div>
 
-      <h2 className="text-xl font-semibold mb-6">Configurer le Quiz</h2>
-
-      {/* Types de questions */}
+{/* Types de questions */}
       <section className="mb-6">
         <h2 className="text-base font-medium mb-3">Types de questions</h2>
-        <div className="flex flex-col gap-2">
-          {MODE_LABELS.map(({ mode, label }) => (
-            <label key={mode} className="flex items-center gap-3 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={selectedModes.has(mode)}
-                onChange={() => toggleMode(mode)}
-                className="w-4 h-4 rounded accent-blue-600"
-              />
-              <span className="text-sm">{label}</span>
-            </label>
-          ))}
+
+        <div className="grid grid-cols-[2fr_3fr] gap-4">
+          {/* Groupe Région */}
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Région</p>
+            <div className="flex flex-col gap-2 pl-1">
+              {REGION_MODES.map(({ mode, label }) => (
+                <label key={mode} className="flex items-center gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={selectedModes.has(mode)}
+                    onChange={() => toggleMode(mode)}
+                    className="w-4 h-4 rounded accent-blue-600 shrink-0"
+                  />
+                  <span className="text-sm">{label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Groupe Département */}
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Département</p>
+            <div className="flex flex-col gap-2 pl-1">
+              {DEPT_MODES.map(({ mode, label }) => (
+                <label key={mode} className="flex items-center gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={selectedModes.has(mode)}
+                    onChange={() => toggleMode(mode)}
+                    className="w-4 h-4 rounded accent-blue-600 shrink-0"
+                  />
+                  <span className="text-sm">{label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
         </div>
+
         {selectedModes.size === 0 && (
           <p className="text-red-500 text-xs mt-2">Sélectionnez au moins un type de question.</p>
         )}
@@ -107,10 +137,13 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
             <button
               key={len}
               type="button"
-              onClick={() => setSessionLength(len)}
+              onClick={() => !onlyRegionModes && setSessionLength(len)}
+              disabled={onlyRegionModes}
               className={`px-4 py-2 rounded text-sm font-medium border transition-colors ${
-                sessionLength === len
+                effectiveSessionLength === len
                   ? 'bg-blue-600 text-white border-blue-600'
+                  : onlyRegionModes
+                  ? 'bg-gray-50 text-gray-300 border-gray-200 cursor-not-allowed'
                   : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
               }`}
             >
@@ -118,6 +151,11 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
             </button>
           ))}
         </div>
+        {onlyRegionModes && (
+          <p className="text-xs text-gray-500 mt-2">
+            Fixé sur « Tout » pour les questions de type Région.
+          </p>
+        )}
       </section>
 
       {/* Bouton Commencer */}

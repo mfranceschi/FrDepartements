@@ -9,6 +9,7 @@ interface CoucheDepsProps {
   visible: boolean;
   quizMode?: boolean;
   highlightCode?: string;
+  wrongCode?: string;
   onHover: (feature: Feature | null, x: number, y: number) => void;
   onClick?: (code: string) => void;
 }
@@ -19,6 +20,7 @@ export default memo(function CoucheDepts({
   visible,
   quizMode = false,
   highlightCode,
+  wrongCode,
   onHover,
   onClick,
 }: CoucheDepsProps) {
@@ -35,13 +37,14 @@ export default memo(function CoucheDepts({
       {paths.map(({ feature, d, code }) => {
         if (!d) return null;
         const isHighlighted = code !== undefined && code === highlightCode;
+        const isWrong = code !== undefined && code === wrongCode;
 
         return (
           <path
             key={code ?? d}
             d={d}
-            fill={isHighlighted ? '#60a5fa' : '#dbeafe'}
-            stroke="#3b82f6"
+            fill={isHighlighted ? '#60a5fa' : isWrong ? '#fca5a5' : '#dbeafe'}
+            stroke={isWrong ? '#dc2626' : '#3b82f6'}
             strokeWidth={0.5}
             style={{ cursor: onClick ? 'pointer' : 'default' }}
             onMouseMove={(e) => { if (!quizMode) onHover(feature, e.clientX, e.clientY); }}

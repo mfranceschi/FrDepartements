@@ -3,6 +3,8 @@ import type { FeatureCollection } from 'geojson';
 import type { SessionState, QuizMode } from '../../quiz/types';
 import TrouverDeptCarte from './types-questions/TrouverDeptCarte';
 import TrouverRegionCarte from './types-questions/TrouverRegionCarte';
+import DevinerNomRegionCarte from './types-questions/DevinerNomRegionCarte';
+import DevinerNomDeptCarte from './types-questions/DevinerNomDeptCarte';
 import DevinerCodeDept from './types-questions/DevinerCodeDept';
 import DevinerNomDept from './types-questions/DevinerNomDept';
 import DevinerRegionDept from './types-questions/DevinerRegionDept';
@@ -19,11 +21,13 @@ interface QuizShellProps {
   onReviewErrors: () => void;
 }
 
-const QCM_MODES = new Set(['DevinerCodeDept', 'DevinerNomDept', 'DevinerRegionDept']);
+const QCM_MODES = new Set(['DevinerNomRegionCarte', 'DevinerNomDeptCarte', 'DevinerCodeDept', 'DevinerNomDept', 'DevinerRegionDept']);
 
 const MODE_LABELS: Record<QuizMode, string> = {
   TrouverDeptCarte: 'Dept. sur carte',
   TrouverRegionCarte: 'Région sur carte',
+  DevinerNomRegionCarte: 'Nom de région',
+  DevinerNomDeptCarte: 'Nom de dept. (carte)',
   DevinerCodeDept: 'Numéro de dept.',
   DevinerNomDept: 'Nom de dept.',
   DevinerRegionDept: "Région d'un dept.",
@@ -244,6 +248,7 @@ export default function QuizShell({
             question={question}
             geoData={geoData}
             answerState={answerState}
+            selectedCode={selectedCode}
             onAnswer={onAnswer}
           />
         )}
@@ -252,6 +257,25 @@ export default function QuizShell({
             question={question}
             geoData={geoData}
             answerState={answerState}
+            selectedCode={selectedCode}
+            onAnswer={onAnswer}
+          />
+        )}
+        {question.mode === 'DevinerNomRegionCarte' && (
+          <DevinerNomRegionCarte
+            question={question}
+            geoData={geoData}
+            answerState={answerState}
+            selectedCode={selectedCode}
+            onAnswer={onAnswer}
+          />
+        )}
+        {question.mode === 'DevinerNomDeptCarte' && (
+          <DevinerNomDeptCarte
+            question={question}
+            geoData={geoData}
+            answerState={answerState}
+            selectedCode={selectedCode}
             onAnswer={onAnswer}
           />
         )}

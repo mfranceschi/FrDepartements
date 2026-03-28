@@ -9,6 +9,7 @@ interface TrouverRegionCarteProps {
     regions: FeatureCollection | null;
   };
   answerState: AnswerState;
+  selectedCode: string | null;
   onAnswer: (code: string) => void;
 }
 
@@ -16,6 +17,7 @@ export default function TrouverRegionCarte({
   question,
   geoData,
   answerState,
+  selectedCode,
   onAnswer,
 }: TrouverRegionCarteProps) {
   if (!geoData.departements || !geoData.regions) {
@@ -45,9 +47,7 @@ export default function TrouverRegionCarte({
               : 'bg-red-100 text-red-700'
           }`}
         >
-          {answerState === 'correct'
-            ? '✓ Bonne réponse !'
-            : `✗ Mauvaise réponse. La bonne réponse était : ${question.targetNom}`}
+          {answerState === 'correct' ? '✓ Bonne réponse !' : '✗ Mauvaise réponse.'}
         </div>
       )}
 
@@ -57,6 +57,9 @@ export default function TrouverRegionCarte({
         quizMode={true}
         quizLayer="regions"
         highlightCode={answerState !== 'pending' ? question.targetCode : undefined}
+        highlightType="region"
+        wrongCode={answerState === 'wrong' && selectedCode !== question.targetCode ? selectedCode ?? undefined : undefined}
+        wrongType="region"
         onFeatureClick={(code) => handleClick(code)}
       />
     </div>

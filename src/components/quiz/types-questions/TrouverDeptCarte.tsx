@@ -9,6 +9,7 @@ interface TrouverDeptCarteProps {
     regions: FeatureCollection | null;
   };
   answerState: AnswerState;
+  selectedCode: string | null;
   onAnswer: (code: string) => void;
 }
 
@@ -16,6 +17,7 @@ export default function TrouverDeptCarte({
   question,
   geoData,
   answerState,
+  selectedCode,
   onAnswer,
 }: TrouverDeptCarteProps) {
   if (!geoData.departements || !geoData.regions) {
@@ -47,9 +49,7 @@ export default function TrouverDeptCarte({
               : 'bg-red-100 text-red-700'
           }`}
         >
-          {answerState === 'correct'
-            ? '✓ Bonne réponse !'
-            : `✗ Mauvaise réponse. La bonne réponse était : ${question.targetNom} (${question.targetCode})`}
+          {answerState === 'correct' ? '✓ Bonne réponse !' : '✗ Mauvaise réponse.'}
         </div>
       )}
 
@@ -59,6 +59,9 @@ export default function TrouverDeptCarte({
         quizMode={true}
         quizLayer="departements"
         highlightCode={answerState !== 'pending' ? question.targetCode : undefined}
+        highlightType="departement"
+        wrongCode={answerState === 'wrong' && selectedCode !== question.targetCode ? selectedCode ?? undefined : undefined}
+        wrongType="departement"
         onFeatureClick={(code) => handleClick(code)}
       />
     </div>

@@ -9,10 +9,12 @@ const GEO_DATA = {
   regions: { type: 'FeatureCollection' as const, features: [] },
 };
 
-// CarteFrance : simule les clics sur des départements via des boutons data-testid
+// CarteFrance : expose wrongCode et highlightCode via data-testid, simule les clics
 vi.mock('../components/carte/CarteFrance', () => ({
-  default: ({ onFeatureClick }: CarteFranceProps) => (
+  default: ({ onFeatureClick, wrongCode, highlightCode }: CarteFranceProps) => (
     <div data-testid="carte-france">
+      {wrongCode && <span data-testid="wrong-code">{wrongCode}</span>}
+      {highlightCode && <span data-testid="highlight-code">{highlightCode}</span>}
       <button data-testid="click-971" onClick={() => onFeatureClick?.('971', 'departement')}>
         Guadeloupe (971)
       </button>
@@ -40,6 +42,7 @@ describe('TrouverDeptCarte – quiz de localisation sur carte', () => {
         question={makeQuestion('971', 'Guadeloupe')}
         geoData={GEO_DATA}
         answerState="pending"
+        selectedCode={null}
         onAnswer={vi.fn()}
       />,
     );
@@ -54,6 +57,7 @@ describe('TrouverDeptCarte – quiz de localisation sur carte', () => {
         question={makeQuestion('971', 'Guadeloupe')}
         geoData={GEO_DATA}
         answerState="pending"
+        selectedCode={null}
         onAnswer={onAnswer}
       />,
     );
@@ -69,6 +73,7 @@ describe('TrouverDeptCarte – quiz de localisation sur carte', () => {
         question={makeQuestion('971', 'Guadeloupe')}
         geoData={GEO_DATA}
         answerState="pending"
+        selectedCode={null}
         onAnswer={onAnswer}
       />,
     );
@@ -82,23 +87,24 @@ describe('TrouverDeptCarte – quiz de localisation sur carte', () => {
         question={makeQuestion('971', 'Guadeloupe')}
         geoData={GEO_DATA}
         answerState="correct"
+        selectedCode="971"
         onAnswer={vi.fn()}
       />,
     );
     expect(screen.getByText(/Bonne réponse/i)).toBeInTheDocument();
   });
 
-  it('affiche la correction quand answerState est "wrong"', () => {
+  it('affiche "Mauvaise réponse." quand answerState est "wrong"', () => {
     render(
       <TrouverDeptCarte
         question={makeQuestion('971', 'Guadeloupe')}
         geoData={GEO_DATA}
         answerState="wrong"
+        selectedCode="75"
         onAnswer={vi.fn()}
       />,
     );
-    // Le texte de correction contient le nom ET le code dans la même phrase
-    expect(screen.getByText(/La bonne réponse était : Guadeloupe \(971\)/)).toBeInTheDocument();
+    expect(screen.getByText(/Mauvaise réponse/i)).toBeInTheDocument();
   });
 
   it('ne déclenche pas onAnswer si la question est déjà répondue', () => {
@@ -108,6 +114,7 @@ describe('TrouverDeptCarte – quiz de localisation sur carte', () => {
         question={makeQuestion('971', 'Guadeloupe')}
         geoData={GEO_DATA}
         answerState="correct"
+        selectedCode="971"
         onAnswer={onAnswer}
       />,
     );
@@ -122,6 +129,7 @@ describe('TrouverDeptCarte – quiz de localisation sur carte', () => {
         question={makeQuestion('75', 'Paris')}
         geoData={GEO_DATA}
         answerState="pending"
+        selectedCode={null}
         onAnswer={onAnswer}
       />,
     );
@@ -136,9 +144,54 @@ describe('TrouverDeptCarte – quiz de localisation sur carte', () => {
         question={makeQuestion('971', 'Guadeloupe')}
         geoData={{ departements: null, regions: null }}
         answerState="pending"
+        selectedCode={null}
         onAnswer={vi.fn()}
       />,
     );
     expect(screen.getByText(/Chargement de la carte/i)).toBeInTheDocument();
+  });
+
+  // ─── Surbrillance rouge/vert ────────────────────────────────────────────────
+
+  it('passe wrongCode=sélection et highlightCode=cible à CarteFrance après une mauvaise réponse', () => {
+    render(
+      <TrouverDeptCarte
+        question={makeQuestion('971', 'Guadeloupe')}
+        geoData={GEO_DATA}
+        answerState="wrong"
+        selectedCode="75"
+        onAnswer={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId('wrong-code')).toHaveTextContent('75');
+    expect(screen.getByTestId('highlight-code')).toHaveTextContent('971');
+  });
+
+  it('ne passe pas wrongCode à CarteFrance après une bonne réponse', () => {
+    render(
+      <TrouverDeptCarte
+        question={makeQuestion('971', 'Guadeloupe')}
+        geoData={GEO_DATA}
+        answerState="correct"
+        selectedCode="971"
+        onAnswer={vi.fn()}
+      />,
+    );
+    expect(screen.queryByTestId('wrong-code')).not.toBeInTheDocument();
+    expect(screen.getByTestId('highlight-code')).toHaveTextContent('971');
+  });
+
+  it('ne passe ni wrongCode ni highlightCode tant que la question est en attente', () => {
+    render(
+      <TrouverDeptCarte
+        question={makeQuestion('971', 'Guadeloupe')}
+        geoData={GEO_DATA}
+        answerState="pending"
+        selectedCode={null}
+        onAnswer={vi.fn()}
+      />,
+    );
+    expect(screen.queryByTestId('wrong-code')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('highlight-code')).not.toBeInTheDocument();
   });
 });
