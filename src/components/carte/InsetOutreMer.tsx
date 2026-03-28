@@ -25,17 +25,17 @@ const GROUP_INSET_CONFIGS: GroupInsetConfig[] = [
     // Borne sud abaissée à 10°N pour inclure Grenade et Trinidad & Tobago
     geoBounds: [-63, 10, -59, 18.5],
     territories: [
-      { code: '971', nom: 'Guadeloupe', targetSizePx: 46 },
-      { code: '972', nom: 'Martinique', targetSizePx: 39 },
+      { code: '971', nom: 'Guadeloupe' },
+      { code: '972', nom: 'Martinique' },
     ],
   },
   {
     id: 'guyane',
     x: INSET_X, y: insetY(1), width: INSET_W, height: INSET_H,
-    // Guyane + Suriname (ouest) + Brésil/Amapá (sud-est)
-    geoBounds: [-58, -1, -49, 9],
+    // Guyane + Suriname (est) + Brésil/Amapá (sud-est)
+    geoBounds: [-56, 1, -50, 8],
     territories: [
-      { code: '973', nom: 'Guyane', targetSizePx: 100 },
+      { code: '973', nom: 'Guyane' },
     ],
   },
   {
@@ -44,8 +44,8 @@ const GROUP_INSET_CONFIGS: GroupInsetConfig[] = [
     // La Réunion + Mayotte + Madagascar + Comores + Maurice + Seychelles
     geoBounds: [38, -28, 62, -4],
     territories: [
-      { code: '974', nom: 'La Réunion', targetSizePx: 48 },
-      { code: '976', nom: 'Mayotte',    targetSizePx: 40 },
+      { code: '974', nom: 'La Réunion' },
+      { code: '976', nom: 'Mayotte' },
     ],
   },
 ];

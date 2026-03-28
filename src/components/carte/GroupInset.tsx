@@ -6,7 +6,6 @@ import type { GeoPermissibleObjects } from 'd3';
 export interface GroupTerritoryConfig {
   code: string;
   nom: string;
-  targetSizePx: number;
 }
 
 export interface GroupInsetConfig {
@@ -104,7 +103,7 @@ export default function GroupInset({
     });
   }, [worldFeatures, geoBounds]);
 
-  // Compute centroid + local paths for each territory (memoized)
+  // Compute centroid + paths for each territory using the global projection
   const territoryData = useMemo(
     () =>
       territories.map((terr) => {
@@ -115,21 +114,14 @@ export default function GroupInset({
 
         if (!mainFeature) {
           return { ...terr, deptFeature, regionFeature, regionCode, centroid: null,
-            deptLocalPath: null, regionLocalPath: null };
+            deptGlobalPath: null, regionGlobalPath: null };
         }
 
         const centroid = globalPathGen.centroid(mainFeature as GeoPermissibleObjects);
         if (!centroid || isNaN(centroid[0]) || isNaN(centroid[1])) {
           return { ...terr, deptFeature, regionFeature, regionCode, centroid: null,
-            deptLocalPath: null, regionLocalPath: null };
+            deptGlobalPath: null, regionGlobalPath: null };
         }
-
-        const sz = terr.targetSizePx;
-        const localProj = geoMercator().fitExtent(
-          [[0, 0], [sz, sz]],
-          mainFeature as GeoPermissibleObjects,
-        );
-        const localPathGen = geoPath(localProj);
 
         return {
           ...terr,
@@ -137,11 +129,11 @@ export default function GroupInset({
           regionFeature,
           regionCode,
           centroid,
-          deptLocalPath: deptFeature
-            ? localPathGen(deptFeature as GeoPermissibleObjects)
+          deptGlobalPath: deptFeature
+            ? globalPathGen(deptFeature as GeoPermissibleObjects)
             : null,
-          regionLocalPath: regionFeature
-            ? localPathGen(regionFeature as GeoPermissibleObjects)
+          regionGlobalPath: regionFeature
+            ? globalPathGen(regionFeature as GeoPermissibleObjects)
             : null,
         };
       }),
@@ -172,14 +164,14 @@ export default function GroupInset({
         })}
       </g>
 
-      {/* Territoires agrandis */}
+      {/* Territoires à l'échelle réelle (projection globale) */}
       {territoryData.map((td) => {
         if (!td.centroid) return null;
 
         const {
-          code, nom, targetSizePx: sz, centroid,
+          code, nom, centroid,
           deptFeature, regionFeature, regionCode,
-          deptLocalPath, regionLocalPath,
+          deptGlobalPath, regionGlobalPath,
         } = td;
 
         const deptCode = deptFeature?.properties?.code as string | undefined;
@@ -189,16 +181,12 @@ export default function GroupInset({
         const isDeptWrong         = deptCode !== undefined && deptCode === wrongDeptCode;
         const isRegionWrong       = regCode  !== undefined && regCode  === wrongRegionCode;
 
-        const tx = centroid[0] - sz / 2;
-        const ty = centroid[1] - sz / 2;
-
         return (
           <g key={code}>
-            {/* Île agrandie (clippée au rectangle) */}
-            <g clipPath={`url(#${clipId})`} transform={`translate(${tx}, ${ty})`}>
-              {showRegions && regionLocalPath && (
+            <g clipPath={`url(#${clipId})`}>
+              {showRegions && regionGlobalPath && (
                 <path
-                  d={regionLocalPath}
+                  d={regionGlobalPath}
                   fill={isRegionHighlighted ? '#4ade80' : isRegionWrong ? '#fca5a5' : '#e8f4e8'}
                   stroke={isRegionWrong ? '#dc2626' : '#6aaa6a'}
                   strokeWidth={0.8}
@@ -212,9 +200,9 @@ export default function GroupInset({
                   }}
                 />
               )}
-              {showDepts && deptLocalPath && (
+              {showDepts && deptGlobalPath && (
                 <path
-                  d={deptLocalPath}
+                  d={deptGlobalPath}
                   fill={isDeptHighlighted ? '#60a5fa' : isDeptWrong ? '#fca5a5' : '#dbeafe'}
                   stroke={isDeptWrong ? '#dc2626' : '#3b82f6'}
                   strokeWidth={0.5}
@@ -234,7 +222,7 @@ export default function GroupInset({
             {!quizMode && (
               <text
                 x={centroid[0]}
-                y={Math.min(ty + sz + 9, height - 2)}
+                y={Math.min(centroid[1] + 12, height - 2)}
                 textAnchor="middle"
                 fontSize={11}
                 fill="#374151"
