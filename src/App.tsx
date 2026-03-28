@@ -14,7 +14,7 @@ function AppInner() {
 
   useEffect(() => {
     if (!VALID_PATHS.has(pathname)) {
-      navigate('/carte', { replace: true });
+      navigate('/quiz', { replace: true });
     }
   }, [pathname, navigate]);
 

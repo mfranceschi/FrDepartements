@@ -1,8 +1,8 @@
 import { NavLink } from 'react-router-dom';
 
 const links = [
-  { to: '/carte', label: 'Carte' },
   { to: '/quiz', label: 'Quiz' },
+  { to: '/carte', label: 'Carte' },
   { to: '/tableau', label: 'Tableau' },
 ];
 

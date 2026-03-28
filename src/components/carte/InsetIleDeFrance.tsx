@@ -5,12 +5,11 @@ import type { GeoPermissibleObjects } from 'd3';
 
 const IDF_CODES = new Set(['75', '77', '78', '91', '92', '93', '94', '95']);
 
-// Position et taille de l'inset dans le SVG 900x700
-// Placé à gauche, au-dessus des DROM (qui commencent à y=430)
-const X = 10;
-const Y = 150;
-const W = 175;
-const H = 160;
+// Panneau latéral droit (x=910), en haut — SVG 1200×730
+const X = 910;
+const Y = 8;
+const W = 283;
+const H = 120;
 const PAD = 6;
 
 
@@ -93,7 +92,7 @@ export default memo(function InsetIleDeFrance({
           );
         })}
 
-        <text x={W / 2} y={H - 3} fontSize={11} fill="#92400e" textAnchor="middle">
+        <text x={W / 2} y={H - 3} fontSize={13} fill="#92400e" textAnchor="middle">
           Île-de-France (agrandie)
         </text>
       </g>

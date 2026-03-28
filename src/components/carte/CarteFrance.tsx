@@ -31,8 +31,8 @@ const DROM_CODES = new Set(['971', '972', '973', '974', '976']);
 
 const PROJECTION = geoConicConformal()
   .center([2.5, 46.5])
-  .scale(3000)
-  .translate([520, 340]);
+  .scale(3800)
+  .translate([530, 355]);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const PATH_GEN: GeoPath<any, GeoPermissibleObjects> = geoPath(PROJECTION);
@@ -225,7 +225,7 @@ export default function CarteFrance({
 
       <svg
         ref={svgRef}
-        viewBox="0 0 900 700"
+        viewBox="0 0 1200 730"
         preserveAspectRatio="xMidYMid meet"
         style={{ width: '100%', height: '100%', minHeight: 0, cursor: 'grab' }}
         className="block flex-1"
@@ -272,11 +272,11 @@ export default function CarteFrance({
           onClick={onFeatureClick ? handleDeptClick : undefined}
         />
         <rect
-          x={8} y={424} width={292} height={270}
+          x={903} y={5} width={292} height={720}
           fill="none" stroke="#cbd5e1" strokeWidth={0.5} strokeDasharray="4 2" rx={3}
         />
-        <text x={12} y={421} fontSize={11} fill="#94a3b8">
-          Départements et régions d'outre-mer
+        <text x={908} y={17} fontSize={12} fill="#94a3b8">
+          Territoires hors-échelle
         </text>
       </svg>
 

@@ -26,9 +26,9 @@ describe('App – smoke test', () => {
     expect(within(nav).getByText('Tableau')).toBeInTheDocument();
   });
 
-  it('redirige vers /carte par défaut et affiche la carte', () => {
+  it('redirige vers /quiz par défaut et affiche la page quiz', () => {
     render(<App />);
-    // La carte est visible (les 3 pages sont toutes montées, seule /carte est affichée)
-    expect(screen.getByTestId('carte-france-stub')).toBeInTheDocument();
+    // La page quiz est visible (les 3 pages sont montées, seule /quiz est affichée)
+    expect(screen.getByText('Départements de France')).toBeInTheDocument();
   });
 });

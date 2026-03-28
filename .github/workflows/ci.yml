@@ -43,11 +43,12 @@ jobs:
           find dist/assets -type f | sort | xargs ls -lh | awk '{print $5, $9}'
           TOTAL=$(du -sb dist | cut -f1)
           echo "Total dist size: $(du -sh dist | cut -f1)"
-          # Limite relevée à 6 MB : les fichiers GeoJSON (depts + régions) pèsent ~5 MB
-          # à eux seuls, et le service worker PWA (Workbox) ajoute ~150 KB supplémentaires.
+          # Limite relevée à 7 MB : les fichiers GeoJSON (depts + régions) pèsent ~5 MB
+          # à eux seuls, world-110m.json (contexte mondial des insets) ajoute ~800 KB,
+          # et le service worker PWA (Workbox) ajoute ~150 KB supplémentaires.
           # Pour réduire le bundle, envisager : simplification des GeoJSON ou lazy-loading.
-          if [ "$TOTAL" -gt 6291456 ]; then
-            echo "ERROR: dist exceeds 6 MB"
+          if [ "$TOTAL" -gt 7340032 ]; then
+            echo "ERROR: dist exceeds 7 MB"
             exit 1
           fi
 

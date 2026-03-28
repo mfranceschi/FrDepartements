@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { geoMercator, geoPath } from 'd3';
-import type { Feature } from 'geojson';
+import type { Feature, FeatureCollection } from 'geojson';
 import type { GeoPermissibleObjects } from 'd3';
+import GroupInset, { type GroupInsetConfig } from './GroupInset';
 
 interface InsetConfig {
   code: string;
@@ -13,18 +14,54 @@ interface InsetConfig {
   height: number;
 }
 
-const INSET_CONFIGS: InsetConfig[] = [
-  { code: '971', nom: 'Guadeloupe', type: 'departement', x: 10,  y: 437, width: 137, height: 78 },
-  { code: '972', nom: 'Martinique', type: 'departement', x: 153, y: 437, width: 137, height: 78 },
-  { code: '973', nom: 'Guyane',     type: 'departement', x: 10,  y: 525, width: 280, height: 90 },
-  { code: '974', nom: 'La Réunion', type: 'departement', x: 10,  y: 625, width: 137, height: 62 },
-  { code: '976', nom: 'Mayotte',    type: 'departement', x: 153, y: 625, width: 137, height: 62 },
+const INSET_X    = 910;
+const INSET_W    = 283;
+const INSET_H    = 175;
+const INSET_GAP  = 6;   // px entre la baseline du label et le haut de l'inset
+const LABEL_H    = 12;  // hauteur réservée au label au-dessus de chaque inset
+const SECTION_H  = LABEL_H + INSET_GAP + INSET_H; // = 193
+const FIRST_Y    = 138; // y du premier label DROM (après IDF : Y=8, H=120, +10 gap)
+
+function insetY(sectionIndex: number): number {
+  return FIRST_Y + sectionIndex * (SECTION_H + 6) + LABEL_H + INSET_GAP;
+}
+function labelY(sectionIndex: number): number {
+  return FIRST_Y + sectionIndex * (SECTION_H + 6);
+}
+
+// Guyane reste en inset simple (territoire unique, pas de voisin DROM)
+const SINGLE_INSET_CONFIGS: InsetConfig[] = [
+  { code: '973', nom: 'Guyane', type: 'departement',
+    x: INSET_X, y: insetY(1), width: INSET_W, height: INSET_H },
+];
+
+const GROUP_INSET_CONFIGS: GroupInsetConfig[] = [
+  {
+    id: 'antilles',
+    x: INSET_X, y: insetY(0), width: INSET_W, height: INSET_H,
+    // Guadeloupe + Martinique + Petites Antilles (Dominique, Sainte-Lucie, Barbade, Antigua…)
+    geoBounds: [-63, 12, -59, 18],
+    territories: [
+      { code: '971', nom: 'Guadeloupe', targetSizePx: 46 },
+      { code: '972', nom: 'Martinique', targetSizePx: 39 },
+    ],
+  },
+  {
+    id: 'ocean-indien',
+    x: INSET_X, y: insetY(2), width: INSET_W, height: INSET_H,
+    // La Réunion + Mayotte + Madagascar + Comores + Mauritius + Seychelles
+    geoBounds: [38, -28, 62, -4],
+    territories: [
+      { code: '974', nom: 'La Réunion', targetSizePx: 48 },
+      { code: '976', nom: 'Mayotte',    targetSizePx: 40 },
+    ],
+  },
 ];
 
 const GROUP_LABELS = [
-  { label: 'Antilles',         y: 433 },
-  { label: 'Amérique du Sud',  y: 521 },
-  { label: 'Océan Indien',     y: 621 },
+  { label: 'Antilles',        x: INSET_X + 3, y: labelY(0) },
+  { label: 'Amérique du Sud', x: INSET_X + 3, y: labelY(1) },
+  { label: 'Océan Indien',    x: INSET_X + 3, y: labelY(2) },
 ];
 
 // Region codes corresponding to each DROM département
@@ -101,26 +138,12 @@ function SingleInset({
   const isDeptHighlighted = deptCode !== undefined && deptCode === highlightDeptCode;
   const isRegionHighlighted = regionCode !== undefined && regionCode === highlightRegionCode;
 
-  // If no data available for this DROM, show placeholder
   if (!deptFeature && !regionFeature) {
     return (
       <g transform={`translate(${x}, ${y})`}>
-        <rect
-          width={width}
-          height={height}
-          fill="#f8fafc"
-          stroke="#94a3b8"
-          strokeWidth={0.5}
-          rx={2}
-        />
-        <text
-          x={width / 2}
-          y={height / 2}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fontSize={11}
-          fill="#64748b"
-        >
+        <rect width={width} height={height} fill="#f8fafc" stroke="#94a3b8" strokeWidth={0.5} rx={2} />
+        <text x={width / 2} y={height / 2} textAnchor="middle" dominantBaseline="middle"
+          fontSize={13} fill="#64748b">
           {nom}
         </text>
       </g>
@@ -129,14 +152,7 @@ function SingleInset({
 
   return (
     <g transform={`translate(${x}, ${y})`}>
-      <rect
-        width={width}
-        height={height}
-        fill="#f0f9ff"
-        stroke="#7dd3fc"
-        strokeWidth={0.8}
-        rx={2}
-      />
+      <rect width={width} height={height} fill="#f0f9ff" stroke="#7dd3fc" strokeWidth={0.8} rx={2} />
 
       {showRegions && regionPath && (
         <path
@@ -173,14 +189,8 @@ function SingleInset({
       )}
 
       {!quizMode && (
-        <text
-          x={width / 2}
-          y={height - 2}
-          textAnchor="middle"
-          fontSize={11}
-          fill="#374151"
-          fontWeight="500"
-        >
+        <text x={width / 2} y={height - 2} textAnchor="middle" fontSize={13}
+          fill="#374151" fontWeight="500">
           {nom}
         </text>
       )}
@@ -199,6 +209,19 @@ export default function InsetOutreMer({
   onHover,
   onClick,
 }: InsetOutreMerProps) {
+  const [worldFeatures, setWorldFeatures] = useState<Feature[]>([]);
+
+  useEffect(() => {
+    import('../../geo/world-110m.json')
+      .then((m) => {
+        const fc = m.default as unknown as FeatureCollection;
+        setWorldFeatures(fc.features as Feature[]);
+      })
+      .catch(() => {
+        // Dégradation gracieuse : GroupInset s'affiche sans contexte mondial
+      });
+  }, []);
+
   const deptsByCode = useMemo(() => {
     const map = new Map<string, Feature>();
     allDepts.forEach((f) => {
@@ -219,12 +242,12 @@ export default function InsetOutreMer({
 
   return (
     <g className="insets-outre-mer">
-      {GROUP_LABELS.map(({ label, y }) => (
+      {GROUP_LABELS.map(({ label, x, y }) => (
         <text
           key={label}
-          x={12}
+          x={x}
           y={y}
-          fontSize={9}
+          fontSize={11}
           fill="#94a3b8"
           fontStyle="italic"
           fontWeight="500"
@@ -232,7 +255,26 @@ export default function InsetOutreMer({
           {label}
         </text>
       ))}
-      {INSET_CONFIGS.map((config) => {
+
+      {GROUP_INSET_CONFIGS.map((config) => (
+        <GroupInset
+          key={config.id}
+          config={config}
+          deptsByCode={deptsByCode}
+          regionsByCode={regionsByCode}
+          deptToRegion={DEPT_TO_REGION}
+          worldFeatures={worldFeatures}
+          showDepts={showDepts}
+          showRegions={showRegions}
+          quizMode={quizMode}
+          highlightDeptCode={highlightDeptCode}
+          highlightRegionCode={highlightRegionCode}
+          onHover={onHover}
+          onClick={onClick}
+        />
+      ))}
+
+      {SINGLE_INSET_CONFIGS.map((config) => {
         const deptFeature = deptsByCode.get(config.code) ?? null;
         const regionCode = DEPT_TO_REGION[config.code];
         const regionFeature = regionCode ? (regionsByCode.get(regionCode) ?? null) : null;

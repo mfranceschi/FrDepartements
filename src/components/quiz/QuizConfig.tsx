@@ -46,7 +46,16 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
 
   return (
     <div className="max-w-lg mx-auto p-6">
-      <h1 className="text-2xl font-semibold mb-6">Configurer le Quiz</h1>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">Départements de France</h1>
+        <p className="text-gray-600 text-sm">
+          Testez vos connaissances sur les départements et régions français. Vous pouvez aussi explorer la{' '}
+          <span className="font-medium text-gray-800">Carte</span> ou le{' '}
+          <span className="font-medium text-gray-800">Tableau</span> via les onglets ci-dessus.
+        </p>
+      </div>
+
+      <h2 className="text-xl font-semibold mb-6">Configurer le Quiz</h2>
 
       {/* Types de questions */}
       <section className="mb-6">
