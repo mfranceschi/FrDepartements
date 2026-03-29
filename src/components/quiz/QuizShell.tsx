@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import type { SessionState, QuizMode } from '../../quiz/types';
 import QuestionTrouverDeptCarte from './types-questions/QuestionTrouverDeptCarte';
 import QuestionTrouverRegionCarte from './types-questions/QuestionTrouverRegionCarte';
