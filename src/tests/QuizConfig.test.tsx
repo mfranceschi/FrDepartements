@@ -4,11 +4,15 @@ import QuizConfig from '../components/quiz/QuizConfig';
 import type { QuizConfig as QuizConfigType } from '../quiz/types';
 
 describe('QuizConfig – affichage initial', () => {
-  it('coche tous les modes par défaut', () => {
+  it('coche uniquement TrouverDeptCarte et DROM par défaut', () => {
     render(<QuizConfig onStart={vi.fn()} />);
     const checkboxes = screen.getAllByRole('checkbox');
     expect(checkboxes).toHaveLength(8); // 7 modes + 1 DROM
-    checkboxes.forEach((cb) => expect(cb).toBeChecked());
+    // TrouverDeptCarte = index 2 (après 2 modes Région), DROM = index 7
+    checkboxes.forEach((cb, i) => {
+      if (i === 2 || i === 7) expect(cb).toBeChecked();
+      else expect(cb).not.toBeChecked();
+    });
   });
 
   it('sélectionne "facile" comme difficulté par défaut', () => {
@@ -33,29 +37,29 @@ describe('QuizConfig – affichage initial', () => {
 describe('QuizConfig – interaction modes', () => {
   it('décoche un mode en cliquant sur sa case', () => {
     render(<QuizConfig onStart={vi.fn()} />);
-    const firstCheckbox = screen.getAllByRole('checkbox')[0];
-    fireEvent.click(firstCheckbox);
-    expect(firstCheckbox).not.toBeChecked();
+    const checkedCheckbox = screen.getAllByRole('checkbox')[2]; // TrouverDeptCarte
+    fireEvent.click(checkedCheckbox);
+    expect(checkedCheckbox).not.toBeChecked();
   });
 
   it('affiche un message d\'erreur si tous les modes sont décochés', () => {
     render(<QuizConfig onStart={vi.fn()} />);
-    // Les 7 premières cases sont les modes (la 8e est DROM)
-    screen.getAllByRole('checkbox').slice(0, 7).forEach((cb) => fireEvent.click(cb));
+    // Décocher TrouverDeptCarte (seul mode coché par défaut, index 2)
+    fireEvent.click(screen.getAllByRole('checkbox')[2]);
     expect(screen.getByText(/Sélectionnez au moins un type de question/i)).toBeInTheDocument();
   });
 
   it('désactive le bouton "Commencer" si aucun mode sélectionné', () => {
     render(<QuizConfig onStart={vi.fn()} />);
-    screen.getAllByRole('checkbox').slice(0, 7).forEach((cb) => fireEvent.click(cb));
+    fireEvent.click(screen.getAllByRole('checkbox')[2]); // décocher TrouverDeptCarte
     expect(screen.getByRole('button', { name: /Commencer/i })).toBeDisabled();
   });
 
   it('réactive le bouton en re-cochant au moins un mode', () => {
     render(<QuizConfig onStart={vi.fn()} />);
     const checkboxes = screen.getAllByRole('checkbox');
-    checkboxes.slice(0, 7).forEach((cb) => fireEvent.click(cb));
-    fireEvent.click(checkboxes[0]); // on en recoche un
+    fireEvent.click(checkboxes[2]); // décoche TrouverDeptCarte → 0 modes, bouton disabled
+    fireEvent.click(checkboxes[0]); // coche TrouverRegionCarte → 1 mode, bouton enabled
     expect(screen.getByRole('button', { name: /Commencer/i })).not.toBeDisabled();
   });
 });
@@ -85,14 +89,14 @@ describe('QuizConfig – interaction longueur de session', () => {
 });
 
 describe('QuizConfig – soumission', () => {
-  it('appelle onStart avec la config complète au clic sur Commencer', () => {
+  it('appelle onStart avec la config par défaut au clic sur Commencer', () => {
     const onStart = vi.fn();
     render(<QuizConfig onStart={onStart} />);
     fireEvent.click(screen.getByRole('button', { name: /Commencer/i }));
 
     expect(onStart).toHaveBeenCalledOnce();
     const config: QuizConfigType = onStart.mock.calls[0][0];
-    expect(config.modes).toHaveLength(7);
+    expect(config.modes).toEqual(['TrouverDeptCarte']);
     expect(config.difficulty).toBe('facile');
     expect(config.sessionLength).toBe(25);
     expect(config.includeDrom).toBe(true);
@@ -125,19 +129,21 @@ describe('QuizConfig – soumission', () => {
     const onStart = vi.fn();
     render(<QuizConfig onStart={onStart} />);
 
-    // Décoche tous sauf le premier
+    // Cocher TrouverRegionCarte (index 0) et décocher TrouverDeptCarte (index 2)
     const checkboxes = screen.getAllByRole('checkbox');
-    checkboxes.slice(1).forEach((cb) => fireEvent.click(cb));
+    fireEvent.click(checkboxes[0]); // coche TrouverRegionCarte
+    fireEvent.click(checkboxes[2]); // décoche TrouverDeptCarte
     fireEvent.click(screen.getByRole('button', { name: /Commencer/i }));
 
     const config: QuizConfigType = onStart.mock.calls[0][0];
     expect(config.modes).toHaveLength(1);
+    expect(config.modes).toContain('TrouverRegionCarte');
   });
 
   it('ne déclenche pas onStart si aucun mode coché', () => {
     const onStart = vi.fn();
     render(<QuizConfig onStart={onStart} />);
-    screen.getAllByRole('checkbox').forEach((cb) => fireEvent.click(cb));
+    fireEvent.click(screen.getAllByRole('checkbox')[2]); // décocher TrouverDeptCarte (seul mode coché)
     fireEvent.click(screen.getByRole('button', { name: /Commencer/i }));
     expect(onStart).not.toHaveBeenCalled();
   });

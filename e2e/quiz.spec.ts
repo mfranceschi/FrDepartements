@@ -168,7 +168,9 @@ test.describe('Quiz entier – 7 types de questions, score et évaluations cohé
     await page.goto('/quiz');
 
     // ── 1. Configuration ────────────────────────────────────────────────────
-    // Les 5 modes sont cochés par défaut ; on sélectionne 10 questions.
+    // Activer tous les modes via les boutons de groupe Région + Département
+    await page.getByRole('button', { name: 'Région' }).click();
+    await page.getByRole('button', { name: 'Département' }).click();
     await page.getByRole('button', { name: '10' }).click();
     // Vérification visuelle : le bouton 10 doit être actif (fond bleu)
     await expect(page.getByRole('button', { name: '10' })).toHaveClass(/bg-blue-600/);

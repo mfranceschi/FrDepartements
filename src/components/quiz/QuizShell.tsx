@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import type { SessionState, QuizMode } from '../../quiz/types';
 import QuestionTrouverDeptCarte from './types-questions/QuestionTrouverDeptCarte';
 import QuestionTrouverRegionCarte from './types-questions/QuestionTrouverRegionCarte';
@@ -111,26 +111,7 @@ export default function QuizShell({
   const answeredCount = currentIndex + (answered ? 1 : 0);
   const liveRatio = answeredCount > 0 ? score / answeredCount : 1;
 
-  // ─── Délai de mémorisation sur les questions carte ───────────────────────
-  const CARTE_MODES_SET = new Set(['TrouverDeptCarte', 'TrouverRegionCarte']);
-  const [nextEnabled, setNextEnabled] = useState(true);
-  const nextTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (nextTimerRef.current) clearTimeout(nextTimerRef.current);
-
-    if (answered && CARTE_MODES_SET.has(questions[currentIndex]?.mode)) {
-      setNextEnabled(false);
-      nextTimerRef.current = setTimeout(() => setNextEnabled(true), 1500);
-    } else {
-      setNextEnabled(true);
-    }
-
-    return () => {
-      if (nextTimerRef.current) clearTimeout(nextTimerRef.current);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answered, currentIndex]);
+  const nextEnabled = true;
 
   // ─── Keyboard navigation ────────────────────────────────────────────────
   useEffect(() => {
@@ -307,7 +288,7 @@ export default function QuizShell({
                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'
             }`}
           >
-            {!nextEnabled ? 'Mémorisez…' : isLastQuestion ? 'Voir le résultat' : 'Question suivante'}
+            {isLastQuestion ? 'Voir le résultat' : 'Question suivante'}
           </button>
           {nextEnabled && (
             <p className="text-xs text-gray-400">
