@@ -57,4 +57,7 @@ export default defineConfig({
     // Exclut les tests Playwright (gérés par leur propre runner)
     exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
   },
+  server: {
+    host: true,  // activé sur le réseau local pour tester sur d'autres appareils
+  },
 })
