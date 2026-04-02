@@ -9,6 +9,7 @@ interface CouchePrefecturesProps {
   visible: boolean;
   highlightDeptCode?: string;
   onHover: (label: string | null, x: number, y: number) => void;
+  onlyRegionales?: boolean;
 }
 
 export default memo(function CouchePrefectures({
@@ -17,6 +18,7 @@ export default memo(function CouchePrefectures({
   visible,
   highlightDeptCode,
   onHover,
+  onlyRegionales = false,
 }: CouchePrefecturesProps) {
   // Projeter les coordonnées une seule fois (la projection ne change pas)
   const points = useMemo(
@@ -45,13 +47,15 @@ export default memo(function CouchePrefectures({
 
   if (!visible) return null;
 
+  const visiblePoints = onlyRegionales ? points.filter((p) => p.isRegionale) : points;
+
   const r = 3 / zoomK;
   const rOuter = 5.5 / zoomK;
   const sw = 1 / zoomK;
 
   return (
     <g className="couche-prefectures">
-      {points.map(({ code, prefecture, nomDept, x, y, isRegionale }) => {
+      {visiblePoints.map(({ code, prefecture, nomDept, x, y, isRegionale }) => {
         const isHighlighted = code === highlightDeptCode;
         const fill = isHighlighted ? 'white' : '#9f1239';
         const stroke = '#9f1239';

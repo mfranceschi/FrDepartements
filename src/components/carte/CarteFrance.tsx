@@ -289,6 +289,7 @@ export default function CarteFrance({
             visible={!quizMode && showPrefectures}
             highlightDeptCode={highlightDeptCode}
             onHover={(label, x, y) => label ? showTooltip(label, x, y) : hideTooltip()}
+            onlyRegionales={effectiveShowRegions}
           />
         </g>
 
