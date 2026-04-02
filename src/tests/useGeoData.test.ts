@@ -31,22 +31,6 @@ vi.mock('../geo/regions.json', () => ({
   default: { type: 'FeatureCollection', features: [] },
 }));
 
-vi.mock('../geo/drom/dept-971.json', () => ({
-  default: { type: 'Feature', properties: { code: '971', nom: 'Guadeloupe' }, geometry: null },
-}));
-vi.mock('../geo/drom/dept-972.json', () => ({
-  default: { type: 'Feature', properties: { code: '972', nom: 'Martinique' }, geometry: null },
-}));
-vi.mock('../geo/drom/dept-973.json', () => ({
-  default: { type: 'Feature', properties: { code: '973', nom: 'Guyane' }, geometry: null },
-}));
-vi.mock('../geo/drom/dept-974.json', () => ({
-  default: { type: 'Feature', properties: { code: '974', nom: 'La Réunion' }, geometry: null },
-}));
-vi.mock('../geo/drom/dept-976.json', () => ({
-  default: { type: 'Feature', properties: { code: '976', nom: 'Mayotte' }, geometry: null },
-}));
-
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 import { useGeoData } from '../hooks/useGeoData';
@@ -66,50 +50,13 @@ describe('useGeoData – chargement des données', () => {
     expect(result.current.departements!.type).toBe('FeatureCollection');
     expect(result.current.regions!.type).toBe('FeatureCollection');
   });
-});
 
-describe('useGeoData – enrichissement DROM', () => {
-  it('ajoute les 5 features DROM dans la collection departements', async () => {
-    const { result } = renderHook(() => useGeoData());
-    await waitFor(() => expect(result.current.loading).toBe(false));
-
-    const codes = result.current.departements!.features.map((f) => f.properties?.code as string);
-    expect(codes).toContain('971');
-    expect(codes).toContain('972');
-    expect(codes).toContain('973');
-    expect(codes).toContain('974');
-    expect(codes).toContain('976');
-  });
-
-  it('conserve les départements métropolitains de base', async () => {
+  it('conserve les départements de base', async () => {
     const { result } = renderHook(() => useGeoData());
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     const codes = result.current.departements!.features.map((f) => f.properties?.code as string);
     expect(codes).toContain('01');
     expect(codes).toContain('75');
-  });
-
-  it('crée une région pour chaque DROM dans la collection regions', async () => {
-    const { result } = renderHook(() => useGeoData());
-    await waitFor(() => expect(result.current.loading).toBe(false));
-
-    const regionCodes = result.current.regions!.features.map((f) => f.properties?.code as string);
-    // Guadeloupe→01, Martinique→02, Guyane→03, La Réunion→04, Mayotte→06
-    expect(regionCodes).toContain('01');
-    expect(regionCodes).toContain('02');
-    expect(regionCodes).toContain('06');
-  });
-
-  it('attache le bon nom à chaque région DROM', async () => {
-    const { result } = renderHook(() => useGeoData());
-    await waitFor(() => expect(result.current.loading).toBe(false));
-
-    const regions = result.current.regions!.features;
-    const guadeloupe = regions.find((f) => f.properties?.code === '01');
-    expect(guadeloupe?.properties?.nom).toBe('Guadeloupe');
-
-    const mayotte = regions.find((f) => f.properties?.code === '06');
-    expect(mayotte?.properties?.nom).toBe('Mayotte');
   });
 });

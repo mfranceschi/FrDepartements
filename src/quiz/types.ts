@@ -13,7 +13,6 @@ export interface QuizConfig {
   modes: QuizMode[];
   difficulty: Difficulty;
   sessionLength: 10 | 25 | 50 | 'tout';
-  includeDrom?: boolean;
 }
 
 export interface Question {

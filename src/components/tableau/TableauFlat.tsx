@@ -101,16 +101,13 @@ export default function TableauFlat() {
               >
                 Région {indicator('region')}
               </th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">
-                Outre-mer
-              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-100">
             {sorted.length === 0 ? (
               <tr>
                 <td
-                  colSpan={4}
+                  colSpan={3}
                   className="px-4 py-8 text-center text-gray-400 italic"
                 >
                   Aucun département ne correspond à votre recherche.
@@ -128,13 +125,6 @@ export default function TableauFlat() {
                   <td className="px-4 py-2.5 text-gray-800">{dept.nom}</td>
                   <td className="px-4 py-2.5 text-gray-600">
                     {regionMap.get(dept.regionCode) ?? dept.regionCode}
-                  </td>
-                  <td className="px-4 py-2.5">
-                    {dept.outresMer && (
-                      <span className="inline-block bg-blue-100 text-blue-700 text-xs font-medium px-2 py-0.5 rounded-full">
-                        DOM
-                      </span>
-                    )}
                   </td>
                 </tr>
               ))

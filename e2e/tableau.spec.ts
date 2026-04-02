@@ -62,13 +62,13 @@ test.describe('Tableau des départements', () => {
     await expect(page.locator('li').first()).toBeVisible({ timeout: 3_000 });
   });
 
-  test('affiche 101 départements au total dans la liste complète', async ({ page }) => {
+  test('affiche 96 départements au total dans la liste complète', async ({ page }) => {
     await page.getByRole('button', { name: /liste/i }).click();
 
     // Attend les lignes du tableau
     const rows = page.locator('tbody tr');
     await expect(rows.first()).toBeVisible({ timeout: 5_000 });
     const count = await rows.count();
-    expect(count).toBe(101);
+    expect(count).toBe(96);
   });
 });

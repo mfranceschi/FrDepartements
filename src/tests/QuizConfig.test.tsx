@@ -4,13 +4,13 @@ import QuizConfig from '../components/quiz/QuizConfig';
 import type { QuizConfig as QuizConfigType } from '../quiz/types';
 
 describe('QuizConfig – affichage initial', () => {
-  it('coche uniquement TrouverDeptCarte et DROM par défaut', () => {
+  it('coche uniquement TrouverDeptCarte par défaut', () => {
     render(<QuizConfig onStart={vi.fn()} />);
     const checkboxes = screen.getAllByRole('checkbox');
-    expect(checkboxes).toHaveLength(8); // 7 modes + 1 DROM
-    // TrouverDeptCarte = index 2 (après 2 modes Région), DROM = index 7
+    expect(checkboxes).toHaveLength(7); // 7 modes
+    // TrouverDeptCarte = index 2 (après 2 modes Région)
     checkboxes.forEach((cb, i) => {
-      if (i === 2 || i === 7) expect(cb).toBeChecked();
+      if (i === 2) expect(cb).toBeChecked();
       else expect(cb).not.toBeChecked();
     });
   });
@@ -99,7 +99,6 @@ describe('QuizConfig – soumission', () => {
     expect(config.modes).toEqual(['TrouverDeptCarte']);
     expect(config.difficulty).toBe('facile');
     expect(config.sessionLength).toBe(25);
-    expect(config.includeDrom).toBe(true);
   });
 
   it('transmet la difficulté et la longueur choisies', () => {
@@ -113,16 +112,6 @@ describe('QuizConfig – soumission', () => {
     const config: QuizConfigType = onStart.mock.calls[0][0];
     expect(config.difficulty).toBe('difficile');
     expect(config.sessionLength).toBe(50);
-  });
-
-  it('transmet includeDrom: false quand la case DROM est décochée', () => {
-    const onStart = vi.fn();
-    render(<QuizConfig onStart={onStart} />);
-    const dromCheckbox = screen.getByRole('checkbox', { name: /outre-mer/i });
-    fireEvent.click(dromCheckbox);
-    fireEvent.click(screen.getByRole('button', { name: /Commencer/i }));
-    const config: QuizConfigType = onStart.mock.calls[0][0];
-    expect(config.includeDrom).toBe(false);
   });
 
   it('transmet uniquement les modes cochés', () => {

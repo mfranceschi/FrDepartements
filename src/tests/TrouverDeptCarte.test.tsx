@@ -54,7 +54,7 @@ describe('QuestionTrouverDeptCarte – quiz de localisation sur carte', () => {
     expect(screen.getByText('(971)')).toBeInTheDocument();
   });
 
-  it('appelle onAnswer avec le bon code au clic sur la carte (DROM Guadeloupe)', () => {
+  it('appelle onAnswer avec le bon code au clic sur la carte', () => {
     const onAnswer = vi.fn();
     render(
       <QuestionTrouverDeptCarte

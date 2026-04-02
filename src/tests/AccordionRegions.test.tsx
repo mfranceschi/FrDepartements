@@ -4,30 +4,15 @@ import AccordionRegions from '../components/tableau/AccordionRegions';
 import { REGIONS } from '../data/regions';
 import { DEPARTEMENTS } from '../data/departements';
 
-const metropole = REGIONS.filter((r) => !r.outresMer);
-const outremer  = REGIONS.filter((r) => r.outresMer);
-
 // Département d'Île-de-France (regionCode '11') pour les assertions de contenu
 const idfDepts = DEPARTEMENTS.filter((d) => d.regionCode === '11');
 
 describe('AccordionRegions – structure', () => {
-  it('affiche toutes les régions métropolitaines', () => {
+  it('affiche toutes les régions', () => {
     render(<AccordionRegions />);
-    for (const region of metropole) {
+    for (const region of REGIONS) {
       expect(screen.getByRole('button', { name: new RegExp(region.nom, 'i') })).toBeInTheDocument();
     }
-  });
-
-  it("affiche toutes les régions d'outre-mer", () => {
-    render(<AccordionRegions />);
-    for (const region of outremer) {
-      expect(screen.getByRole('button', { name: new RegExp(region.nom, 'i') })).toBeInTheDocument();
-    }
-  });
-
-  it('affiche le séparateur « Outre-mer »', () => {
-    render(<AccordionRegions />);
-    expect(screen.getByText(/outre-mer/i)).toBeInTheDocument();
   });
 
   it('tous les accordéons sont fermés par défaut (aria-expanded = false)', () => {
@@ -83,17 +68,6 @@ describe('AccordionRegions – interaction', () => {
 
     expect(idfBtn).toHaveAttribute('aria-expanded', 'true');
     expect(bretBtn).toHaveAttribute('aria-expanded', 'true');
-  });
-
-  it("ouvrir une région d'outre-mer affiche ses départements", () => {
-    render(<AccordionRegions />);
-    // Guadeloupe (code région '01') contient le département 971
-    const guadeBtn = screen.getByRole('button', { name: /guadeloupe/i });
-    fireEvent.click(guadeBtn);
-
-    expect(guadeBtn).toHaveAttribute('aria-expanded', 'true');
-    // Le code '971' est unique dans le DOM (code dept ; le code région Guadeloupe est '01')
-    expect(screen.getByText('971')).toBeInTheDocument();
   });
 
   it('les départements sont triés par code dans un accordéon ouvert', () => {

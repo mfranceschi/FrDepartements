@@ -87,8 +87,8 @@ describe('useQuiz – mode unique activé', () => {
   it('sessionLength "tout" génère une session avec tous les départements (> 50)', () => {
     const config: QuizConfig = { modes: ['DevinerNomDept'], difficulty: 'facile', sessionLength: 'tout' };
     const { result } = renderHook(() => useQuiz(config));
-    // 101 départements → au moins 101 questions en mode "tout"
-    expect(result.current.session.questions.length).toBeGreaterThanOrEqual(101);
+    // 96 départements métropolitains → au moins 96 questions en mode "tout"
+    expect(result.current.session.questions.length).toBeGreaterThanOrEqual(96);
   });
 
   it('sessionLength "tout" ne génère pas de doublon de département cible', () => {

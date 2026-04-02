@@ -129,7 +129,6 @@ export function buildRegionChoicesFacile(correctRegion: RegionChoice, allRegions
 /**
  * Construit 4 choix QCM pour un mode « Deviner la région » en difficulté **difficile** :
  * les distractors sont prioritairement des régions géographiquement voisines.
- * Pour les régions DROM (sans voisinage défini), repli sur des distractors aléatoires.
  */
 export function buildRegionChoicesDifficile(correctRegion: RegionChoice, allRegions: RegionChoice[]): Choice[] {
   const exclude = new Set([correctRegion.code]);

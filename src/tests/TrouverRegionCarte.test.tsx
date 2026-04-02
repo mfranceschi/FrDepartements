@@ -107,7 +107,7 @@ describe('QuestionTrouverRegionCarte – quiz de localisation de région', () =>
     expect(onAnswer).not.toHaveBeenCalled();
   });
 
-  it('fonctionne pour une région DROM (Guadeloupe, code 01)', () => {
+  it('fonctionne pour une région quelconque (code 01)', () => {
     const onAnswer = vi.fn();
     render(
       <QuestionTrouverRegionCarte

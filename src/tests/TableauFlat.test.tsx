@@ -10,12 +10,11 @@ describe('TableauFlat – affichage initial', () => {
     expect(screen.getByText(`${DEPARTEMENTS.length} / ${DEPARTEMENTS.length} départements`)).toBeInTheDocument();
   });
 
-  it('contient les colonnes Numéro, Nom, Région, Outre-mer', () => {
+  it('contient les colonnes Numéro, Nom, Région', () => {
     render(<TableauFlat />);
     expect(screen.getByText(/Numéro/i)).toBeInTheDocument();
     expect(screen.getByText(/Nom/i)).toBeInTheDocument();
     expect(screen.getByText(/Région/i)).toBeInTheDocument();
-    expect(screen.getByText(/Outre-mer/i)).toBeInTheDocument();
   });
 
   it('affiche le champ de filtre vide au départ', () => {
@@ -59,12 +58,6 @@ describe('TableauFlat – filtre par code', () => {
     expect(screen.getByText('Paris')).toBeInTheDocument();
   });
 
-  it('filtre les DROM par leur code à 3 chiffres', () => {
-    render(<TableauFlat />);
-    fireEvent.change(screen.getByPlaceholderText(/Filtrer/i), { target: { value: '971' } });
-    expect(screen.getAllByText('Guadeloupe').length).toBeGreaterThan(0);
-    expect(screen.getByText('1 résultat')).toBeInTheDocument();
-  });
 });
 
 describe('TableauFlat – filtre par région', () => {

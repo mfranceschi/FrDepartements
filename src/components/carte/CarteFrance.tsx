@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   geoConicConformal,
   geoPath,
@@ -10,9 +10,7 @@ import type { GeoPath, GeoPermissibleObjects, ZoomBehavior, D3ZoomEvent } from '
 import type { Feature } from 'geojson';
 import CoucheRegions from './CoucheRegions';
 import CoucheDepts from './CoucheDepts';
-import InsetOutreMer from './InsetOutreMer';
 import InsetIleDeFrance from './InsetIleDeFrance';
-import { DROM_CODES } from '../../data/dromsConfig';
 
 export interface CarteFranceProps {
   features: {
@@ -83,9 +81,6 @@ export default function CarteFrance({
   useEffect(() => {
     if (!focusCode || !svgRef.current || !zoomRef.current) return;
 
-    // Les DROM départements sont dans l'inset — on ne zoome pas
-    if (focusType === 'departement' && DROM_CODES.has(focusCode)) return;
-
     // Cherche dans le bon tableau selon le type
     const pool = focusType === 'region' ? features.regions : features.departements;
     const target = pool.find((f) => f.properties?.code === focusCode);
@@ -122,11 +117,6 @@ export default function CarteFrance({
     select(svgRef.current).transition().duration(300).call(zoomRef.current.transform, zoomIdentity);
   }, []);
 
-  const metroDepts = useMemo(
-    () => features.departements.filter((f) => !DROM_CODES.has(f.properties?.code as string)),
-    [features.departements],
-  );
-
   const handleDeptHover = useCallback((feature: Feature | null, x: number, y: number) => {
     const el = tooltipRef.current;
     if (!el) return;
@@ -157,11 +147,6 @@ export default function CarteFrance({
 
   const handleDeptClick = useCallback(
     (code: string) => onFeatureClick?.(code, 'departement'),
-    [onFeatureClick],
-  );
-
-  const handleInsetClick = useCallback(
-    (code: string, type: 'departement' | 'region') => onFeatureClick?.(code, type),
     [onFeatureClick],
   );
 
@@ -247,7 +232,7 @@ export default function CarteFrance({
             onClick={onFeatureClick ? handleRegionClick : undefined}
           />
           <CoucheDepts
-            features={metroDepts}
+            features={features.departements}
             pathGen={PATH_GEN}
             visible={effectiveShowDepts}
             quizMode={quizMode}
@@ -259,21 +244,8 @@ export default function CarteFrance({
         </g>
 
         {/* Overlays fixes — ne bougent pas avec le zoom/pan */}
-        <InsetOutreMer
-          allDepts={features.departements}
-          allRegions={features.regions}
-          showDepts={effectiveShowDepts}
-          showRegions={effectiveShowRegions}
-          quizMode={quizMode}
-          highlightDeptCode={highlightDeptCode}
-          highlightRegionCode={highlightRegionCode}
-          wrongDeptCode={wrongDeptCode}
-          wrongRegionCode={wrongRegionCode}
-          onHover={handleDeptHover}
-          onClick={onFeatureClick ? handleInsetClick : undefined}
-        />
         <InsetIleDeFrance
-          features={metroDepts}
+          features={features.departements}
           visible={effectiveShowDepts}
           quizMode={quizMode}
           highlightCode={highlightDeptCode}

@@ -23,22 +23,10 @@ vi.mock('../components/carte/CarteFrance', () => ({
         Paris [dept]
       </button>
       <button
-        data-testid="btn-dept-971"
-        onClick={() => onFeatureClick?.('971', 'departement')}
-      >
-        Guadeloupe [dept]
-      </button>
-      <button
         data-testid="btn-region-11"
         onClick={() => onFeatureClick?.('11', 'region')}
       >
         Île-de-France [région]
-      </button>
-      <button
-        data-testid="btn-region-01"
-        onClick={() => onFeatureClick?.('01', 'region')}
-      >
-        Guadeloupe [région DROM]
       </button>
     </div>
   ),
@@ -95,15 +83,6 @@ describe('CartePage – panneau d\'informations', () => {
     expect(within(sidebar).getByText('Région')).toBeInTheDocument();
   });
 
-  it('affiche le département DROM Guadeloupe (971) au clic', () => {
-    render(<CartePage />);
-    fireEvent.click(screen.getByTestId('btn-dept-971'));
-
-    const sidebar = getSidebar();
-    expect(within(sidebar).getByRole('heading', { level: 2 })).toHaveTextContent('Guadeloupe');
-    expect(within(sidebar).getByText('971')).toBeInTheDocument();
-    expect(within(sidebar).getByText('Département')).toBeInTheDocument();
-  });
 });
 
 // ── Recherche dans la sidebar ─────────────────────────────────────────────────

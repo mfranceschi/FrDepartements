@@ -31,15 +31,8 @@ export const QCM_MODES = new Set<QuizMode>(['DevinerNomRegionCarte', 'DevinerNom
  * contient l'intégralité des éléments combinés des pools sélectionnés.
  */
 export function generateQuestions(config: QuizConfig): Question[] {
-  const dromEnabled = config.includeDrom !== false;
-
-  const allDepts = DEPARTEMENTS
-    .filter((d) => dromEnabled || !d.outresMer)
-    .map((d) => ({ code: d.code, nom: d.nom, regionCode: d.regionCode, outresMer: d.outresMer }));
-  const allRegions = REGIONS
-    .filter((r) => dromEnabled || !r.outresMer)
-    .map((r) => ({ code: r.code, nom: r.nom, outresMer: r.outresMer }));
-  const metroRegions = allRegions.filter((r) => !r.outresMer);
+  const allDepts = DEPARTEMENTS.map((d) => ({ code: d.code, nom: d.nom, regionCode: d.regionCode }));
+  const allRegions = REGIONS.map((r) => ({ code: r.code, nom: r.nom }));
 
   type PoolItem = { mode: QuizMode; code: string; nom: string; regionCode?: string };
 
@@ -74,12 +67,9 @@ export function generateQuestions(config: QuizConfig): Question[] {
         );
         break;
       case 'DevinerRegionDept':
-        // Exclut les DROM : leurs régions ne font pas partie des 13 régions métropolitaines
-        allDepts
-          .filter((d) => !d.outresMer)
-          .forEach((d) =>
-            qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }),
-          );
+        allDepts.forEach((d) =>
+          qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }),
+        );
         break;
     }
   }
@@ -165,12 +155,12 @@ export function generateQuestions(config: QuizConfig): Question[] {
         break;
       }
       case 'DevinerRegionDept': {
-        const correctRegion = metroRegions.find((r) => r.code === item.regionCode);
+        const correctRegion = allRegions.find((r) => r.code === item.regionCode);
         if (correctRegion) {
           base.choices =
             config.difficulty === 'facile'
-              ? buildRegionChoicesFacile(correctRegion, metroRegions)
-              : buildRegionChoicesDifficile(correctRegion, metroRegions);
+              ? buildRegionChoicesFacile(correctRegion, allRegions)
+              : buildRegionChoicesDifficile(correctRegion, allRegions);
         }
         break;
       }

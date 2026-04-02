@@ -1,6 +1,6 @@
 # Départements & Régions de France
 
-Application web progressive (PWA) pour explorer et apprendre les 101 départements et 18 régions de France métropolitaine et d'outre-mer.
+Application web progressive (PWA) pour explorer et apprendre les 96 départements et 13 régions de France métropolitaine (Corse incluse).
 
 ## Fonctionnalités
 
@@ -8,7 +8,7 @@ Application web progressive (PWA) pour explorer et apprendre les 101 départemen
 - Visualisation SVG de la France avec D3.js
 - Zoom et panoramique
 - Survol / clic sur un département ou une région pour afficher ses informations
-- Encarts dédiés pour l'Île-de-France et les territoires d'outre-mer (Antilles, Guyane, Océan Indien) avec contexte géographique mondial (pays voisins)
+- Encart dédié pour l'Île-de-France (hors-échelle)
 
 ### Quiz
 Cinq modes d'entraînement configurables :
@@ -67,7 +67,7 @@ npm run dev
 ```
 src/
 ├── components/
-│   ├── carte/          # Carte SVG (couches depts, régions, encarts) — GroupInset pour les DROM
+│   ├── carte/          # Carte SVG (couches depts, régions, encart Île-de-France)
 │   ├── quiz/           # Shell quiz + 5 types de questions
 │   └── tableau/        # Tableau et accordéon par région
 ├── pages/              # CartePage, QuizPage, TableauPage
@@ -96,8 +96,7 @@ La pipeline GitHub Actions (`.github/workflows/ci.yml`) comprend deux jobs :
 2. Vérification TypeScript (`tsc --noEmit`)
 3. Tests unitaires Vitest
 4. Build Vite de production
-5. Contrôle de la taille du bundle (limite : 6 MB)
-6. Upload de l'artefact `dist/`
+5. Upload de l'artefact `dist/`
 
 **`e2e`** (dépend de `build` — timeout 20 min) :
 1. Installation des navigateurs Playwright (Chromium)

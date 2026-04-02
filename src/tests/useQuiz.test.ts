@@ -3,8 +3,6 @@ import { renderHook, act } from '@testing-library/react';
 import { useQuiz } from '../hooks/useQuiz';
 import type { QuizConfig } from '../quiz/types';
 
-const DROM_CODES = ['971', '972', '973', '974', '976'];
-
 describe('useQuiz – état initial', () => {
   it('démarre à la première question en attente de réponse', () => {
     const config: QuizConfig = { modes: ['TrouverDeptCarte'], difficulty: 'facile', sessionLength: 10 };
@@ -20,45 +18,6 @@ describe('useQuiz – état initial', () => {
     const config: QuizConfig = { modes: ['TrouverDeptCarte'], difficulty: 'facile', sessionLength: 10 };
     const { result } = renderHook(() => useQuiz(config));
     expect(result.current.session.questions).toHaveLength(10);
-  });
-});
-
-describe('useQuiz – DROM dans les questions', () => {
-  it('inclut les DROM dans une session TrouverDeptCarte complète', () => {
-    const config: QuizConfig = { modes: ['TrouverDeptCarte'], difficulty: 'facile', sessionLength: 'tout' };
-    const { result } = renderHook(() => useQuiz(config));
-
-    const codes = result.current.session.questions.map((q) => q.targetCode);
-    expect(DROM_CODES.every((c) => codes.includes(c))).toBe(true);
-  });
-
-  it('exclut les DROM quand includeDrom est false', () => {
-    const config: QuizConfig = { modes: ['TrouverDeptCarte'], difficulty: 'facile', sessionLength: 'tout', includeDrom: false };
-    const { result } = renderHook(() => useQuiz(config));
-
-    const codes = result.current.session.questions.map((q) => q.targetCode);
-    expect(DROM_CODES.some((c) => codes.includes(c))).toBe(false);
-    expect(result.current.session.questions).toHaveLength(96); // 101 - 5 DROM
-  });
-
-  it('exclut les régions DROM quand includeDrom est false', () => {
-    const config: QuizConfig = { modes: ['TrouverRegionCarte'], difficulty: 'facile', sessionLength: 'tout', includeDrom: false };
-    const { result } = renderHook(() => useQuiz(config));
-    expect(result.current.session.questions).toHaveLength(13); // 18 - 5 DROM
-  });
-
-  it('les questions DROM ont les bons codes (3 chiffres)', () => {
-    const config: QuizConfig = { modes: ['TrouverDeptCarte'], difficulty: 'facile', sessionLength: 'tout' };
-    const { result } = renderHook(() => useQuiz(config));
-
-    const dromQuestions = result.current.session.questions.filter((q) =>
-      DROM_CODES.includes(q.targetCode),
-    );
-    expect(dromQuestions.length).toBe(5);
-    dromQuestions.forEach((q) => {
-      expect(q.mode).toBe('TrouverDeptCarte');
-      expect(q.targetCode).toMatch(/^97[1-46]$/);
-    });
   });
 });
 
@@ -97,26 +56,6 @@ describe('useQuiz – submitAnswer', () => {
     expect(result.current.session.answerState).toBe('correct'); // inchangé
   });
 
-  it('bonne réponse pour un DROM (Guadeloupe 971)', () => {
-    // On force une session contenant Guadeloupe en position 0
-    const config: QuizConfig = { modes: ['TrouverDeptCarte'], difficulty: 'facile', sessionLength: 'tout' };
-    const { result } = renderHook(() => useQuiz(config));
-
-    const dromQ = result.current.session.questions.find((q) => q.targetCode === '971');
-    expect(dromQ).toBeDefined();
-
-    // On vérifie la logique : répondre '971' à une question dont targetCode est '971' → correct
-    // On injecte directement la logique via submitAnswer sur la vraie session complète
-    const idx = result.current.session.questions.findIndex((q) => q.targetCode === '971');
-
-    // Avancer jusqu'à la question Guadeloupe via nextQuestion + mauvaises réponses
-    for (let i = 0; i < idx; i++) {
-      act(() => { result.current.submitAnswer('__skip__'); });
-      act(() => { result.current.nextQuestion(); });
-    }
-    act(() => { result.current.submitAnswer('971'); });
-    expect(result.current.session.answerState).toBe('correct');
-  });
 });
 
 describe('useQuiz – nextQuestion', () => {
@@ -243,22 +182,22 @@ describe('useQuiz – QCM régions (DevinerNomRegionCarte)', () => {
 });
 
 describe('useQuiz – sessionLength "tout" = une question par entité', () => {
-  it('TrouverDeptCarte "tout" : exactement 101 questions (une par département)', () => {
+  it('TrouverDeptCarte "tout" : exactement 96 questions (une par département)', () => {
     const config: QuizConfig = { modes: ['TrouverDeptCarte'], difficulty: 'facile', sessionLength: 'tout' };
     const { result } = renderHook(() => useQuiz(config));
-    expect(result.current.session.questions).toHaveLength(101);
+    expect(result.current.session.questions).toHaveLength(96);
   });
 
-  it('TrouverRegionCarte "tout" : exactement 18 questions (une par région)', () => {
+  it('TrouverRegionCarte "tout" : exactement 13 questions (une par région)', () => {
     const config: QuizConfig = { modes: ['TrouverRegionCarte'], difficulty: 'facile', sessionLength: 'tout' };
     const { result } = renderHook(() => useQuiz(config));
-    expect(result.current.session.questions).toHaveLength(18);
+    expect(result.current.session.questions).toHaveLength(13);
   });
 
-  it('DevinerNomDept + DevinerCodeDept "tout" : 101 questions (pas 202)', () => {
+  it('DevinerNomDept + DevinerCodeDept "tout" : 96 questions (pas 192)', () => {
     const config: QuizConfig = { modes: ['DevinerNomDept', 'DevinerCodeDept'], difficulty: 'facile', sessionLength: 'tout' };
     const { result } = renderHook(() => useQuiz(config));
-    expect(result.current.session.questions).toHaveLength(101);
+    expect(result.current.session.questions).toHaveLength(96);
   });
 });
 

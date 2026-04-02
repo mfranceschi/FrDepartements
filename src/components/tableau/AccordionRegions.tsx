@@ -12,12 +12,7 @@ for (const dept of DEPARTEMENTS) {
   deptsByRegion.set(dept.regionCode, list);
 }
 
-const metropole: Region[] = REGIONS.filter((r) => !r.outresMer).sort((a, b) =>
-  a.nom.localeCompare(b.nom, 'fr'),
-);
-const outremer: Region[] = REGIONS.filter((r) => r.outresMer).sort((a, b) =>
-  a.nom.localeCompare(b.nom, 'fr'),
-);
+const sortedRegions: Region[] = [...REGIONS].sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
 
 interface RegionRowProps {
   region: Region;
@@ -83,37 +78,14 @@ function RegionRow({ region, depts }: RegionRowProps) {
 
 export default function AccordionRegions() {
   return (
-    <div className="space-y-6">
-      {/* Régions métropolitaines */}
-      <section className="space-y-2">
-        {metropole.map((region) => (
-          <RegionRow
-            key={region.code}
-            region={region}
-            depts={deptsByRegion.get(region.code) ?? []}
-          />
-        ))}
-      </section>
-
-      {/* Séparateur Outre-mer */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1 border-t border-gray-300" />
-        <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider px-2">
-          Outre-mer
-        </span>
-        <div className="flex-1 border-t border-gray-300" />
-      </div>
-
-      {/* Régions d'outre-mer */}
-      <section className="space-y-2">
-        {outremer.map((region) => (
-          <RegionRow
-            key={region.code}
-            region={region}
-            depts={deptsByRegion.get(region.code) ?? []}
-          />
-        ))}
-      </section>
+    <div className="space-y-2">
+      {sortedRegions.map((region) => (
+        <RegionRow
+          key={region.code}
+          region={region}
+          depts={deptsByRegion.get(region.code) ?? []}
+        />
+      ))}
     </div>
   );
 }
