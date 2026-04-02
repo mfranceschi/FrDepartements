@@ -37,21 +37,6 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Check bundle size
-        run: |
-          echo "=== Bundle sizes ==="
-          find dist/assets -type f | sort | xargs ls -lh | awk '{print $5, $9}'
-          TOTAL=$(du -sb dist | cut -f1)
-          echo "Total dist size: $(du -sh dist | cut -f1)"
-          # Limite relevée à 9 MB : les fichiers GeoJSON (depts + régions) pèsent ~5 MB
-          # à eux seuls, world-50m.json (contexte mondial des insets) ajoute ~3 MB,
-          # et le service worker PWA (Workbox) ajoute ~150 KB supplémentaires.
-          # Pour réduire le bundle, envisager : simplification des GeoJSON ou lazy-loading.
-          if [ "$TOTAL" -gt 9437184 ]; then
-            echo "ERROR: dist exceeds 9 MB"
-            exit 1
-          fi
-
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:

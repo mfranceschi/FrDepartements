@@ -18,5 +18,20 @@
       "Bash(/tmp/simple_check.sh:*)",
       "Bash(__NEW_LINE_2c22be42394636d9__ bash:*)"
     ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"c:/Users/mfran/Desktop/MahSandbox/FrDepartements\" && npm run lint && npm run build && npm test || exit 2",
+            "timeout": 180,
+            "statusMessage": "Vérification pipeline (lint + build + tests)...",
+            "asyncRewake": true
+          }
+        ]
+      }
+    ]
   }
 }
