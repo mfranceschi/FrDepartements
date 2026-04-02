@@ -52,6 +52,7 @@ export default function CarteFrance({
   type Layer = 'departements' | 'regions';
   const [activeLayer, setActiveLayer] = useState<Layer>('departements');
   const [transform, setTransform] = useState<ZoomTransform>({ x: 0, y: 0, k: 1 });
+  const [showLabels, setShowLabels] = useState(false);
 
   const svgRef = useRef<SVGSVGElement>(null);
   const zoomRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | undefined>(undefined);
@@ -183,6 +184,24 @@ export default function CarteFrance({
           </div>
         )}
 
+        {/* Bouton étiquettes (mode exploration uniquement) */}
+        {!quizMode && activeLayer === 'departements' && (
+          <button
+            type="button"
+            onClick={() => setShowLabels((v) => !v)}
+            title={showLabels ? 'Masquer les étiquettes' : 'Afficher les étiquettes'}
+            className={[
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+              showLabels
+                ? 'bg-blue-100 text-blue-700 border border-blue-300'
+                : 'bg-gray-100 text-gray-500 hover:text-gray-700',
+            ].join(' ')}
+          >
+            <span className="text-xs leading-none">Aa</span>
+            Étiquettes
+          </button>
+        )}
+
         {/* Boutons de zoom */}
         <div className={`flex gap-1 bg-gray-100 p-1 rounded-lg ${!quizMode ? 'ml-auto' : ''}`}>
           <button
@@ -239,6 +258,8 @@ export default function CarteFrance({
             wrongCode={wrongDeptCode}
             onHover={handleDeptHover}
             onClick={onFeatureClick ? handleDeptClick : undefined}
+            zoomK={transform.k}
+            showLabels={showLabels}
           />
         </g>
 

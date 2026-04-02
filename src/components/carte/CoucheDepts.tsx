@@ -12,7 +12,15 @@ interface CoucheDepsProps {
   wrongCode?: string;
   onHover: (feature: Feature | null, x: number, y: number) => void;
   onClick?: (code: string) => void;
+  zoomK?: number;
+  showLabels?: boolean;
 }
+
+// Seuils en unités SVG × facteur de zoom :
+// - au-dessus de SEUIL_CODE : affiche le numéro seul
+// - au-dessus de SEUIL_NOM  : affiche numéro + nom
+const SEUIL_CODE = 100;
+const SEUIL_NOM = 180;
 
 export default memo(function CoucheDepts({
   features,
@@ -23,10 +31,20 @@ export default memo(function CoucheDepts({
   wrongCode,
   onHover,
   onClick,
+  zoomK = 1,
+  showLabels = true,
 }: CoucheDepsProps) {
-  // Calcul des paths une seule fois (ou quand features/pathGen changent)
+  // Calcul des paths, centroïdes et tailles une seule fois (ou quand features/pathGen changent)
   const paths = useMemo(
-    () => features.map((f) => ({ feature: f, d: pathGen(f), code: f.properties?.code as string | undefined })),
+    () => features.map((f) => {
+      const d = pathGen(f);
+      const code = f.properties?.code as string | undefined;
+      const nom = f.properties?.nom as string | undefined;
+      const centroid = pathGen.centroid(f);
+      const [[x0, y0], [x1, y1]] = pathGen.bounds(f);
+      const minDim = Math.min(x1 - x0, y1 - y0);
+      return { feature: f, d, code, nom, centroid, minDim };
+    }),
     [features, pathGen],
   );
 
@@ -51,6 +69,45 @@ export default memo(function CoucheDepts({
             onMouseLeave={() => onHover(null, 0, 0)}
             onClick={() => { if (onClick && code) onClick(code); }}
           />
+        );
+      })}
+      {!quizMode && showLabels && paths.map(({ code, nom, centroid, minDim }) => {
+        const effective = minDim * zoomK;
+        if (effective < SEUIL_CODE) return null;
+        const showName = effective >= SEUIL_NOM;
+        const [cx, cy] = centroid;
+        if (isNaN(cx) || isNaN(cy)) return null;
+        const fs = 14 / zoomK; // taille fixe à l'écran (~14px) quelle que soit l'échelle
+
+        return (
+          <text key={`label-${code}`} textAnchor="middle" style={{ userSelect: 'none', pointerEvents: 'none' }}>
+            <tspan
+              x={cx}
+              y={showName ? cy - fs * 0.65 : cy}
+              dominantBaseline={showName ? 'auto' : 'middle'}
+              fontSize={fs}
+              fontWeight="bold"
+              fill="#1e3a5f"
+              stroke="white"
+              strokeWidth={fs * 0.25}
+              paintOrder="stroke"
+            >
+              {code}
+            </tspan>
+            {showName && (
+              <tspan
+                x={cx}
+                y={cy + fs * 0.75}
+                fontSize={fs}
+                fill="#1e3a5f"
+                stroke="white"
+                strokeWidth={fs * 0.25}
+                paintOrder="stroke"
+              >
+                {nom}
+              </tspan>
+            )}
+          </text>
         );
       })}
     </g>
