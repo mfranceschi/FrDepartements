@@ -10,18 +10,18 @@ interface SelectedInfo {
   type: 'departement' | 'region';
 }
 
-function buildDeptMap(): Map<string, { nom: string; regionCode: string }> {
-  const map = new Map<string, { nom: string; regionCode: string }>();
+function buildDeptMap(): Map<string, { nom: string; regionCode: string; prefecture: string }> {
+  const map = new Map<string, { nom: string; regionCode: string; prefecture: string }>();
   for (const d of DEPARTEMENTS) {
-    map.set(d.code, { nom: d.nom, regionCode: d.regionCode });
+    map.set(d.code, { nom: d.nom, regionCode: d.regionCode, prefecture: d.prefecture });
   }
   return map;
 }
 
-function buildRegionMap(): Map<string, string> {
-  const map = new Map<string, string>();
+function buildRegionMap(): Map<string, { nom: string; prefectureRegionale: string }> {
+  const map = new Map<string, { nom: string; prefectureRegionale: string }>();
   for (const r of REGIONS) {
-    map.set(r.code, r.nom);
+    map.set(r.code, { nom: r.nom, prefectureRegionale: r.prefectureRegionale });
   }
   return map;
 }
@@ -68,7 +68,8 @@ function InfoPanel({ selected }: { selected: SelectedInfo | null }) {
   }
 
   if (selected.type === 'region') {
-    const nom = REGION_MAP.get(selected.code) ?? selected.code;
+    const region = REGION_MAP.get(selected.code);
+    const nom = region?.nom ?? selected.code;
     return (
       <div className="space-y-2">
         <div className="flex items-center gap-2">
@@ -79,13 +80,18 @@ function InfoPanel({ selected }: { selected: SelectedInfo | null }) {
         <p className="text-sm text-gray-500">
           Code : <span className="font-mono font-semibold text-gray-700">{selected.code}</span>
         </p>
+        {region?.prefectureRegionale && (
+          <p className="text-sm text-gray-500">
+            Préfecture régionale : <span className="font-semibold text-rose-700">{region.prefectureRegionale}</span>
+          </p>
+        )}
       </div>
     );
   }
 
   const dept = DEPT_MAP.get(selected.code);
   const nom = dept?.nom ?? selected.code;
-  const regionNom = dept?.regionCode ? (REGION_MAP.get(dept.regionCode) ?? dept.regionCode) : null;
+  const regionInfo = dept?.regionCode ? REGION_MAP.get(dept.regionCode) : null;
 
   return (
     <div className="space-y-2">
@@ -97,9 +103,14 @@ function InfoPanel({ selected }: { selected: SelectedInfo | null }) {
       <p className="text-sm text-gray-500">
         Code : <span className="font-mono font-semibold text-gray-700">{selected.code}</span>
       </p>
-      {regionNom && (
+      {regionInfo && (
         <p className="text-sm text-gray-500">
-          Région : <span className="font-semibold text-green-700">{regionNom}</span>
+          Région : <span className="font-semibold text-green-700">{regionInfo.nom}</span>
+        </p>
+      )}
+      {dept?.prefecture && (
+        <p className="text-sm text-gray-500">
+          Préfecture : <span className="font-semibold text-rose-700">{dept.prefecture}</span>
         </p>
       )}
     </div>
@@ -125,7 +136,7 @@ function useSearch(query: string): SearchResult[] {
         d.nom.toLowerCase().includes(q) ||
         d.code.toLowerCase().startsWith(q)
       ) {
-        const regionNom = REGION_MAP.get(d.regionCode) ?? '';
+        const regionNom = REGION_MAP.get(d.regionCode)?.nom ?? '';
         results.push({ code: d.code, nom: d.nom, type: 'departement', subtitle: regionNom });
       }
     }

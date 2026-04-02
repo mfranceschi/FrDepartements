@@ -60,13 +60,18 @@ function RegionRow({ region, depts }: RegionRowProps) {
       {/* Contenu dépliable */}
       {open && (
         <div className="px-4 py-3 border-t border-gray-100 bg-white">
-          <ul className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1.5">
+          <p className="text-xs text-gray-500 mb-2.5">
+            Préfecture régionale :{' '}
+            <span className="font-semibold text-rose-700">{region.prefectureRegionale}</span>
+          </p>
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
             {sorted.map((dept) => (
               <li key={dept.code} className="flex items-center gap-2 text-sm">
                 <span className="font-mono text-gray-500 w-8 shrink-0">
                   {dept.code}
                 </span>
-                <span className="text-gray-700">{dept.nom}</span>
+                <span className="text-gray-700 flex-1">{dept.nom}</span>
+                <span className="text-gray-400 text-xs shrink-0 hidden sm:inline">{dept.prefecture}</span>
               </li>
             ))}
           </ul>

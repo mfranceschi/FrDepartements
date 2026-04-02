@@ -10,6 +10,7 @@ import type { GeoPath, GeoPermissibleObjects, ZoomBehavior, D3ZoomEvent } from '
 import type { Feature } from 'geojson';
 import CoucheRegions from './CoucheRegions';
 import CoucheDepts from './CoucheDepts';
+import CouchePrefectures from './CouchePrefectures';
 
 export interface CarteFranceProps {
   features: {
@@ -53,6 +54,7 @@ export default function CarteFrance({
   const [activeLayer, setActiveLayer] = useState<Layer>('departements');
   const [transform, setTransform] = useState<ZoomTransform>({ x: 0, y: 0, k: 1 });
   const [showLabels, setShowLabels] = useState(false);
+  const [showPrefectures, setShowPrefectures] = useState(false);
 
   const svgRef = useRef<SVGSVGElement>(null);
   const zoomRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | undefined>(undefined);
@@ -117,28 +119,32 @@ export default function CarteFrance({
     select(svgRef.current).transition().duration(300).call(zoomRef.current.transform, zoomIdentity);
   }, []);
 
-  const handleDeptHover = useCallback((feature: Feature | null, x: number, y: number) => {
+  const showTooltip = useCallback((text: string, x: number, y: number) => {
     const el = tooltipRef.current;
     if (!el) return;
-    if (!feature) { el.style.display = 'none'; return; }
-    const nom = feature.properties?.nom as string | undefined;
-    const code = feature.properties?.code as string | undefined;
-    el.textContent = nom && code ? `${nom} (${code})` : nom ?? code ?? '';
+    el.textContent = text;
     el.style.left = `${x + 12}px`;
     el.style.top = `${y - 30}px`;
     el.style.display = 'block';
   }, []);
 
-  const handleRegionHover = useCallback((feature: Feature | null, x: number, y: number) => {
+  const hideTooltip = useCallback(() => {
     const el = tooltipRef.current;
-    if (!el) return;
-    if (!feature) { el.style.display = 'none'; return; }
-    const nom = feature.properties?.nom as string | undefined;
-    el.textContent = nom ?? '';
-    el.style.left = `${x + 12}px`;
-    el.style.top = `${y - 30}px`;
-    el.style.display = 'block';
+    if (el) el.style.display = 'none';
   }, []);
+
+  const handleDeptHover = useCallback((feature: Feature | null, x: number, y: number) => {
+    if (!feature) { hideTooltip(); return; }
+    const nom = feature.properties?.nom as string | undefined;
+    const code = feature.properties?.code as string | undefined;
+    showTooltip(nom && code ? `${nom} (${code})` : nom ?? code ?? '', x, y);
+  }, [showTooltip, hideTooltip]);
+
+  const handleRegionHover = useCallback((feature: Feature | null, x: number, y: number) => {
+    if (!feature) { hideTooltip(); return; }
+    const nom = feature.properties?.nom as string | undefined;
+    showTooltip(nom ?? '', x, y);
+  }, [showTooltip, hideTooltip]);
 
   const handleRegionClick = useCallback(
     (code: string) => onFeatureClick?.(code, 'region'),
@@ -184,22 +190,38 @@ export default function CarteFrance({
           </div>
         )}
 
-        {/* Bouton étiquettes (mode exploration uniquement) */}
+        {/* Boutons mode exploration uniquement */}
         {!quizMode && activeLayer === 'departements' && (
-          <button
-            type="button"
-            onClick={() => setShowLabels((v) => !v)}
-            title={showLabels ? 'Masquer les étiquettes' : 'Afficher les étiquettes'}
-            className={[
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
-              showLabels
-                ? 'bg-blue-100 text-blue-700 border border-blue-300'
-                : 'bg-gray-100 text-gray-500 hover:text-gray-700',
-            ].join(' ')}
-          >
-            <span className="text-xs leading-none">Aa</span>
-            Étiquettes
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => setShowLabels((v) => !v)}
+              title={showLabels ? 'Masquer les étiquettes' : 'Afficher les étiquettes'}
+              className={[
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                showLabels
+                  ? 'bg-blue-100 text-blue-700 border border-blue-300'
+                  : 'bg-gray-100 text-gray-500 hover:text-gray-700',
+              ].join(' ')}
+            >
+              <span className="text-xs leading-none">Aa</span>
+              Étiquettes
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowPrefectures((v) => !v)}
+              title={showPrefectures ? 'Masquer les préfectures' : 'Afficher les préfectures'}
+              className={[
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                showPrefectures
+                  ? 'bg-rose-100 text-rose-700 border border-rose-300'
+                  : 'bg-gray-100 text-gray-500 hover:text-gray-700',
+              ].join(' ')}
+            >
+              <span className="text-xs leading-none">●</span>
+              Préfectures
+            </button>
+          </>
         )}
 
         {/* Boutons de zoom */}
@@ -260,6 +282,13 @@ export default function CarteFrance({
             onClick={onFeatureClick ? handleDeptClick : undefined}
             zoomK={transform.k}
             showLabels={showLabels}
+          />
+          <CouchePrefectures
+            projection={PROJECTION}
+            zoomK={transform.k}
+            visible={!quizMode && showPrefectures}
+            highlightDeptCode={highlightDeptCode}
+            onHover={(label, x, y) => label ? showTooltip(label, x, y) : hideTooltip()}
           />
         </g>
 

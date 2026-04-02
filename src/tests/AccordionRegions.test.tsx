@@ -38,7 +38,8 @@ describe('AccordionRegions – interaction', () => {
 
     expect(idfBtn).toHaveAttribute('aria-expanded', 'true');
     for (const dept of idfDepts) {
-      expect(screen.getByText(dept.nom)).toBeInTheDocument();
+      // getAllByText car certains noms (ex: "Paris") apparaissent aussi en préfecture
+      expect(screen.getAllByText(dept.nom).length).toBeGreaterThanOrEqual(1);
     }
   });
 
