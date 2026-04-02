@@ -10,7 +10,6 @@ import type { GeoPath, GeoPermissibleObjects, ZoomBehavior, D3ZoomEvent } from '
 import type { Feature } from 'geojson';
 import CoucheRegions from './CoucheRegions';
 import CoucheDepts from './CoucheDepts';
-import InsetIleDeFrance from './InsetIleDeFrance';
 
 export interface CarteFranceProps {
   features: {
@@ -243,22 +242,6 @@ export default function CarteFrance({
           />
         </g>
 
-        {/* Overlays fixes — ne bougent pas avec le zoom/pan */}
-        <InsetIleDeFrance
-          features={features.departements}
-          visible={effectiveShowDepts}
-          quizMode={quizMode}
-          highlightCode={highlightDeptCode}
-          onHover={handleDeptHover}
-          onClick={onFeatureClick ? handleDeptClick : undefined}
-        />
-        <rect
-          x={903} y={5} width={292} height={720}
-          fill="none" stroke="#cbd5e1" strokeWidth={0.5} strokeDasharray="4 2" rx={3}
-        />
-        <text x={908} y={17} fontSize={12} fill="#94a3b8">
-          Territoires hors-échelle
-        </text>
       </svg>
 
       {!quizMode && (

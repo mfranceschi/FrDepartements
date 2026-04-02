@@ -24,7 +24,7 @@ npx vitest run src/tests/someFile.test.ts
 
 This is a React + TypeScript PWA for learning French administrative divisions (departments and regions). It has three features accessible via a 3-tab nav:
 
-1. **Carte** — Interactive D3.js SVG map with zoom/pan, department/region layers, and an inset for Île-de-France
+1. **Carte** — Interactive D3.js SVG map with zoom/pan, department/region layers
 2. **Quiz** — Configurable training sessions with 7 question types: map-clicking challenges and MCQ variants
 3. **Tableau** — Accordion data table of all departments grouped by region
 
@@ -36,7 +36,7 @@ Quiz sessions are orchestrated by `useQuiz` (hook in `src/hooks/`) which calls `
 
 `QuizShell` dispatches rendering to one of 7 question-type components in `src/components/quiz/types-questions/` based on `question.mode`.
 
-The D3 map (`CarteFrance.tsx`) uses `useEffect` for zoom behavior and `geoPath` rendering. The Île-de-France inset (`InsetIleDeFrance`) is rendered as a fixed overlay outside the zoomable group.
+The D3 map (`CarteFrance.tsx`) uses `useEffect` for zoom behavior and `geoPath` rendering.
 
 ### Key constraints
 

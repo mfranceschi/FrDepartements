@@ -8,7 +8,6 @@ Application web progressive (PWA) pour explorer et apprendre les 96 département
 - Visualisation SVG de la France avec D3.js
 - Zoom et panoramique
 - Survol / clic sur un département ou une région pour afficher ses informations
-- Encart dédié pour l'Île-de-France (hors-échelle)
 
 ### Quiz
 Cinq modes d'entraînement configurables :
@@ -67,7 +66,7 @@ npm run dev
 ```
 src/
 ├── components/
-│   ├── carte/          # Carte SVG (couches depts, régions, encart Île-de-France)
+│   ├── carte/          # Carte SVG (couches depts, régions)
 │   ├── quiz/           # Shell quiz + 5 types de questions
 │   └── tableau/        # Tableau et accordéon par région
 ├── pages/              # CartePage, QuizPage, TableauPage
