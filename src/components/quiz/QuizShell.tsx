@@ -34,12 +34,6 @@ function scoreColor(ratio: number): string {
   return 'text-red-500';
 }
 
-function progressColor(ratio: number): string {
-  if (ratio >= 0.85) return 'bg-green-500';
-  if (ratio >= 0.6) return 'bg-yellow-400';
-  return 'bg-red-500';
-}
-
 function getResultMessage(score: number, total: number): string {
   const ratio = total > 0 ? score / total : 0;
   if (ratio >= 0.85) return 'Excellent !';
@@ -111,6 +105,15 @@ export default function QuizShell({
   const answeredCount = currentIndex + (answered ? 1 : 0);
   const liveRatio = answeredCount > 0 ? score / answeredCount : 1;
 
+  // Calcul du streak (bonnes réponses consécutives)
+  let streak = 0;
+  for (let i = answerHistory.length - 1; i >= 0; i--) {
+    if (answerHistory[i].correct) streak++;
+    else break;
+  }
+
+  const progressPct = Math.round((answeredCount / total) * 100);
+
   const nextEnabled = true;
 
   // ─── Keyboard navigation ────────────────────────────────────────────────
@@ -155,10 +158,14 @@ export default function QuizShell({
           <span className="text-3xl text-gray-400 font-normal"> / {total}</span>
         </p>
 
-        <div className="w-full max-w-xs bg-gray-200 rounded-full h-3 overflow-hidden">
+        <div className="relative w-full max-w-xs h-3 rounded-full overflow-hidden bg-gray-200">
           <div
-            className={`h-3 rounded-full transition-all ${progressColor(ratio)}`}
-            style={{ width: `${pct}%` }}
+            className="absolute inset-0 rounded-full"
+            style={{ background: 'linear-gradient(to right, #ef4444, #f59e0b 50%, #22c55e)' }}
+          />
+          <div
+            className="absolute top-0 right-0 bottom-0 bg-gray-200 transition-all duration-700"
+            style={{ width: `${100 - pct}%` }}
           />
         </div>
         <p className="text-sm text-gray-500">{pct} % de bonnes réponses</p>
@@ -198,14 +205,39 @@ export default function QuizShell({
   return (
     <div className="flex flex-col gap-4 w-full">
       {/* Bandeau supérieur avec score bien visible */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-lg border border-gray-200">
-        <span className="text-sm font-medium text-gray-600">
-          Question {currentIndex + 1} / {total}
-        </span>
-        <span className={`text-2xl font-bold tabular-nums ${scoreColor(liveRatio)}`}>
-          {score}
-          <span className="text-base font-normal text-gray-400"> / {answeredCount}</span>
-        </span>
+      <div className="rounded-lg border border-gray-200 overflow-hidden">
+        {/* Barre de progression fine */}
+        <div className="relative h-1.5 bg-gray-100">
+          <div
+            className="absolute inset-0 rounded-r"
+            style={{
+              background: 'linear-gradient(to right, #ef4444, #f59e0b 50%, #22c55e)',
+            }}
+          />
+          <div
+            className="absolute top-0 right-0 bottom-0 bg-gray-100 transition-all duration-300"
+            style={{ width: `${100 - progressPct}%` }}
+          />
+        </div>
+        {/* Score + streak */}
+        <div className="flex items-center justify-between px-4 py-3 bg-gray-50">
+          <span className="text-sm font-medium text-gray-600">
+            Question {currentIndex + 1} / {total}
+          </span>
+          <div className="flex items-center gap-2">
+            {streak >= 3 && (
+              <span
+                className="streak-badge inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-300"
+              >
+                🔥 ×{streak}
+              </span>
+            )}
+            <span className={`text-2xl font-bold tabular-nums ${scoreColor(liveRatio)}`}>
+              {score}
+              <span className="text-base font-normal text-gray-400"> / {answeredCount}</span>
+            </span>
+          </div>
+        </div>
       </div>
 
       {isQcm && !answered && (

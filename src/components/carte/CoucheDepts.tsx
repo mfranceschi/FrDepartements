@@ -1,6 +1,7 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState } from 'react';
 import type { Feature } from 'geojson';
 import type { GeoPath, GeoPermissibleObjects } from 'd3';
+import { computeDeptColors } from '../../geo/colorMap';
 
 interface CoucheDepsProps {
   features: Feature[];
@@ -34,6 +35,11 @@ export default memo(function CoucheDepts({
   zoomK = 1,
   showLabels = true,
 }: CoucheDepsProps) {
+  // Coloriage des départements (déterministe, calculé une seule fois)
+  const colorMap = useMemo(() => computeDeptColors(features), [features]);
+
+  const [hoveredCode, setHoveredCode] = useState<string | null>(null);
+
   // Calcul des paths, centroïdes et tailles une seule fois (ou quand features/pathGen changent)
   const paths = useMemo(
     () => features.map((f) => {
@@ -57,16 +63,28 @@ export default memo(function CoucheDepts({
         const isHighlighted = code !== undefined && code === highlightCode;
         const isWrong = code !== undefined && code === wrongCode;
 
+        const isHovered = code !== undefined && code === hoveredCode;
+        const baseFill = code ? (colorMap.get(code) ?? '#dbeafe') : '#dbeafe';
+        const fill = isHighlighted
+          ? (quizMode ? '#4ade80' : 'white')
+          : isWrong ? '#fca5a5'
+          : isHovered ? 'white'
+          : baseFill;
+
         return (
           <path
             key={code ?? d}
             d={d}
-            fill={isHighlighted ? '#60a5fa' : isWrong ? '#fca5a5' : '#dbeafe'}
-            stroke={isWrong ? '#dc2626' : '#3b82f6'}
+            fill={fill}
+            stroke={isWrong ? '#dc2626' : '#475569'}
             strokeWidth={0.5}
             style={{ cursor: onClick ? 'pointer' : 'default' }}
+            onMouseEnter={(e) => {
+              setHoveredCode(code ?? null);
+              if (!quizMode) onHover(feature, e.clientX, e.clientY);
+            }}
             onMouseMove={(e) => { if (!quizMode) onHover(feature, e.clientX, e.clientY); }}
-            onMouseLeave={() => onHover(null, 0, 0)}
+            onMouseLeave={() => { setHoveredCode(null); onHover(null, 0, 0); }}
             onClick={() => { if (onClick && code) onClick(code); }}
           />
         );

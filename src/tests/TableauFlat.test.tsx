@@ -55,7 +55,7 @@ describe('TableauFlat – filtre par code', () => {
   it('filtre par code département exact', () => {
     render(<TableauFlat />);
     fireEvent.change(screen.getByPlaceholderText(/Filtrer/i), { target: { value: '75' } });
-    expect(screen.getByText('Paris')).toBeInTheDocument();
+    expect(screen.getAllByText('Paris')).toHaveLength(2); // nom + préfecture
   });
 
 });

@@ -36,6 +36,50 @@ function makeFinishedSession(score: number, total: number): SessionState {
   };
 }
 
+// Session en cours avec N bonnes réponses consécutives en fin d'historique
+function makeSessionWithStreak(streak: number, brokenBy?: 'wrong'): SessionState {
+  const total = 10;
+  const history = brokenBy === 'wrong'
+    ? [
+        ...Array.from({ length: streak }, (_, i) => ({
+          mode: 'DevinerNomDept' as const,
+          correct: true,
+          question: { id: `q${i}`, mode: 'DevinerNomDept' as const, targetCode: String(i).padStart(2, '0'), targetNom: `Dept${i}` },
+        })),
+        {
+          mode: 'DevinerNomDept' as const,
+          correct: false,
+          question: { id: 'qw', mode: 'DevinerNomDept' as const, targetCode: '99', targetNom: 'DeptW' },
+        },
+      ]
+    : Array.from({ length: streak }, (_, i) => ({
+        mode: 'DevinerNomDept' as const,
+        correct: true,
+        question: { id: `q${i}`, mode: 'DevinerNomDept' as const, targetCode: String(i).padStart(2, '0'), targetNom: `Dept${i}` },
+      }));
+
+  return {
+    questions: Array.from({ length: total }, (_, i) => ({
+      id: `q${i}`,
+      mode: 'DevinerNomDept' as const,
+      targetCode: String(i).padStart(2, '0'),
+      targetNom: `Dept${i}`,
+      choices: [
+        { code: String(i).padStart(2, '0'), label: `Dept${i}`, correct: true },
+        { code: '97', label: 'Autre1', correct: false },
+        { code: '98', label: 'Autre2', correct: false },
+        { code: '99', label: 'Autre3', correct: false },
+      ],
+    })),
+    currentIndex: history.length,
+    score: streak,
+    answerState: 'pending',
+    selectedCode: null,
+    finished: false,
+    answerHistory: history,
+  };
+}
+
 // Session en cours (QCM — pas de CarteFrance)
 function makeActiveSession(mode: 'DevinerNomDept' | 'DevinerCodeDept' = 'DevinerNomDept'): SessionState {
   return {
@@ -186,6 +230,109 @@ describe('QuizShell – écran de fin', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: /Revoir mes erreurs/i }));
     expect(onReviewErrors).toHaveBeenCalledOnce();
+  });
+});
+
+// ── Streak badge ──────────────────────────────────────────────────────────────
+
+describe('QuizShell – badge streak', () => {
+  it("n'affiche pas de badge pour un streak < 3", () => {
+    render(
+      <QuizShell
+        session={makeSessionWithStreak(2)}
+        onAnswer={vi.fn()}
+        onNext={vi.fn()}
+        onRestart={vi.fn()}
+        onReviewErrors={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText(/🔥/)).not.toBeInTheDocument();
+  });
+
+  it('affiche le badge "🔥 ×3" pour un streak de 3', () => {
+    render(
+      <QuizShell
+        session={makeSessionWithStreak(3)}
+        onAnswer={vi.fn()}
+        onNext={vi.fn()}
+        onRestart={vi.fn()}
+        onReviewErrors={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/🔥 ×3/)).toBeInTheDocument();
+  });
+
+  it('affiche le bon compteur pour un streak de 5', () => {
+    render(
+      <QuizShell
+        session={makeSessionWithStreak(5)}
+        onAnswer={vi.fn()}
+        onNext={vi.fn()}
+        onRestart={vi.fn()}
+        onReviewErrors={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/🔥 ×5/)).toBeInTheDocument();
+  });
+
+  it("n'affiche pas de badge quand le streak est cassé par une mauvaise réponse", () => {
+    render(
+      <QuizShell
+        session={makeSessionWithStreak(3, 'wrong')}
+        onAnswer={vi.fn()}
+        onNext={vi.fn()}
+        onRestart={vi.fn()}
+        onReviewErrors={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText(/🔥/)).not.toBeInTheDocument();
+  });
+});
+
+// ── Barre de progression ──────────────────────────────────────────────────────
+
+describe('QuizShell – barre de progression', () => {
+  it('la barre fine est présente pendant la session', () => {
+    const { container } = render(
+      <QuizShell
+        session={makeActiveSession()}
+        onAnswer={vi.fn()}
+        onNext={vi.fn()}
+        onRestart={vi.fn()}
+        onReviewErrors={vi.fn()}
+      />,
+    );
+    const bar = container.querySelector('.h-1\\.5');
+    expect(bar).toBeInTheDocument();
+  });
+
+  it('la barre de résultats utilise un dégradé rouge→vert', () => {
+    const { container } = render(
+      <QuizShell
+        session={makeFinishedSession(7, 10)}
+        onAnswer={vi.fn()}
+        onNext={vi.fn()}
+        onRestart={vi.fn()}
+        onReviewErrors={vi.fn()}
+      />,
+    );
+    const gradientEl = container.querySelector('[style*="linear-gradient"]');
+    expect(gradientEl).toBeInTheDocument();
+  });
+
+  it('le masque gris couvre 0 % pour un score parfait (100 %)', () => {
+    const { container } = render(
+      <QuizShell
+        session={makeFinishedSession(10, 10)}
+        onAnswer={vi.fn()}
+        onNext={vi.fn()}
+        onRestart={vi.fn()}
+        onReviewErrors={vi.fn()}
+      />,
+    );
+    // Le masque gris doit avoir width: 0%
+    const mask = container.querySelector('[style*="width: 0%"]');
+    expect(mask).toBeInTheDocument();
   });
 });
 

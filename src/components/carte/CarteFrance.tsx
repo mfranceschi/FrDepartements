@@ -158,6 +158,8 @@ export default function CarteFrance({
 
   const effectiveShowRegions = quizMode ? quizLayer === 'regions' : activeLayer === 'regions';
   const effectiveShowDepts = quizMode ? quizLayer === 'departements' : activeLayer === 'departements';
+  // Contours de régions superposés sur les départements colorés (mode carte uniquement)
+  const effectiveShowRegionBorders = !quizMode && activeLayer === 'departements';
 
   // Restreint la surbrillance à la bonne couche pour éviter les collisions de codes
   const highlightDeptCode = !highlightType || highlightType === 'departement' ? highlightCode : undefined;
@@ -290,6 +292,15 @@ export default function CarteFrance({
             highlightDeptCode={highlightDeptCode}
             onHover={(label, x, y) => label ? showTooltip(label, x, y) : hideTooltip()}
             onlyRegionales={effectiveShowRegions}
+          />
+          {/* Contours de régions en surcouche sur les départements colorés */}
+          <CoucheRegions
+            features={features.regions}
+            pathGen={PATH_GEN}
+            visible={effectiveShowRegionBorders}
+            borderOnly={true}
+            quizMode={false}
+            onHover={() => {}}
           />
         </g>
 

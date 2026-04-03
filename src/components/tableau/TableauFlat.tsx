@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { DEPARTEMENTS } from '../../data/departements';
 import { REGIONS } from '../../data/regions';
 
-type SortKey = 'code' | 'nom' | 'region';
+type SortKey = 'code' | 'nom' | 'region' | 'prefecture';
 type SortDir = 'asc' | 'desc';
 
 const regionMap = new Map(REGIONS.map((r) => [r.code, r.nom]));
@@ -34,7 +34,8 @@ export default function TableauFlat() {
       (d) =>
         d.code.toLowerCase().includes(q) ||
         d.nom.toLowerCase().includes(q) ||
-        (regionMap.get(d.regionCode) ?? '').toLowerCase().includes(q),
+        (regionMap.get(d.regionCode) ?? '').toLowerCase().includes(q) ||
+        d.prefecture.toLowerCase().includes(q),
     );
   }, [filter]);
 
@@ -45,10 +46,12 @@ export default function TableauFlat() {
         cmp = codeToSortKey(a.code) - codeToSortKey(b.code);
       } else if (sortKey === 'nom') {
         cmp = a.nom.localeCompare(b.nom, 'fr');
-      } else {
+      } else if (sortKey === 'region') {
         const ra = regionMap.get(a.regionCode) ?? '';
         const rb = regionMap.get(b.regionCode) ?? '';
         cmp = ra.localeCompare(rb, 'fr');
+      } else {
+        cmp = a.prefecture.localeCompare(b.prefecture, 'fr');
       }
       return sortDir === 'asc' ? cmp : -cmp;
     });
@@ -95,19 +98,19 @@ export default function TableauFlat() {
               <th className={thClass} onClick={() => handleHeaderClick('nom')}>
                 Nom {indicator('nom')}
               </th>
-              <th
-                className={thClass}
-                onClick={() => handleHeaderClick('region')}
-              >
+              <th className={thClass} onClick={() => handleHeaderClick('region')}>
                 Région {indicator('region')}
+              </th>
+              <th className={thClass} onClick={() => handleHeaderClick('prefecture')}>
+                Préfecture {indicator('prefecture')}
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-100">
+          <tbody className="divide-y divide-gray-100">
             {sorted.length === 0 ? (
               <tr>
                 <td
-                  colSpan={3}
+                  colSpan={4}
                   className="px-4 py-8 text-center text-gray-400 italic"
                 >
                   Aucun département ne correspond à votre recherche.
@@ -117,7 +120,7 @@ export default function TableauFlat() {
               sorted.map((dept) => (
                 <tr
                   key={dept.code}
-                  className="hover:bg-gray-50 transition-colors"
+                  className="odd:bg-white even:bg-blue-50 hover:bg-blue-100 transition-colors"
                 >
                   <td className="px-4 py-2.5 font-mono font-medium text-gray-800">
                     {dept.code}
@@ -125,6 +128,9 @@ export default function TableauFlat() {
                   <td className="px-4 py-2.5 text-gray-800">{dept.nom}</td>
                   <td className="px-4 py-2.5 text-gray-600">
                     {regionMap.get(dept.regionCode) ?? dept.regionCode}
+                  </td>
+                  <td className="px-4 py-2.5 text-gray-600">
+                    {dept.prefecture}
                   </td>
                 </tr>
               ))
