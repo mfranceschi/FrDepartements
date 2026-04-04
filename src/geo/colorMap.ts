@@ -62,6 +62,9 @@ function computeAdjacency(features: Feature[]): Map<string, Set<string>> {
 
 // ─── Coloriage glouton ────────────────────────────────────────────────────────
 
+// Cache the result — input is static GeoJSON loaded once, so this is computed at most once
+let cachedColors: Map<string, string> | null = null;
+
 /**
  * Calcule un coloriage valide (aucun voisin de même couleur) par algorithme
  * glouton. Les départements les plus connectés sont colorés en premier pour
@@ -71,6 +74,8 @@ function computeAdjacency(features: Feature[]): Map<string, Set<string>> {
  * le même ordre de traitement produit toujours la même carte.
  */
 export function computeDeptColors(features: Feature[]): Map<string, string> {
+  if (cachedColors !== null) return cachedColors;
+
   const adjacency = computeAdjacency(features);
 
   // Trier par nombre de voisins décroissant (nœuds les plus contraints d'abord)
@@ -91,9 +96,9 @@ export function computeDeptColors(features: Feature[]): Map<string, string> {
     colorIndex.set(code, chosen);
   }
 
-  const result = new Map<string, string>();
+  cachedColors = new Map<string, string>();
   for (const [code, idx] of colorIndex) {
-    result.set(code, PALETTE[idx % PALETTE.length]);
+    cachedColors.set(code, PALETTE[idx % PALETTE.length]);
   }
-  return result;
+  return cachedColors;
 }

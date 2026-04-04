@@ -31,20 +31,7 @@ export function useQuiz(config: QuizConfig): {
     setSession((prev) => {
       if (prev.answerState !== 'pending' || prev.finished) return prev;
       const question = prev.questions[prev.currentIndex];
-      let correct = false;
-
-      switch (question.mode) {
-        case 'TrouverDeptCarte':
-        case 'TrouverRegionCarte':
-        case 'DevinerNomRegionCarte':
-        case 'DevinerNomDeptCarte':
-        case 'DevinerCodeDept':
-        case 'DevinerNomDept':
-        case 'DevinerPrefectureDept':
-        case 'DevinerPrefectureRegion':
-          correct = code === question.targetCode;
-          break;
-      }
+      const correct = code === question.targetCode;
 
       const record: AnswerRecord = { mode: question.mode, correct, question };
 

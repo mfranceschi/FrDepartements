@@ -40,6 +40,17 @@ export interface Choice {
 
 export type AnswerState = 'pending' | 'correct' | 'wrong';
 
+export const MODE_LABELS: Record<QuizMode, string> = {
+  TrouverDeptCarte: 'Dept. sur carte',
+  TrouverRegionCarte: 'Région sur carte',
+  DevinerNomRegionCarte: 'Nom de région',
+  DevinerNomDeptCarte: 'Nom de dept. (carte)',
+  DevinerCodeDept: 'Numéro de dept.',
+  DevinerNomDept: 'Nom de dept.',
+  DevinerPrefectureDept: 'Préfecture de dept.',
+  DevinerPrefectureRegion: 'Préfecture de région',
+};
+
 export interface AnswerRecord {
   mode: QuizMode;
   correct: boolean;

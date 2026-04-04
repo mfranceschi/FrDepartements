@@ -15,6 +15,29 @@ import {
 } from './buildChoices';
 import type { QuizConfig, QuizSujet, Question, SessionState, QuizMode } from './types';
 
+// Pre-computed once — these are static data that never change at runtime
+const ALL_DEPTS = DEPARTEMENTS.map((d) => ({
+  code: d.code,
+  nom: d.nom,
+  regionCode: d.regionCode,
+  prefecture: d.prefecture,
+}));
+
+const ALL_REGIONS = REGIONS.map((r) => ({
+  code: r.code,
+  nom: r.nom,
+  prefectureRegionale: r.prefectureRegionale,
+}));
+
+function deduplicateByCode<T extends { code: string }>(items: T[]): T[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (seen.has(item.code)) return false;
+    seen.add(item.code);
+    return true;
+  });
+}
+
 export const CARTE_MODES = new Set<QuizMode>(['TrouverDeptCarte', 'TrouverRegionCarte']);
 export const QCM_MODES = new Set<QuizMode>([
   'DevinerNomRegionCarte',
@@ -46,18 +69,6 @@ const SUJET_MODES: Record<QuizSujet, QuizMode[]> = {
  * ici afin que le rendu n'ait aucune logique de génération à exécuter.
  */
 export function generateQuestions(config: QuizConfig): Question[] {
-  const allDepts = DEPARTEMENTS.map((d) => ({
-    code: d.code,
-    nom: d.nom,
-    regionCode: d.regionCode,
-    prefecture: d.prefecture,
-  }));
-  const allRegions = REGIONS.map((r) => ({
-    code: r.code,
-    nom: r.nom,
-    prefectureRegionale: r.prefectureRegionale,
-  }));
-
   const modes = SUJET_MODES[config.sujet];
 
   type PoolItem = { mode: QuizMode; code: string; nom: string; regionCode?: string };
@@ -68,38 +79,28 @@ export function generateQuestions(config: QuizConfig): Question[] {
   for (const mode of modes) {
     switch (mode) {
       case 'TrouverDeptCarte':
-        allDepts.forEach((d) => cartePool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }));
+        ALL_DEPTS.forEach((d) => cartePool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }));
         break;
       case 'TrouverRegionCarte':
-        allRegions.forEach((r) => cartePool.push({ mode, code: r.code, nom: r.nom }));
+        ALL_REGIONS.forEach((r) => cartePool.push({ mode, code: r.code, nom: r.nom }));
         break;
       case 'DevinerNomRegionCarte':
-        allRegions.forEach((r) => qcmPool.push({ mode, code: r.code, nom: r.nom }));
+        ALL_REGIONS.forEach((r) => qcmPool.push({ mode, code: r.code, nom: r.nom }));
         break;
       case 'DevinerNomDeptCarte':
-        allDepts.forEach((d) => qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }));
+        ALL_DEPTS.forEach((d) => qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }));
         break;
       case 'DevinerCodeDept':
       case 'DevinerNomDept':
-        allDepts.forEach((d) => qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }));
+        ALL_DEPTS.forEach((d) => qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }));
         break;
       case 'DevinerPrefectureDept':
-        allDepts.forEach((d) => qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }));
+        ALL_DEPTS.forEach((d) => qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }));
         break;
       case 'DevinerPrefectureRegion':
-        allRegions.forEach((r) => qcmPool.push({ mode, code: r.code, nom: r.nom }));
+        ALL_REGIONS.forEach((r) => qcmPool.push({ mode, code: r.code, nom: r.nom }));
         break;
     }
-  }
-
-  // Déduplique un pool par code d'entité (évite deux questions sur la même entité).
-  function deduplicateByCode(items: PoolItem[]): PoolItem[] {
-    const seen = new Set<string>();
-    return items.filter((item) => {
-      if (seen.has(item.code)) return false;
-      seen.add(item.code);
-      return true;
-    });
   }
 
   const hasCarteMode = cartePool.length > 0;
@@ -131,8 +132,8 @@ export function generateQuestions(config: QuizConfig): Question[] {
     selected = dedup.slice(0, Math.min(count, dedup.length));
   }
 
-  const allDeptsPref: PrefDeptChoice[] = allDepts;
-  const allRegionsPref: PrefRegionChoice[] = allRegions;
+  const allDeptsPref: PrefDeptChoice[] = ALL_DEPTS;
+  const allRegionsPref: PrefRegionChoice[] = ALL_REGIONS;
 
   return selected.map((item, idx): Question => {
     const base: Question = {
@@ -148,22 +149,22 @@ export function generateQuestions(config: QuizConfig): Question[] {
         const deptItem: DeptChoice = { code: item.code, nom: item.nom, regionCode: item.regionCode ?? '' };
         base.choices =
           config.difficulty === 'facile'
-            ? buildCodeChoicesFacile(deptItem, allDepts)
-            : buildCodeChoicesDifficile(deptItem, allDepts);
+            ? buildCodeChoicesFacile(deptItem, ALL_DEPTS)
+            : buildCodeChoicesDifficile(deptItem, ALL_DEPTS);
         break;
       }
       case 'DevinerNomDept': {
         const deptItem: DeptChoice = { code: item.code, nom: item.nom, regionCode: item.regionCode ?? '' };
         base.choices =
           config.difficulty === 'facile'
-            ? buildDeptChoicesFacile(deptItem, allDepts)
-            : buildDeptChoicesDifficile(deptItem, allDepts);
+            ? buildDeptChoicesFacile(deptItem, ALL_DEPTS)
+            : buildDeptChoicesDifficile(deptItem, ALL_DEPTS);
         break;
       }
       case 'DevinerNomRegionCarte': {
-        const correctRegion = allRegions.find((r) => r.code === item.code);
+        const correctRegion = ALL_REGIONS.find((r) => r.code === item.code);
         if (correctRegion) {
-          base.choices = buildRegionChoicesFacile(correctRegion, allRegions);
+          base.choices = buildRegionChoicesFacile(correctRegion, ALL_REGIONS);
         }
         break;
       }
@@ -171,8 +172,8 @@ export function generateQuestions(config: QuizConfig): Question[] {
         const deptItem: DeptChoice = { code: item.code, nom: item.nom, regionCode: item.regionCode ?? '' };
         base.choices =
           config.difficulty === 'facile'
-            ? buildDeptChoicesFacile(deptItem, allDepts)
-            : buildDeptChoicesDifficile(deptItem, allDepts);
+            ? buildDeptChoicesFacile(deptItem, ALL_DEPTS)
+            : buildDeptChoicesDifficile(deptItem, ALL_DEPTS);
         break;
       }
       case 'DevinerPrefectureDept': {

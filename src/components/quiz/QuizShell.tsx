@@ -1,5 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { SessionState, QuizMode } from '../../quiz/types';
+import { MODE_LABELS } from '../../quiz/types';
+import { QCM_MODES } from '../../quiz/generateQuestions';
 import QuestionTrouverDeptCarte from './types-questions/QuestionTrouverDeptCarte';
 import QuestionTrouverRegionCarte from './types-questions/QuestionTrouverRegionCarte';
 import QuestionDevinerNomRegionCarte from './types-questions/QuestionDevinerNomRegionCarte';
@@ -17,25 +19,6 @@ interface QuizShellProps {
   onReviewErrors: () => void;
 }
 
-const QCM_MODES = new Set([
-  'DevinerNomRegionCarte',
-  'DevinerNomDeptCarte',
-  'DevinerCodeDept',
-  'DevinerNomDept',
-  'DevinerPrefectureDept',
-  'DevinerPrefectureRegion',
-]);
-
-const MODE_LABELS: Record<QuizMode, string> = {
-  TrouverDeptCarte: 'Dept. sur carte',
-  TrouverRegionCarte: 'Région sur carte',
-  DevinerNomRegionCarte: 'Nom de région',
-  DevinerNomDeptCarte: 'Nom de dept. (carte)',
-  DevinerCodeDept: 'Numéro de dept.',
-  DevinerNomDept: 'Nom de dept.',
-  DevinerPrefectureDept: 'Préfecture de dept.',
-  DevinerPrefectureRegion: 'Préfecture de région',
-};
 
 function scoreColor(ratio: number): string {
   if (ratio >= 0.85) return 'text-green-600';
@@ -115,15 +98,16 @@ export default function QuizShell({
   const liveRatio = answeredCount > 0 ? score / answeredCount : 1;
 
   // Calcul du streak (bonnes réponses consécutives)
-  let streak = 0;
-  for (let i = answerHistory.length - 1; i >= 0; i--) {
-    if (answerHistory[i].correct) streak++;
-    else break;
-  }
+  const streak = useMemo(() => {
+    let count = 0;
+    for (let i = answerHistory.length - 1; i >= 0; i--) {
+      if (answerHistory[i].correct) count++;
+      else break;
+    }
+    return count;
+  }, [answerHistory]);
 
   const progressPct = Math.round((answeredCount / total) * 100);
-
-  const nextEnabled = true;
 
   // ─── Keyboard navigation ────────────────────────────────────────────────
   useEffect(() => {
@@ -131,7 +115,7 @@ export default function QuizShell({
       const question = questions[currentIndex];
       if (!question) return;
 
-      if ((e.key === 'Enter' || e.key === ' ') && answered && nextEnabled) {
+      if ((e.key === 'Enter' || e.key === ' ') && answered) {
         e.preventDefault();
         onNext();
         return;
@@ -148,7 +132,7 @@ export default function QuizShell({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [questions, currentIndex, answered, answerState, onAnswer, onNext, nextEnabled]);
+  }, [questions, currentIndex, answered, answerState, onAnswer, onNext]);
 
   // ─── Écran de fin ────────────────────────────────────────────────────────
   if (finished) {
@@ -329,22 +313,15 @@ export default function QuizShell({
         <div className="flex flex-col items-center gap-1 pt-2">
           <button
             type="button"
-            onClick={nextEnabled ? onNext : undefined}
-            disabled={!nextEnabled}
-            className={`px-8 py-3 font-semibold rounded-lg transition-colors ${
-              nextEnabled
-                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-            }`}
+            onClick={onNext}
+            className="px-8 py-3 font-semibold rounded-lg transition-colors bg-blue-600 text-white hover:bg-blue-700"
           >
             {isLastQuestion ? 'Voir le résultat' : 'Question suivante'}
           </button>
-          {nextEnabled && (
-            <p className="text-xs text-gray-400">
-              ou appuyez sur{' '}
-              <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs">Entrée</kbd>
-            </p>
-          )}
+          <p className="text-xs text-gray-400">
+            ou appuyez sur{' '}
+            <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs">Entrée</kbd>
+          </p>
         </div>
       )}
     </div>
