@@ -113,7 +113,6 @@ export default function CarteFrance({
       .transition()
       .duration(500)
       .call(zoomRef.current.transform, newTransform);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusCode, focusType]);
 
   const handleZoomIn = useCallback(() => {
