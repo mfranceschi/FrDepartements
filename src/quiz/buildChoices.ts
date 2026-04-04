@@ -3,6 +3,8 @@ import type { Choice } from './types';
 
 export interface DeptChoice { code: string; nom: string; regionCode: string }
 export interface RegionChoice { code: string; nom: string }
+export interface PrefDeptChoice { code: string; nom: string; prefecture: string }
+export interface PrefRegionChoice { code: string; nom: string; prefectureRegionale: string }
 
 // ─── Utilitaires ──────────────────────────────────────────────────────────────
 
@@ -147,5 +149,37 @@ export function buildRegionChoicesDifficile(correctRegion: RegionChoice, allRegi
   return shuffle([
     { code: correctRegion.code, label: correctRegion.nom, correct: true },
     ...distractors.slice(0, 3).map((r) => ({ code: r.code, label: r.nom, correct: false })),
+  ]);
+}
+
+// ─── Distractors préfectures ──────────────────────────────────────────────────
+
+/**
+ * Construit 4 choix QCM pour « Deviner la préfecture d'un département » :
+ * la bonne réponse est le nom de la préfecture du département cible ;
+ * les distractors sont des préfectures d'autres départements.
+ * Le `code` de chaque choix correspond au code du département (permet la validation
+ * par comparaison avec `targetCode`).
+ */
+export function buildPrefDeptChoices(correct: PrefDeptChoice, allDepts: PrefDeptChoice[]): Choice[] {
+  const exclude = new Set([correct.code]);
+  const distractors = pickRandom(allDepts, 3, exclude, (d) => d.code);
+  return shuffle([
+    { code: correct.code, label: correct.prefecture, correct: true },
+    ...distractors.map((d) => ({ code: d.code, label: d.prefecture, correct: false })),
+  ]);
+}
+
+/**
+ * Construit 4 choix QCM pour « Deviner la préfecture d'une région » :
+ * la bonne réponse est le nom de la préfecture régionale ;
+ * les distractors sont des préfectures régionales d'autres régions.
+ */
+export function buildPrefRegionChoices(correct: PrefRegionChoice, allRegions: PrefRegionChoice[]): Choice[] {
+  const exclude = new Set([correct.code]);
+  const distractors = pickRandom(allRegions, 3, exclude, (r) => r.code);
+  return shuffle([
+    { code: correct.code, label: correct.prefectureRegionale, correct: true },
+    ...distractors.map((r) => ({ code: r.code, label: r.prefectureRegionale, correct: false })),
   ]);
 }

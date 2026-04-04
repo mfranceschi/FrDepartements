@@ -1,20 +1,19 @@
 import { useEffect, useState } from 'react';
-import { REGIONS } from '../../../data/regions';
 import type { Question, AnswerState } from '../../../quiz/types';
 
-interface DevinerRegionDeptProps {
+interface DevinerPrefectureRegionProps {
   question: Question;
   answerState: AnswerState;
   selectedCode: string | null;
   onAnswer: (code: string) => void;
 }
 
-export default function QuestionDevinerRegionDept({
+export default function QuestionDevinerPrefectureRegion({
   question,
   answerState,
   selectedCode,
   onAnswer,
-}: DevinerRegionDeptProps) {
+}: DevinerPrefectureRegionProps) {
   const choices = question.choices ?? [];
   const [flashing, setFlashing] = useState(false);
 
@@ -26,12 +25,12 @@ export default function QuestionDevinerRegionDept({
     }
   }, [answerState]);
 
-  const correctRegion = REGIONS.find((r) => r.code === question.targetRegionCode);
+  const correctChoice = choices.find((c) => c.correct);
 
   return (
     <div className="flex flex-col gap-6">
       <p className="text-center text-lg">
-        Dans quelle région se trouve <strong>{question.targetNom}</strong> ?
+        Quelle est la préfecture de la région <strong>{question.targetNom}</strong> ?
       </p>
 
       <div className="grid grid-cols-1 gap-3 max-w-sm mx-auto w-full">
@@ -70,7 +69,7 @@ export default function QuestionDevinerRegionDept({
         <p className={`text-center font-semibold ${answerState === 'correct' ? 'text-green-600' : 'text-red-600'}`}>
           {answerState === 'correct'
             ? '✓ Bonne réponse !'
-            : `✗ La bonne réponse était : ${correctRegion?.nom ?? question.targetRegionCode}`}
+            : `✗ La bonne réponse était : ${correctChoice?.label ?? ''}`}
         </p>
       )}
     </div>

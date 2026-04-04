@@ -4,15 +4,16 @@ import QuizConfig from '../components/quiz/QuizConfig';
 import type { QuizConfig as QuizConfigType } from '../quiz/types';
 
 describe('QuizConfig – affichage initial', () => {
-  it('coche uniquement TrouverDeptCarte par défaut', () => {
+  it('sélectionne "depts-carte" comme sujet par défaut', () => {
     render(<QuizConfig onStart={vi.fn()} />);
-    const checkboxes = screen.getAllByRole('checkbox');
-    expect(checkboxes).toHaveLength(7); // 7 modes
-    // TrouverDeptCarte = index 2 (après 2 modes Région)
-    checkboxes.forEach((cb, i) => {
-      if (i === 2) expect(cb).toBeChecked();
-      else expect(cb).not.toBeChecked();
-    });
+    const radio = screen.getByRole('radio', { name: /Départements — Carte/i });
+    expect(radio).toBeChecked();
+  });
+
+  it('affiche 5 sujets disponibles', () => {
+    render(<QuizConfig onStart={vi.fn()} />);
+    const radios = screen.getAllByRole('radio', { name: /Régions|Départements/i });
+    expect(radios).toHaveLength(5);
   });
 
   it('sélectionne "facile" comme difficulté par défaut', () => {
@@ -23,7 +24,6 @@ describe('QuizConfig – affichage initial', () => {
 
   it('sélectionne 25 questions par défaut', () => {
     render(<QuizConfig onStart={vi.fn()} />);
-    // Le bouton "25" doit avoir la classe active (bg-blue-600)
     const btn25 = screen.getByRole('button', { name: '25' });
     expect(btn25).toHaveClass('bg-blue-600');
   });
@@ -34,33 +34,34 @@ describe('QuizConfig – affichage initial', () => {
   });
 });
 
-describe('QuizConfig – interaction modes', () => {
-  it('décoche un mode en cliquant sur sa case', () => {
+describe('QuizConfig – affichage difficulté conditionnel', () => {
+  it('affiche la difficulté pour depts-carte (défaut)', () => {
     render(<QuizConfig onStart={vi.fn()} />);
-    const checkedCheckbox = screen.getAllByRole('checkbox')[2]; // TrouverDeptCarte
-    fireEvent.click(checkedCheckbox);
-    expect(checkedCheckbox).not.toBeChecked();
+    expect(screen.getByText(/Niveau de difficulté/i)).toBeInTheDocument();
   });
 
-  it('affiche un message d\'erreur si tous les modes sont décochés', () => {
+  it('n\'affiche pas la difficulté pour regions-carte', () => {
     render(<QuizConfig onStart={vi.fn()} />);
-    // Décocher TrouverDeptCarte (seul mode coché par défaut, index 2)
-    fireEvent.click(screen.getAllByRole('checkbox')[2]);
-    expect(screen.getByText(/Sélectionnez au moins un type de question/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('radio', { name: /Régions — Carte/i }));
+    expect(screen.queryByText(/Niveau de difficulté/i)).not.toBeInTheDocument();
   });
 
-  it('désactive le bouton "Commencer" si aucun mode sélectionné', () => {
+  it('n\'affiche pas la difficulté pour depts-prefectures', () => {
     render(<QuizConfig onStart={vi.fn()} />);
-    fireEvent.click(screen.getAllByRole('checkbox')[2]); // décocher TrouverDeptCarte
-    expect(screen.getByRole('button', { name: /Commencer/i })).toBeDisabled();
+    fireEvent.click(screen.getByRole('radio', { name: /Départements — Préfectures/i }));
+    expect(screen.queryByText(/Niveau de difficulté/i)).not.toBeInTheDocument();
   });
 
-  it('réactive le bouton en re-cochant au moins un mode', () => {
+  it('n\'affiche pas la difficulté pour regions-prefectures', () => {
     render(<QuizConfig onStart={vi.fn()} />);
-    const checkboxes = screen.getAllByRole('checkbox');
-    fireEvent.click(checkboxes[2]); // décoche TrouverDeptCarte → 0 modes, bouton disabled
-    fireEvent.click(checkboxes[0]); // coche TrouverRegionCarte → 1 mode, bouton enabled
-    expect(screen.getByRole('button', { name: /Commencer/i })).not.toBeDisabled();
+    fireEvent.click(screen.getByRole('radio', { name: /Régions — Préfectures/i }));
+    expect(screen.queryByText(/Niveau de difficulté/i)).not.toBeInTheDocument();
+  });
+
+  it('affiche la difficulté pour depts-numeros', () => {
+    render(<QuizConfig onStart={vi.fn()} />);
+    fireEvent.click(screen.getByRole('radio', { name: /Départements — Numéros/i }));
+    expect(screen.getByText(/Niveau de difficulté/i)).toBeInTheDocument();
   });
 });
 
@@ -96,7 +97,7 @@ describe('QuizConfig – soumission', () => {
 
     expect(onStart).toHaveBeenCalledOnce();
     const config: QuizConfigType = onStart.mock.calls[0][0];
-    expect(config.modes).toEqual(['TrouverDeptCarte']);
+    expect(config.sujet).toBe('depts-carte');
     expect(config.difficulty).toBe('facile');
     expect(config.sessionLength).toBe(25);
   });
@@ -114,26 +115,14 @@ describe('QuizConfig – soumission', () => {
     expect(config.sessionLength).toBe(50);
   });
 
-  it('transmet uniquement les modes cochés', () => {
+  it('transmet le sujet sélectionné', () => {
     const onStart = vi.fn();
     render(<QuizConfig onStart={onStart} />);
 
-    // Cocher TrouverRegionCarte (index 0) et décocher TrouverDeptCarte (index 2)
-    const checkboxes = screen.getAllByRole('checkbox');
-    fireEvent.click(checkboxes[0]); // coche TrouverRegionCarte
-    fireEvent.click(checkboxes[2]); // décoche TrouverDeptCarte
+    fireEvent.click(screen.getByRole('radio', { name: /Régions — Carte/i }));
     fireEvent.click(screen.getByRole('button', { name: /Commencer/i }));
 
     const config: QuizConfigType = onStart.mock.calls[0][0];
-    expect(config.modes).toHaveLength(1);
-    expect(config.modes).toContain('TrouverRegionCarte');
-  });
-
-  it('ne déclenche pas onStart si aucun mode coché', () => {
-    const onStart = vi.fn();
-    render(<QuizConfig onStart={onStart} />);
-    fireEvent.click(screen.getAllByRole('checkbox')[2]); // décocher TrouverDeptCarte (seul mode coché)
-    fireEvent.click(screen.getByRole('button', { name: /Commencer/i }));
-    expect(onStart).not.toHaveBeenCalled();
+    expect(config.sujet).toBe('regions-carte');
   });
 });

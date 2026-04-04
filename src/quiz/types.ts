@@ -1,3 +1,10 @@
+export type QuizSujet =
+  | 'regions-carte'
+  | 'depts-carte'
+  | 'depts-numeros'
+  | 'depts-prefectures'
+  | 'regions-prefectures';
+
 export type QuizMode =
   | 'TrouverDeptCarte'
   | 'TrouverRegionCarte'
@@ -5,12 +12,13 @@ export type QuizMode =
   | 'DevinerNomDeptCarte'
   | 'DevinerCodeDept'
   | 'DevinerNomDept'
-  | 'DevinerRegionDept';
+  | 'DevinerPrefectureDept'
+  | 'DevinerPrefectureRegion';
 
 export type Difficulty = 'facile' | 'difficile';
 
 export interface QuizConfig {
-  modes: QuizMode[];
+  sujet: QuizSujet;
   difficulty: Difficulty;
   sessionLength: 10 | 25 | 50 | 'tout';
 }

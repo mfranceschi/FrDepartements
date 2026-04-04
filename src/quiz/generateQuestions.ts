@@ -7,47 +7,68 @@ import {
   buildCodeChoicesFacile,
   buildCodeChoicesDifficile,
   buildRegionChoicesFacile,
-  buildRegionChoicesDifficile,
+  buildPrefDeptChoices,
+  buildPrefRegionChoices,
   type DeptChoice,
+  type PrefDeptChoice,
+  type PrefRegionChoice,
 } from './buildChoices';
-import type { QuizConfig, Question, SessionState, QuizMode } from './types';
+import type { QuizConfig, QuizSujet, Question, SessionState, QuizMode } from './types';
 
 export const CARTE_MODES = new Set<QuizMode>(['TrouverDeptCarte', 'TrouverRegionCarte']);
-export const QCM_MODES = new Set<QuizMode>(['DevinerNomRegionCarte', 'DevinerNomDeptCarte', 'DevinerCodeDept', 'DevinerNomDept', 'DevinerRegionDept']);
+export const QCM_MODES = new Set<QuizMode>([
+  'DevinerNomRegionCarte',
+  'DevinerNomDeptCarte',
+  'DevinerCodeDept',
+  'DevinerNomDept',
+  'DevinerPrefectureDept',
+  'DevinerPrefectureRegion',
+]);
+
+/** Modes internes utilisés pour chaque sujet. */
+const SUJET_MODES: Record<QuizSujet, QuizMode[]> = {
+  'regions-carte':       ['TrouverRegionCarte', 'DevinerNomRegionCarte'],
+  'depts-carte':         ['TrouverDeptCarte', 'DevinerNomDeptCarte'],
+  'depts-numeros':       ['DevinerCodeDept', 'DevinerNomDept'],
+  'depts-prefectures':   ['DevinerPrefectureDept'],
+  'regions-prefectures': ['DevinerPrefectureRegion'],
+};
 
 /**
  * Génère la liste ordonnée de questions pour une session à partir de la
  * configuration utilisateur.
  *
- * **Équilibrage carte / QCM** : quand les deux familles de modes sont activées
- * simultanément, les questions sont réparties à 50/50 (arrondi supérieur pour
- * la carte). Cela évite qu'un type n'écrase l'autre quand le pool carte est
- * plus grand que le pool QCM.
+ * **Équilibrage carte / QCM** : pour les sujets qui mêlent un mode carte et un
+ * mode QCM (`regions-carte`, `depts-carte`), les questions sont réparties à
+ * 50/50 (arrondi supérieur pour la carte) afin qu'aucun type ne domine l'autre.
  *
  * **Choix multiples** : les questions QCM incluent leurs `choices` pré-construits
  * ici afin que le rendu n'ait aucune logique de génération à exécuter.
- *
- * **Longueur `'tout'`** : quand l'utilisateur sélectionne « tout », la session
- * contient l'intégralité des éléments combinés des pools sélectionnés.
  */
 export function generateQuestions(config: QuizConfig): Question[] {
-  const allDepts = DEPARTEMENTS.map((d) => ({ code: d.code, nom: d.nom, regionCode: d.regionCode }));
-  const allRegions = REGIONS.map((r) => ({ code: r.code, nom: r.nom }));
+  const allDepts = DEPARTEMENTS.map((d) => ({
+    code: d.code,
+    nom: d.nom,
+    regionCode: d.regionCode,
+    prefecture: d.prefecture,
+  }));
+  const allRegions = REGIONS.map((r) => ({
+    code: r.code,
+    nom: r.nom,
+    prefectureRegionale: r.prefectureRegionale,
+  }));
+
+  const modes = SUJET_MODES[config.sujet];
 
   type PoolItem = { mode: QuizMode; code: string; nom: string; regionCode?: string };
 
   const cartePool: PoolItem[] = [];
   const qcmPool: PoolItem[] = [];
 
-  const hasCarteMode = config.modes.some((m) => CARTE_MODES.has(m));
-  const hasQcmMode = config.modes.some((m) => QCM_MODES.has(m));
-
-  for (const mode of config.modes) {
+  for (const mode of modes) {
     switch (mode) {
       case 'TrouverDeptCarte':
-        allDepts.forEach((d) =>
-          cartePool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }),
-        );
+        allDepts.forEach((d) => cartePool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }));
         break;
       case 'TrouverRegionCarte':
         allRegions.forEach((r) => cartePool.push({ mode, code: r.code, nom: r.nom }));
@@ -56,25 +77,22 @@ export function generateQuestions(config: QuizConfig): Question[] {
         allRegions.forEach((r) => qcmPool.push({ mode, code: r.code, nom: r.nom }));
         break;
       case 'DevinerNomDeptCarte':
-        allDepts.forEach((d) =>
-          qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }),
-        );
+        allDepts.forEach((d) => qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }));
         break;
       case 'DevinerCodeDept':
       case 'DevinerNomDept':
-        allDepts.forEach((d) =>
-          qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }),
-        );
+        allDepts.forEach((d) => qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }));
         break;
-      case 'DevinerRegionDept':
-        allDepts.forEach((d) =>
-          qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }),
-        );
+      case 'DevinerPrefectureDept':
+        allDepts.forEach((d) => qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }));
+        break;
+      case 'DevinerPrefectureRegion':
+        allRegions.forEach((r) => qcmPool.push({ mode, code: r.code, nom: r.nom }));
         break;
     }
   }
 
-  // Déduplique un pool par code d'entité (régions ou départements).
+  // Déduplique un pool par code d'entité (évite deux questions sur la même entité).
   function deduplicateByCode(items: PoolItem[]): PoolItem[] {
     const seen = new Set<string>();
     return items.filter((item) => {
@@ -83,6 +101,9 @@ export function generateQuestions(config: QuizConfig): Question[] {
       return true;
     });
   }
+
+  const hasCarteMode = cartePool.length > 0;
+  const hasQcmMode = qcmPool.length > 0;
 
   let selected: PoolItem[];
 
@@ -109,6 +130,9 @@ export function generateQuestions(config: QuizConfig): Question[] {
     const count = config.sessionLength === 'tout' ? dedup.length : config.sessionLength;
     selected = dedup.slice(0, Math.min(count, dedup.length));
   }
+
+  const allDeptsPref: PrefDeptChoice[] = allDepts;
+  const allRegionsPref: PrefRegionChoice[] = allRegions;
 
   return selected.map((item, idx): Question => {
     const base: Question = {
@@ -139,10 +163,7 @@ export function generateQuestions(config: QuizConfig): Question[] {
       case 'DevinerNomRegionCarte': {
         const correctRegion = allRegions.find((r) => r.code === item.code);
         if (correctRegion) {
-          base.choices =
-            config.difficulty === 'facile'
-              ? buildRegionChoicesFacile(correctRegion, allRegions)
-              : buildRegionChoicesDifficile(correctRegion, allRegions);
+          base.choices = buildRegionChoicesFacile(correctRegion, allRegions);
         }
         break;
       }
@@ -154,13 +175,17 @@ export function generateQuestions(config: QuizConfig): Question[] {
             : buildDeptChoicesDifficile(deptItem, allDepts);
         break;
       }
-      case 'DevinerRegionDept': {
-        const correctRegion = allRegions.find((r) => r.code === item.regionCode);
-        if (correctRegion) {
-          base.choices =
-            config.difficulty === 'facile'
-              ? buildRegionChoicesFacile(correctRegion, allRegions)
-              : buildRegionChoicesDifficile(correctRegion, allRegions);
+      case 'DevinerPrefectureDept': {
+        const deptItem = allDeptsPref.find((d) => d.code === item.code);
+        if (deptItem) {
+          base.choices = buildPrefDeptChoices(deptItem, allDeptsPref);
+        }
+        break;
+      }
+      case 'DevinerPrefectureRegion': {
+        const regionItem = allRegionsPref.find((r) => r.code === item.code);
+        if (regionItem) {
+          base.choices = buildPrefRegionChoices(regionItem, allRegionsPref);
         }
         break;
       }

@@ -3,8 +3,8 @@ import { renderHook, act } from '@testing-library/react';
 import { useQuiz } from '../hooks/useQuiz';
 import type { QuizConfig } from '../quiz/types';
 
-const CARTE_CONFIG: QuizConfig = { modes: ['TrouverDeptCarte'], difficulty: 'facile', sessionLength: 10 };
-const QCM_CONFIG: QuizConfig = { modes: ['DevinerNomDept'], difficulty: 'facile', sessionLength: 10 };
+const CARTE_CONFIG: QuizConfig = { sujet: 'depts-carte', difficulty: 'facile', sessionLength: 10 };
+const QCM_CONFIG: QuizConfig = { sujet: 'depts-numeros', difficulty: 'facile', sessionLength: 10 };
 
 // ── answerHistory ─────────────────────────────────────────────────────────────
 
@@ -40,8 +40,9 @@ describe('useQuiz – answerHistory', () => {
 
   it('enregistre le mode de chaque question', () => {
     const { result } = renderHook(() => useQuiz(QCM_CONFIG));
+    const expectedMode = result.current.session.questions[0].mode;
     act(() => { result.current.submitAnswer('__FAUX__'); });
-    expect(result.current.session.answerHistory[0].mode).toBe('DevinerNomDept');
+    expect(result.current.session.answerHistory[0].mode).toBe(expectedMode);
   });
 
   it('est réinitialisé après restart', () => {
@@ -54,45 +55,48 @@ describe('useQuiz – answerHistory', () => {
   });
 });
 
-// ── Mode unique activé ────────────────────────────────────────────────────────
+// ── Modes par sujet ───────────────────────────────────────────────────────────
 
-describe('useQuiz – mode unique activé', () => {
-  it('toutes les questions ont le mode DevinerNomDept quand seul ce mode est activé', () => {
-    const config: QuizConfig = { modes: ['DevinerNomDept'], difficulty: 'facile', sessionLength: 10 };
-    const { result } = renderHook(() => useQuiz(config));
-    const modes = result.current.session.questions.map((q) => q.mode);
-    expect(modes.every((m) => m === 'DevinerNomDept')).toBe(true);
-    expect(result.current.session.questions).toHaveLength(10);
-  });
-
-  it('toutes les questions ont le mode TrouverDeptCarte quand seul ce mode est activé', () => {
-    const config: QuizConfig = { modes: ['TrouverDeptCarte'], difficulty: 'facile', sessionLength: 10 };
-    const { result } = renderHook(() => useQuiz(config));
-    const modes = result.current.session.questions.map((q) => q.mode);
-    expect(modes.every((m) => m === 'TrouverDeptCarte')).toBe(true);
-  });
-
-  it('seuls les modes sélectionnés apparaissent dans les questions', () => {
-    const config: QuizConfig = {
-      modes: ['DevinerNomDept', 'DevinerCodeDept'],
-      difficulty: 'facile',
-      sessionLength: 25,
-    };
+describe('useQuiz – modes par sujet', () => {
+  it('depts-numeros : toutes les questions sont DevinerNomDept ou DevinerCodeDept', () => {
+    const config: QuizConfig = { sujet: 'depts-numeros', difficulty: 'facile', sessionLength: 10 };
     const { result } = renderHook(() => useQuiz(config));
     const allowed = new Set(['DevinerNomDept', 'DevinerCodeDept']);
     const modes = result.current.session.questions.map((q) => q.mode);
     expect(modes.every((m) => allowed.has(m))).toBe(true);
+    expect(result.current.session.questions).toHaveLength(10);
   });
 
-  it('sessionLength "tout" génère une session avec tous les départements (> 50)', () => {
-    const config: QuizConfig = { modes: ['DevinerNomDept'], difficulty: 'facile', sessionLength: 'tout' };
+  it('depts-carte : toutes les questions sont TrouverDeptCarte ou DevinerNomDeptCarte', () => {
+    const config: QuizConfig = { sujet: 'depts-carte', difficulty: 'facile', sessionLength: 10 };
     const { result } = renderHook(() => useQuiz(config));
-    // 96 départements métropolitains → au moins 96 questions en mode "tout"
+    const allowed = new Set(['TrouverDeptCarte', 'DevinerNomDeptCarte']);
+    const modes = result.current.session.questions.map((q) => q.mode);
+    expect(modes.every((m) => allowed.has(m))).toBe(true);
+  });
+
+  it('depts-prefectures : toutes les questions sont DevinerPrefectureDept', () => {
+    const config: QuizConfig = { sujet: 'depts-prefectures', difficulty: 'facile', sessionLength: 10 };
+    const { result } = renderHook(() => useQuiz(config));
+    const modes = result.current.session.questions.map((q) => q.mode);
+    expect(modes.every((m) => m === 'DevinerPrefectureDept')).toBe(true);
+  });
+
+  it('regions-prefectures : toutes les questions sont DevinerPrefectureRegion', () => {
+    const config: QuizConfig = { sujet: 'regions-prefectures', difficulty: 'facile', sessionLength: 10 };
+    const { result } = renderHook(() => useQuiz(config));
+    const modes = result.current.session.questions.map((q) => q.mode);
+    expect(modes.every((m) => m === 'DevinerPrefectureRegion')).toBe(true);
+  });
+
+  it('sessionLength "tout" génère une session avec tous les départements (≥ 96)', () => {
+    const config: QuizConfig = { sujet: 'depts-numeros', difficulty: 'facile', sessionLength: 'tout' };
+    const { result } = renderHook(() => useQuiz(config));
     expect(result.current.session.questions.length).toBeGreaterThanOrEqual(96);
   });
 
   it('sessionLength "tout" ne génère pas de doublon de département cible', () => {
-    const config: QuizConfig = { modes: ['TrouverDeptCarte'], difficulty: 'facile', sessionLength: 'tout' };
+    const config: QuizConfig = { sujet: 'depts-carte', difficulty: 'facile', sessionLength: 'tout' };
     const { result } = renderHook(() => useQuiz(config));
     const targetCodes = result.current.session.questions.map((q) => q.targetCode);
     const unique = new Set(targetCodes);

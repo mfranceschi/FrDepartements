@@ -40,10 +40,9 @@ export function useQuiz(config: QuizConfig): {
         case 'DevinerNomDeptCarte':
         case 'DevinerCodeDept':
         case 'DevinerNomDept':
+        case 'DevinerPrefectureDept':
+        case 'DevinerPrefectureRegion':
           correct = code === question.targetCode;
-          break;
-        case 'DevinerRegionDept':
-          correct = code === question.targetRegionCode;
           break;
       }
 

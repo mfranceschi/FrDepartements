@@ -6,7 +6,8 @@ import QuestionDevinerNomRegionCarte from './types-questions/QuestionDevinerNomR
 import QuestionDevinerNomDeptCarte from './types-questions/QuestionDevinerNomDeptCarte';
 import QuestionDevinerCodeDept from './types-questions/QuestionDevinerCodeDept';
 import QuestionDevinerNomDept from './types-questions/QuestionDevinerNomDept';
-import QuestionDevinerRegionDept from './types-questions/QuestionDevinerRegionDept';
+import QuestionDevinerPrefectureDept from './types-questions/QuestionDevinerPrefectureDept';
+import QuestionDevinerPrefectureRegion from './types-questions/QuestionDevinerPrefectureRegion';
 
 interface QuizShellProps {
   session: SessionState;
@@ -16,7 +17,14 @@ interface QuizShellProps {
   onReviewErrors: () => void;
 }
 
-const QCM_MODES = new Set(['DevinerNomRegionCarte', 'DevinerNomDeptCarte', 'DevinerCodeDept', 'DevinerNomDept', 'DevinerRegionDept']);
+const QCM_MODES = new Set([
+  'DevinerNomRegionCarte',
+  'DevinerNomDeptCarte',
+  'DevinerCodeDept',
+  'DevinerNomDept',
+  'DevinerPrefectureDept',
+  'DevinerPrefectureRegion',
+]);
 
 const MODE_LABELS: Record<QuizMode, string> = {
   TrouverDeptCarte: 'Dept. sur carte',
@@ -25,7 +33,8 @@ const MODE_LABELS: Record<QuizMode, string> = {
   DevinerNomDeptCarte: 'Nom de dept. (carte)',
   DevinerCodeDept: 'Numéro de dept.',
   DevinerNomDept: 'Nom de dept.',
-  DevinerRegionDept: "Région d'un dept.",
+  DevinerPrefectureDept: 'Préfecture de dept.',
+  DevinerPrefectureRegion: 'Préfecture de région',
 };
 
 function scoreColor(ratio: number): string {
@@ -298,8 +307,16 @@ export default function QuizShell({
             onAnswer={onAnswer}
           />
         )}
-        {question.mode === 'DevinerRegionDept' && (
-          <QuestionDevinerRegionDept
+        {question.mode === 'DevinerPrefectureDept' && (
+          <QuestionDevinerPrefectureDept
+            question={question}
+            answerState={answerState}
+            selectedCode={selectedCode}
+            onAnswer={onAnswer}
+          />
+        )}
+        {question.mode === 'DevinerPrefectureRegion' && (
+          <QuestionDevinerPrefectureRegion
             question={question}
             answerState={answerState}
             selectedCode={selectedCode}
