@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import type { Choice, AnswerState } from '../../quiz/types';
 
 interface QcmChoicesProps {
@@ -21,16 +20,6 @@ export default function QcmChoices({
   gridCols = 1,
   buttonLayout = 'list',
 }: QcmChoicesProps) {
-  const [flashing, setFlashing] = useState(false);
-
-  useEffect(() => {
-    if (answerState !== 'pending') {
-      const t1 = setTimeout(() => setFlashing(true), 0);
-      const t2 = setTimeout(() => setFlashing(false), 500);
-      return () => { clearTimeout(t1); clearTimeout(t2); };
-    }
-  }, [answerState]);
-
   const isAnswered = answerState !== 'pending';
   const gridClass = gridCols === 2 ? 'grid-cols-2' : 'grid-cols-1';
 
@@ -44,10 +33,10 @@ export default function QcmChoices({
           let flashClass = '';
           if (isAnswered && choice.correct) {
             colorClass = 'bg-green-100 text-green-800 border-green-400';
-            if (flashing) flashClass = 'flash-correct';
+            flashClass = 'flash-correct';
           } else if (isAnswered && isSelected && !choice.correct) {
             colorClass = 'bg-red-100 text-red-800 border-red-400';
-            if (flashing) flashClass = 'flash-wrong';
+            flashClass = 'flash-wrong';
           } else if (isAnswered) {
             colorClass = 'bg-white text-gray-400 border-gray-200';
           }

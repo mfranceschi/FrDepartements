@@ -19,6 +19,8 @@ const cache: {
   promise: null,
 };
 
+const LOAD_TIMEOUT_MS = 15_000;
+
 export function useGeoData(): GeoDataState {
   const [state, setState] = useState<GeoDataState>({
     departements: cache.departements,
@@ -38,14 +40,22 @@ export function useGeoData(): GeoDataState {
     }
 
     if (cache.promise === null) {
-      cache.promise = Promise.all([
+      const loadPromise = Promise.all([
         import('../geo/departements.json'),
         import('../geo/regions.json'),
       ]).then(([depts, regs]) => {
         cache.departements = depts.default as unknown as FeatureCollection;
         cache.regions = regs.default as unknown as FeatureCollection;
-      }).catch((err: unknown) => {
-        cache.promise = null; // Allow retry on next mount
+      });
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Délai de chargement dépassé')), LOAD_TIMEOUT_MS),
+      );
+
+      cache.promise = Promise.race([loadPromise, timeoutPromise]).catch((err: unknown) => {
+        cache.promise = null;
+        cache.departements = null;
+        cache.regions = null;
         throw err;
       });
     }

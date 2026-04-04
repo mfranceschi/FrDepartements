@@ -40,7 +40,7 @@ export interface Choice {
 
 export type AnswerState = 'pending' | 'correct' | 'wrong';
 
-export const MODE_LABELS: Record<QuizMode, string> = {
+export const MODE_LABELS: Readonly<Record<QuizMode, string>> = {
   TrouverDeptCarte: 'Dept. sur carte',
   TrouverRegionCarte: 'Région sur carte',
   DevinerNomRegionCarte: 'Nom de région',
@@ -55,6 +55,14 @@ export interface AnswerRecord {
   mode: QuizMode;
   correct: boolean;
   question: Question;
+}
+
+/** Props partagées par tous les composants de type de question. */
+export interface QuestionProps {
+  question: Question;
+  answerState: AnswerState;
+  selectedCode: string | null;
+  onAnswer: (code: string) => void;
 }
 
 export interface SessionState {

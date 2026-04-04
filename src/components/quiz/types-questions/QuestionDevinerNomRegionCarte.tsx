@@ -1,22 +1,15 @@
 import type { Feature } from 'geojson';
 import CarteFrance from '../../carte/CarteFrance';
 import { useGeoData } from '../../../hooks/useGeoData';
-import type { Question, AnswerState } from '../../../quiz/types';
+import type { QuestionProps } from '../../../quiz/types';
 import QcmChoices from '../QcmChoices';
-
-interface QuestionDevinerNomRegionCarteProps {
-  question: Question;
-  answerState: AnswerState;
-  selectedCode: string | null;
-  onAnswer: (code: string) => void;
-}
 
 export default function QuestionDevinerNomRegionCarte({
   question,
   answerState,
   selectedCode,
   onAnswer,
-}: QuestionDevinerNomRegionCarteProps) {
+}: QuestionProps) {
   const geoData = useGeoData();
 
   if (!geoData.departements || !geoData.regions) {

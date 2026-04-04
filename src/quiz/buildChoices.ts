@@ -31,155 +31,97 @@ function pickRandom<T>(arr: T[], n: number, excludeCodes: Set<string>, getCode: 
   return shuffle(candidates).slice(0, n);
 }
 
-// ─── Distractors départements ─────────────────────────────────────────────────
+// ─── Factory générique ────────────────────────────────────────────────────────
 
 /**
- * Construit 4 choix QCM pour un mode « Deviner le nom » en difficulté **facile** :
- * les 3 distractors sont tirés aléatoirement parmi tous les départements,
- * toutes régions confondues.
+ * Construit 4 choix QCM mélangés depuis un pool.
+ *
+ * @param correct       L'élément dont la réponse est correcte.
+ * @param allItems      Pool complet dans lequel piocher les distractors.
+ * @param getCode       Extrait le code unique d'un élément.
+ * @param getLabel      Extrait le label affiché d'un élément.
+ * @param priorityPool  En mode difficile : éléments à préférer comme distractors
+ *                      (ex. même région, régions voisines). Le fallback pioche
+ *                      dans les éléments absents de ce pool si moins de 3 sont disponibles.
  */
+function buildChoicesFrom<T>(
+  correct: T,
+  allItems: T[],
+  getCode: (item: T) => string,
+  getLabel: (item: T) => string,
+  priorityPool?: T[],
+): Choice[] {
+  const exclude = new Set([getCode(correct)]);
+  let distractors: T[];
+
+  if (priorityPool && priorityPool.length > 0) {
+    distractors = shuffle(priorityPool).slice(0, 3);
+    if (distractors.length < 3) {
+      const priorityCodes = new Set(priorityPool.map(getCode));
+      const fallback = pickRandom(
+        allItems.filter((item) => !priorityCodes.has(getCode(item))),
+        3 - distractors.length,
+        exclude,
+        getCode,
+      );
+      distractors.push(...fallback);
+    }
+  } else {
+    distractors = pickRandom(allItems, 3, exclude, getCode);
+  }
+
+  return shuffle([
+    { code: getCode(correct), label: getLabel(correct), correct: true },
+    ...distractors.slice(0, 3).map((item) => ({ code: getCode(item), label: getLabel(item), correct: false })),
+  ]);
+}
+
+// ─── API publique ─────────────────────────────────────────────────────────────
+
+/** Nom de département — distractors aléatoires toutes régions confondues. */
 export function buildDeptChoicesFacile(correct: DeptChoice, allDepts: DeptChoice[]): Choice[] {
-  const exclude = new Set([correct.code]);
-  const distractors = pickRandom(allDepts, 3, exclude, (d) => d.code);
-  return shuffle([
-    { code: correct.code, label: correct.nom, correct: true },
-    ...distractors.map((d) => ({ code: d.code, label: d.nom, correct: false })),
-  ]);
+  return buildChoicesFrom(correct, allDepts, (d) => d.code, (d) => d.nom);
 }
 
-/**
- * Construit 4 choix QCM pour un mode « Deviner le nom » en difficulté **difficile** :
- * les distractors sont prioritairement pris dans la même région que le département
- * cible (voisins proches), ce qui rend la discrimination plus difficile.
- */
+/** Nom de département — distractors prioritairement dans la même région. */
 export function buildDeptChoicesDifficile(correct: DeptChoice, allDepts: DeptChoice[]): Choice[] {
-  const exclude = new Set([correct.code]);
   const sameRegion = allDepts.filter(
     (d) => d.regionCode === correct.regionCode && d.code !== correct.code,
   );
-  const distractors: DeptChoice[] = shuffle(sameRegion).slice(0, 3);
-  if (distractors.length < 3) {
-    const remaining = pickRandom(
-      allDepts.filter((d) => d.regionCode !== correct.regionCode),
-      3 - distractors.length,
-      exclude,
-      (d) => d.code,
-    );
-    distractors.push(...remaining);
-  }
-  return shuffle([
-    { code: correct.code, label: correct.nom, correct: true },
-    ...distractors.slice(0, 3).map((d) => ({ code: d.code, label: d.nom, correct: false })),
-  ]);
+  return buildChoicesFrom(correct, allDepts, (d) => d.code, (d) => d.nom, sameRegion);
 }
 
-// ─── Distractors codes ────────────────────────────────────────────────────────
-
-/**
- * Construit 4 choix QCM pour un mode « Deviner le code » en difficulté **facile** :
- * les labels affichés sont les codes (ex. « 75 », « 13 »), distractors aléatoires.
- */
+/** Code de département — distractors aléatoires toutes régions confondues. */
 export function buildCodeChoicesFacile(correct: DeptChoice, allDepts: DeptChoice[]): Choice[] {
-  const exclude = new Set([correct.code]);
-  const distractors = pickRandom(allDepts, 3, exclude, (d) => d.code);
-  return shuffle([
-    { code: correct.code, label: correct.code, correct: true },
-    ...distractors.map((d) => ({ code: d.code, label: d.code, correct: false })),
-  ]);
+  return buildChoicesFrom(correct, allDepts, (d) => d.code, (d) => d.code);
 }
 
-/**
- * Construit 4 choix QCM pour un mode « Deviner le code » en difficulté **difficile** :
- * les distractors sont des codes de départements de la même région.
- */
+/** Code de département — distractors prioritairement dans la même région. */
 export function buildCodeChoicesDifficile(correct: DeptChoice, allDepts: DeptChoice[]): Choice[] {
-  const exclude = new Set([correct.code]);
   const sameRegion = allDepts.filter(
     (d) => d.regionCode === correct.regionCode && d.code !== correct.code,
   );
-  const distractors: DeptChoice[] = shuffle(sameRegion).slice(0, 3);
-  if (distractors.length < 3) {
-    const remaining = pickRandom(
-      allDepts.filter((d) => d.regionCode !== correct.regionCode),
-      3 - distractors.length,
-      exclude,
-      (d) => d.code,
-    );
-    distractors.push(...remaining);
-  }
-  return shuffle([
-    { code: correct.code, label: correct.code, correct: true },
-    ...distractors.slice(0, 3).map((d) => ({ code: d.code, label: d.code, correct: false })),
-  ]);
+  return buildChoicesFrom(correct, allDepts, (d) => d.code, (d) => d.code, sameRegion);
 }
 
-// ─── Distractors régions ──────────────────────────────────────────────────────
-
-/**
- * Construit 4 choix QCM pour un mode « Deviner la région » en difficulté **facile** :
- * les distractors sont des régions tirées aléatoirement parmi toutes les régions.
- */
+/** Nom de région — distractors aléatoires. */
 export function buildRegionChoicesFacile(correctRegion: RegionChoice, allRegions: RegionChoice[]): Choice[] {
-  const exclude = new Set([correctRegion.code]);
-  const distractors = pickRandom(allRegions, 3, exclude, (r) => r.code);
-  return shuffle([
-    { code: correctRegion.code, label: correctRegion.nom, correct: true },
-    ...distractors.map((r) => ({ code: r.code, label: r.nom, correct: false })),
-  ]);
+  return buildChoicesFrom(correctRegion, allRegions, (r) => r.code, (r) => r.nom);
 }
 
-/**
- * Construit 4 choix QCM pour un mode « Deviner la région » en difficulté **difficile** :
- * les distractors sont prioritairement des régions géographiquement voisines.
- */
+/** Nom de région — distractors prioritairement parmi les régions géographiquement voisines. */
 export function buildRegionChoicesDifficile(correctRegion: RegionChoice, allRegions: RegionChoice[]): Choice[] {
-  const exclude = new Set([correctRegion.code]);
   const adjacentCodes = REGION_ADJACENCY[correctRegion.code] ?? [];
   const adjacent = allRegions.filter((r) => adjacentCodes.includes(r.code));
-  const distractors: RegionChoice[] = shuffle(adjacent).slice(0, 3);
-  if (distractors.length < 3) {
-    const remaining = pickRandom(
-      allRegions.filter((r) => !adjacentCodes.includes(r.code)),
-      3 - distractors.length,
-      exclude,
-      (r) => r.code,
-    );
-    distractors.push(...remaining);
-  }
-  return shuffle([
-    { code: correctRegion.code, label: correctRegion.nom, correct: true },
-    ...distractors.slice(0, 3).map((r) => ({ code: r.code, label: r.nom, correct: false })),
-  ]);
+  return buildChoicesFrom(correctRegion, allRegions, (r) => r.code, (r) => r.nom, adjacent);
 }
 
-// ─── Distractors préfectures ──────────────────────────────────────────────────
-
-/**
- * Construit 4 choix QCM pour « Deviner la préfecture d'un département » :
- * la bonne réponse est le nom de la préfecture du département cible ;
- * les distractors sont des préfectures d'autres départements.
- * Le `code` de chaque choix correspond au code du département (permet la validation
- * par comparaison avec `targetCode`).
- */
+/** Préfecture de département — distractors aléatoires. */
 export function buildPrefDeptChoices(correct: PrefDeptChoice, allDepts: PrefDeptChoice[]): Choice[] {
-  const exclude = new Set([correct.code]);
-  const distractors = pickRandom(allDepts, 3, exclude, (d) => d.code);
-  return shuffle([
-    { code: correct.code, label: correct.prefecture, correct: true },
-    ...distractors.map((d) => ({ code: d.code, label: d.prefecture, correct: false })),
-  ]);
+  return buildChoicesFrom(correct, allDepts, (d) => d.code, (d) => d.prefecture);
 }
 
-/**
- * Construit 4 choix QCM pour « Deviner la préfecture d'une région » :
- * la bonne réponse est le nom de la préfecture régionale ;
- * les distractors sont des préfectures régionales d'autres régions.
- */
+/** Préfecture de région — distractors aléatoires. */
 export function buildPrefRegionChoices(correct: PrefRegionChoice, allRegions: PrefRegionChoice[]): Choice[] {
-  const exclude = new Set([correct.code]);
-  const distractors = pickRandom(allRegions, 3, exclude, (r) => r.code);
-  return shuffle([
-    { code: correct.code, label: correct.prefectureRegionale, correct: true },
-    ...distractors.map((r) => ({ code: r.code, label: r.prefectureRegionale, correct: false })),
-  ]);
+  return buildChoicesFrom(correct, allRegions, (r) => r.code, (r) => r.prefectureRegionale);
 }

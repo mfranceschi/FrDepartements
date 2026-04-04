@@ -61,6 +61,8 @@ export default function CarteFrance({
   const svgRef = useRef<SVGSVGElement>(null);
   const zoomRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | undefined>(undefined);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const featuresRef = useRef(features);
+  featuresRef.current = features;
 
   // Setup d3.zoom
   useEffect(() => {
@@ -81,12 +83,13 @@ export default function CarteFrance({
     };
   }, []);
 
-  // Zoom programmatique vers un territoire (recherche sidebar)
+  // Zoom programmatique vers un territoire (recherche sidebar).
+  // featuresRef est toujours à jour sans être une dépendance : l'effet ne se
+  // déclenche que sur un changement de focusCode / focusType.
   useEffect(() => {
     if (!focusCode || !svgRef.current || !zoomRef.current) return;
 
-    // Cherche dans le bon tableau selon le type
-    const pool = focusType === 'region' ? features.regions : features.departements;
+    const pool = focusType === 'region' ? featuresRef.current.regions : featuresRef.current.departements;
     const target = pool.find((f) => f.properties?.code === focusCode);
     if (!target) return;
 
@@ -104,7 +107,8 @@ export default function CarteFrance({
       .transition()
       .duration(500)
       .call(zoomRef.current.transform, newTransform);
-  }, [focusCode, focusType, features]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusCode, focusType]);
 
   const handleZoomIn = useCallback(() => {
     if (!svgRef.current || !zoomRef.current) return;

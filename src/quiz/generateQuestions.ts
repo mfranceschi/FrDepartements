@@ -7,6 +7,7 @@ import {
   buildCodeChoicesFacile,
   buildCodeChoicesDifficile,
   buildRegionChoicesFacile,
+  buildRegionChoicesDifficile,
   buildPrefDeptChoices,
   buildPrefRegionChoices,
   type DeptChoice,
@@ -164,7 +165,10 @@ export function generateQuestions(config: QuizConfig): Question[] {
       case 'DevinerNomRegionCarte': {
         const correctRegion = ALL_REGIONS.find((r) => r.code === item.code);
         if (correctRegion) {
-          base.choices = buildRegionChoicesFacile(correctRegion, ALL_REGIONS);
+          base.choices =
+            config.difficulty === 'facile'
+              ? buildRegionChoicesFacile(correctRegion, ALL_REGIONS)
+              : buildRegionChoicesDifficile(correctRegion, ALL_REGIONS);
         }
         break;
       }

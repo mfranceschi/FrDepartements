@@ -1,19 +1,12 @@
-import type { Question, AnswerState } from '../../../quiz/types';
+import type { QuestionProps } from '../../../quiz/types';
 import QcmChoices from '../QcmChoices';
-
-interface DevinerCodeDeptProps {
-  question: Question;
-  answerState: AnswerState;
-  selectedCode: string | null;
-  onAnswer: (code: string) => void;
-}
 
 export default function QuestionDevinerCodeDept({
   question,
   answerState,
   selectedCode,
   onAnswer,
-}: DevinerCodeDeptProps) {
+}: QuestionProps) {
   return (
     <div className="flex flex-col gap-6">
       <p className="text-center text-lg">

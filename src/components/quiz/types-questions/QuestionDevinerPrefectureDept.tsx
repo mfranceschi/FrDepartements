@@ -1,19 +1,12 @@
-import type { Question, AnswerState } from '../../../quiz/types';
+import type { QuestionProps } from '../../../quiz/types';
 import QcmChoices from '../QcmChoices';
-
-interface DevinerPrefectureDeptProps {
-  question: Question;
-  answerState: AnswerState;
-  selectedCode: string | null;
-  onAnswer: (code: string) => void;
-}
 
 export default function QuestionDevinerPrefectureDept({
   question,
   answerState,
   selectedCode,
   onAnswer,
-}: DevinerPrefectureDeptProps) {
+}: QuestionProps) {
   const choices = question.choices ?? [];
   const correctChoice = choices.find((c) => c.correct);
 

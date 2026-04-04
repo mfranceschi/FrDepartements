@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import type { SessionState } from '../../quiz/types';
+import type { SessionState, QuizMode, QuestionProps } from '../../quiz/types';
 import { QCM_MODES } from '../../quiz/generateQuestions';
 import QuestionTrouverDeptCarte from './types-questions/QuestionTrouverDeptCarte';
 import QuestionTrouverRegionCarte from './types-questions/QuestionTrouverRegionCarte';
@@ -9,6 +9,17 @@ import QuestionDevinerCodeDept from './types-questions/QuestionDevinerCodeDept';
 import QuestionDevinerNomDept from './types-questions/QuestionDevinerNomDept';
 import QuestionDevinerPrefectureDept from './types-questions/QuestionDevinerPrefectureDept';
 import QuestionDevinerPrefectureRegion from './types-questions/QuestionDevinerPrefectureRegion';
+
+const QUESTION_COMPONENTS: Record<QuizMode, React.ComponentType<QuestionProps>> = {
+  TrouverDeptCarte: QuestionTrouverDeptCarte,
+  TrouverRegionCarte: QuestionTrouverRegionCarte,
+  DevinerNomRegionCarte: QuestionDevinerNomRegionCarte,
+  DevinerNomDeptCarte: QuestionDevinerNomDeptCarte,
+  DevinerCodeDept: QuestionDevinerCodeDept,
+  DevinerNomDept: QuestionDevinerNomDept,
+  DevinerPrefectureDept: QuestionDevinerPrefectureDept,
+  DevinerPrefectureRegion: QuestionDevinerPrefectureRegion,
+};
 
 interface QuizShellProps {
   session: SessionState;
@@ -141,6 +152,7 @@ export default function QuizShell({
   const question = questions[currentIndex];
   const isLastQuestion = currentIndex === total - 1;
   const isQcm = QCM_MODES.has(question.mode);
+  const QuestionComponent = QUESTION_COMPONENTS[question.mode];
 
   return (
     <div className="flex flex-col gap-4 w-full">
@@ -190,70 +202,12 @@ export default function QuizShell({
       )}
 
       <div className="w-full">
-        {question.mode === 'TrouverDeptCarte' && (
-          <QuestionTrouverDeptCarte
-            question={question}
-            answerState={answerState}
-            selectedCode={selectedCode}
-            onAnswer={onAnswer}
-          />
-        )}
-        {question.mode === 'TrouverRegionCarte' && (
-          <QuestionTrouverRegionCarte
-            question={question}
-            answerState={answerState}
-            selectedCode={selectedCode}
-            onAnswer={onAnswer}
-          />
-        )}
-        {question.mode === 'DevinerNomRegionCarte' && (
-          <QuestionDevinerNomRegionCarte
-            question={question}
-            answerState={answerState}
-            selectedCode={selectedCode}
-            onAnswer={onAnswer}
-          />
-        )}
-        {question.mode === 'DevinerNomDeptCarte' && (
-          <QuestionDevinerNomDeptCarte
-            question={question}
-            answerState={answerState}
-            selectedCode={selectedCode}
-            onAnswer={onAnswer}
-          />
-        )}
-        {question.mode === 'DevinerCodeDept' && (
-          <QuestionDevinerCodeDept
-            question={question}
-            answerState={answerState}
-            selectedCode={selectedCode}
-            onAnswer={onAnswer}
-          />
-        )}
-        {question.mode === 'DevinerNomDept' && (
-          <QuestionDevinerNomDept
-            question={question}
-            answerState={answerState}
-            selectedCode={selectedCode}
-            onAnswer={onAnswer}
-          />
-        )}
-        {question.mode === 'DevinerPrefectureDept' && (
-          <QuestionDevinerPrefectureDept
-            question={question}
-            answerState={answerState}
-            selectedCode={selectedCode}
-            onAnswer={onAnswer}
-          />
-        )}
-        {question.mode === 'DevinerPrefectureRegion' && (
-          <QuestionDevinerPrefectureRegion
-            question={question}
-            answerState={answerState}
-            selectedCode={selectedCode}
-            onAnswer={onAnswer}
-          />
-        )}
+        <QuestionComponent
+          question={question}
+          answerState={answerState}
+          selectedCode={selectedCode}
+          onAnswer={onAnswer}
+        />
       </div>
 
       {answered && (

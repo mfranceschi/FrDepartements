@@ -2,7 +2,7 @@
  * Adjacence géographique des régions métropolitaines françaises.
  * Utilisée en mode difficile pour proposer des régions voisines comme distractors.
  */
-export const REGION_ADJACENCY: Record<string, string[]> = {
+export const REGION_ADJACENCY: Readonly<Record<string, readonly string[]>> = {
   '11': ['28', '32', '44', '27', '24'],              // Île-de-France
   '24': ['11', '28', '52', '53', '75', '84', '27'],  // Centre-Val de Loire
   '27': ['11', '44', '84', '24'],                    // Bourgogne-Franche-Comté
