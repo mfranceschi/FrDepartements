@@ -27,7 +27,7 @@ export default function QuestionTrouverDeptCarte({
   };
 
   return (
-    <div className="flex flex-col md:grid md:grid-cols-[1fr_2fr] gap-6 items-start">
+    <div className="flex flex-col md:grid md:grid-cols-[1fr_2fr] gap-6 md:h-full">
       {/* Colonne gauche : énoncé + feedback + bouton */}
       <div className="flex flex-col gap-4">
         <p className="text-center text-lg">
@@ -66,7 +66,7 @@ export default function QuestionTrouverDeptCarte({
       </div>
 
       {/* Colonne droite : carte */}
-      <div className="border border-gray-300 rounded-lg overflow-hidden">
+      <div className="h-full border border-gray-300 rounded-lg overflow-hidden">
         <CarteFrance
           key={question.id}
           features={{ departements: deptFeatures, regions: regionFeatures }}

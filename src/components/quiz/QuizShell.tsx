@@ -156,7 +156,7 @@ export default function QuizShell({
   const QuestionComponent = QUESTION_COMPONENTS[question.mode];
 
   return (
-    <div className="flex flex-col gap-4 w-full">
+    <div className="flex flex-col gap-4 w-full h-full">
       {/* Bandeau supérieur avec score bien visible */}
       <div className="rounded-lg border border-gray-200 overflow-hidden">
         {/* Barre de progression fine */}
@@ -202,7 +202,7 @@ export default function QuizShell({
         </p>
       )}
 
-      <div className="w-full">
+      <div className="flex-1 min-h-0">
         <QuestionComponent
           question={question}
           answerState={answerState}

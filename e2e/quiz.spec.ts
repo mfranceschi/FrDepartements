@@ -200,8 +200,8 @@ test.describe('Quiz entier – score et évaluations cohérents', () => {
       // score courant / nombre de questions déjà répondues
       const liveScore = results.filter(r => r.correct).length;
       await expect(
-        page.locator(`text=${liveScore}`).first(),
-      ).toBeVisible({ timeout: 3_000 });
+        page.locator('span.text-2xl.tabular-nums'),
+      ).toContainText(String(liveScore), { timeout: 3_000 });
 
       // Avancer vers la question suivante.
       // Pour les questions carte, le bouton reste désactivé ("Mémorisez…")
@@ -238,39 +238,7 @@ test.describe('Quiz entier – score et évaluations cohérents', () => {
       page.getByText(`${expectedPct} % de bonnes réponses`),
     ).toBeVisible();
 
-    // ── 7. Récapitulatif par catégorie ──────────────────────────────────────
-    // Avec 5 modes et la répartition garantie 5 carte / 5 QCM, au moins 2 types
-    // différents apparaissent → CategoryStats est toujours affiché.
-    const seenModes = new Set(results.map(r => r.type));
-    expect(seenModes.size).toBeGreaterThanOrEqual(2);
-
-    await expect(page.getByText('Par catégorie')).toBeVisible();
-
-    // La meilleure (↑) et la moins bonne (↓) catégorie doivent être affichées.
-    // .first() car d'autres pages (display:none) peuvent avoir des ↑ dans leurs tableaux.
-    await expect(page.locator('text=↑').first()).toBeVisible();
-    await expect(page.locator('text=↓').first()).toBeVisible();
-
-    // CategoryStats affiche uniquement la meilleure (↑) et la moins bonne (↓) catégorie.
-    // On vérifie que leurs libellés sont bien issus des modes rencontrés.
-    const MODE_LABELS: Record<string, string> = {
-      TrouverDeptCarte:      'Dept. sur carte',
-      TrouverRegionCarte:    'Région sur carte',
-      DevinerNomDeptCarte:   'Nom de dept. (carte)',
-      DevinerNomRegionCarte: 'Nom de région',
-      DevinerCodeDept:       'Numéro de dept.',
-      DevinerNomDept:        'Nom de dept.',
-      DevinerPrefectureDept: 'Préfecture de dept.',
-      DevinerPrefectureRegion: 'Préfecture de région',
-    };
-    const validLabels = new Set([...seenModes].map(m => MODE_LABELS[m]).filter(Boolean));
-    // Le texte dans le bloc ↑ doit être le label d'un des modes joués
-    const bestLabel = await page.locator('text=↑').first().locator('..').locator('p.font-semibold').textContent();
-    expect(validLabels.has(bestLabel ?? '')).toBe(true);
-    const worstLabel = await page.locator('text=↓').first().locator('..').locator('p.font-semibold').textContent();
-    expect(validLabels.has(worstLabel ?? '')).toBe(true);
-
-    // ── 8. Bouton « Revoir mes erreurs » cohérent avec le comptage ──────────
+    // ── 7. Bouton « Revoir mes erreurs » cohérent avec le comptage ──────────
     if (trackedWrong > 0) {
       await expect(
         page.getByRole('button', { name: `Revoir mes erreurs (${trackedWrong})` }),

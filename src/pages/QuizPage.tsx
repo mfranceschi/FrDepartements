@@ -115,14 +115,16 @@ export default function QuizPage() {
         />
       )}
 
-      <main className="flex-1 min-h-0 overflow-y-auto">
+      <main className="flex-1 min-h-0 flex flex-col">
         {phase === 'config' && (
-          <div className="max-w-3xl mx-auto p-4">
-            <QuizConfig onStart={handleStart} />
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="max-w-3xl mx-auto p-4">
+              <QuizConfig onStart={handleStart} />
+            </div>
           </div>
         )}
         {phase === 'session' && config !== null && (
-          <div className="max-w-7xl mx-auto p-4">
+          <div className="flex-1 min-h-0 flex flex-col max-w-7xl mx-auto w-full px-4 py-4">
             <QuizSession
               config={config}
               onRestart={handleRestart}
