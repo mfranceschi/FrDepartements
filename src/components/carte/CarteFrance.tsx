@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import {
   geoConicConformal,
   geoPath,
@@ -6,11 +6,17 @@ import {
   zoomIdentity,
   select,
 } from 'd3';
-import type { GeoPath, GeoPermissibleObjects, ZoomBehavior, D3ZoomEvent } from 'd3';
+import type { ZoomBehavior, D3ZoomEvent } from 'd3';
 import type { Feature } from 'geojson';
 import CoucheRegions from './CoucheRegions';
 import CoucheDepts from './CoucheDepts';
 import CouchePrefectures from './CouchePrefectures';
+import { isValidCentroid } from './featureStyle';
+
+const FOCUS_SVG_W = 900;
+const FOCUS_SVG_H = 700;
+const FOCUS_SCALE = 4;
+const ZOOM_STEP = 1.5;
 
 export interface CarteFranceProps {
   features: {
@@ -34,10 +40,10 @@ const PROJECTION = geoConicConformal()
   .scale(3800)
   .translate([530, 355]);
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const PATH_GEN: GeoPath<any, GeoPermissibleObjects> = geoPath(PROJECTION);
+const PATH_GEN = geoPath(PROJECTION);
 
 const DEFAULT_ZOOM = zoomIdentity;
+const NOOP_HOVER = () => {};
 
 interface ZoomTransform { x: number; y: number; k: number }
 
@@ -97,14 +103,11 @@ export default function CarteFrance({
     if (!target) return;
 
     const centroid = PATH_GEN.centroid(target);
-    if (!centroid || isNaN(centroid[0]) || isNaN(centroid[1])) return;
+    if (!centroid || !isValidCentroid(centroid)) return;
 
-    const svgW = 900;
-    const svgH = 700;
-    const scale = 4;
-    const tx = svgW / 2 - scale * centroid[0];
-    const ty = svgH / 2 - scale * centroid[1];
-    const newTransform = zoomIdentity.translate(tx, ty).scale(scale);
+    const tx = FOCUS_SVG_W / 2 - FOCUS_SCALE * centroid[0];
+    const ty = FOCUS_SVG_H / 2 - FOCUS_SCALE * centroid[1];
+    const newTransform = zoomIdentity.translate(tx, ty).scale(FOCUS_SCALE);
 
     select(svgRef.current)
       .transition()
@@ -115,12 +118,12 @@ export default function CarteFrance({
 
   const handleZoomIn = useCallback(() => {
     if (!svgRef.current || !zoomRef.current) return;
-    select(svgRef.current).transition().duration(250).call(zoomRef.current.scaleBy, 1.5);
+    select(svgRef.current).transition().duration(250).call(zoomRef.current.scaleBy, ZOOM_STEP);
   }, []);
 
   const handleZoomOut = useCallback(() => {
     if (!svgRef.current || !zoomRef.current) return;
-    select(svgRef.current).transition().duration(250).call(zoomRef.current.scaleBy, 1 / 1.5);
+    select(svgRef.current).transition().duration(250).call(zoomRef.current.scaleBy, 1 / ZOOM_STEP);
   }, []);
 
   const handleZoomReset = useCallback(() => {
@@ -144,14 +147,17 @@ export default function CarteFrance({
 
   const handleDeptHover = useCallback((feature: Feature | null, x: number, y: number) => {
     if (!feature) { hideTooltip(); return; }
-    const nom = feature.properties?.nom as string | undefined;
-    const code = feature.properties?.code as string | undefined;
+    const rawNom = feature.properties?.nom;
+    const rawCode = feature.properties?.code;
+    const nom = typeof rawNom === 'string' ? rawNom : undefined;
+    const code = typeof rawCode === 'string' ? rawCode : undefined;
     showTooltip(nom && code ? `${nom} (${code})` : nom ?? code ?? '', x, y);
   }, [showTooltip, hideTooltip]);
 
   const handleRegionHover = useCallback((feature: Feature | null, x: number, y: number) => {
     if (!feature) { hideTooltip(); return; }
-    const nom = feature.properties?.nom as string | undefined;
+    const rawNom = feature.properties?.nom;
+    const nom = typeof rawNom === 'string' ? rawNom : undefined;
     showTooltip(nom ?? '', x, y);
   }, [showTooltip, hideTooltip]);
 
@@ -163,6 +169,14 @@ export default function CarteFrance({
   const handleDeptClick = useCallback(
     (code: string) => onFeatureClick?.(code, 'departement'),
     [onFeatureClick],
+  );
+
+  const handlePrefectureHover = useCallback(
+    (label: string | null, x: number, y: number) => {
+      if (label) showTooltip(label, x, y);
+      else hideTooltip();
+    },
+    [showTooltip, hideTooltip],
   );
 
   const effectiveShowRegions = quizMode ? quizLayer === 'regions' : activeLayer === 'regions';
@@ -177,7 +191,7 @@ export default function CarteFrance({
   const wrongRegionCode = !wrongType || wrongType === 'region' ? wrongCode : undefined;
 
   // Contrôles de zoom — partagés entre toolbar (non-quiz) et overlay absolu (quiz)
-  const zoomControls = (
+  const zoomControls = useMemo(() => (
     <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
       <button
         type="button"
@@ -207,7 +221,7 @@ export default function CarteFrance({
         ↺
       </button>
     </div>
-  );
+  ), [handleZoomIn, handleZoomOut, handleZoomReset, transform.k]);
 
   return (
     <div className="relative w-full h-full flex flex-col" style={{ minHeight: '480px' }}>
@@ -304,7 +318,7 @@ export default function CarteFrance({
             zoomK={transform.k}
             visible={!quizMode && showPrefectures}
             highlightDeptCode={highlightDeptCode}
-            onHover={(label, x, y) => label ? showTooltip(label, x, y) : hideTooltip()}
+            onHover={handlePrefectureHover}
             onlyRegionales={effectiveShowRegions}
           />
           {/* Contours de régions en surcouche sur les départements colorés */}
@@ -314,7 +328,7 @@ export default function CarteFrance({
             visible={effectiveShowRegionBorders}
             borderOnly={true}
             quizMode={false}
-            onHover={() => {}}
+            onHover={NOOP_HOVER}
           />
         </g>
 

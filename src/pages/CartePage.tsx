@@ -29,6 +29,9 @@ function buildRegionMap(): Map<string, { nom: string; prefectureRegionale: strin
 const DEPT_MAP = buildDeptMap();
 const REGION_MAP = buildRegionMap();
 
+// Delay before closing the search dropdown on blur, to allow click events to fire first
+const DROPDOWN_BLUR_DELAY_MS = 150;
+
 function EmptyPanel() {
   return (
     <div className="flex flex-col items-center gap-3 text-center py-6 px-2">
@@ -244,7 +247,7 @@ export default function CartePage() {
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setShowResults(true); }}
               onFocus={() => setShowResults(true)}
-              onBlur={() => setTimeout(() => setShowResults(false), 150)}
+              onBlur={() => setTimeout(() => setShowResults(false), DROPDOWN_BLUR_DELAY_MS)}
               className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
             />
             {searchQuery && (

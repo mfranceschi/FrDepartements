@@ -10,17 +10,17 @@ Application web progressive (PWA) pour explorer et apprendre les 96 département
 - Survol / clic sur un département ou une région pour afficher ses informations
 
 ### Quiz
-Cinq modes d'entraînement configurables :
+Cinq sujets d'entraînement configurables :
 
-| Mode | Description |
+| Sujet | Types de questions |
 |---|---|
-| **Dept. sur carte** | Cliquer sur le département demandé |
-| **Région sur carte** | Cliquer sur la région demandée |
-| **Numéro de dept.** | QCM — trouver le numéro d'un département |
-| **Nom de dept.** | QCM — trouver le nom d'un département |
-| **Région d'un dept.** | QCM — trouver la région d'appartenance |
+| **Régions — Carte** | Cliquer sur la région + nommer une région sur carte |
+| **Départements — Carte** | Cliquer sur le département + nommer un département sur carte |
+| **Départements — Numéros** | QCM — numéro ou nom d'un département |
+| **Départements — Préfectures** | QCM — trouver la préfecture d'un département |
+| **Régions — Préfectures** | QCM — trouver la préfecture d'une région |
 
-Sessions de 5, 10, 20 ou tous les départements. Score en temps réel, récapitulatif par catégorie et mode « Revoir mes erreurs ».
+Sessions de 10, 25, 50 ou tous. Difficulté configurable (facile / difficile) pour les sujets carte et numéros. Score en temps réel, récapitulatif par catégorie et mode « Revoir mes erreurs ».
 
 ### Tableau
 Liste complète des départements organisée par région, avec codes et noms.
@@ -66,13 +66,13 @@ npm run dev
 ```
 src/
 ├── components/
-│   ├── carte/          # Carte SVG (couches depts, régions)
-│   ├── quiz/           # Shell quiz + 5 types de questions
+│   ├── carte/          # Carte SVG (couches depts, régions, préfectures)
+│   ├── quiz/           # Shell quiz + 8 composants types de questions
 │   └── tableau/        # Tableau et accordéon par région
 ├── pages/              # CartePage, QuizPage, TableauPage
-├── hooks/              # useQuiz (logique de session, Fisher-Yates)
+├── hooks/              # useQuiz (logique de session), useGeoData
 ├── data/               # Données statiques (départements, régions)
-├── quiz/               # Types TypeScript du quiz
+├── quiz/               # Types, generateQuestions, buildChoices
 └── tests/              # Tests unitaires Vitest
 e2e/                    # Tests E2E Playwright
 public/                 # GeoJSON France + assets statiques

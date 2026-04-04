@@ -166,4 +166,27 @@ describe('useQuiz – restartWithErrors', () => {
       origChoices.map((c) => c.code).sort(),
     );
   });
+
+  it('les flags correct/incorrect sont préservés après le mélange de restartWithErrors', () => {
+    const { result } = renderHook(() => useQuiz(QCM_CONFIG));
+
+    act(() => { result.current.submitAnswer('__FAUX__'); }); // wrong
+    const origCorrectCode = result.current.session.questions[0].choices!.find((c) => c.correct)!.code;
+
+    act(() => { result.current.restartWithErrors(); });
+
+    const retryChoices = result.current.session.questions[0].choices!;
+    const correctChoices = retryChoices.filter((c) => c.correct);
+    const wrongChoices   = retryChoices.filter((c) => !c.correct);
+
+    // Exactement 1 choix correct, 3 incorrects
+    expect(correctChoices).toHaveLength(1);
+    expect(wrongChoices).toHaveLength(3);
+
+    // Le bon code est toujours marqué correct
+    expect(correctChoices[0].code).toBe(origCorrectCode);
+
+    // Aucun des distracteurs ne porte le flag correct
+    wrongChoices.forEach((c) => expect(c.code).not.toBe(origCorrectCode));
+  });
 });

@@ -1,12 +1,10 @@
 import { memo, useMemo, useState } from 'react';
 import type { Feature } from 'geojson';
-import type { GeoPath, GeoPermissibleObjects } from 'd3';
-import { resolveStroke, STROKE_WIDTH_ACTIVE } from './featureStyle';
+import { type D3PathGen, resolveStroke, STROKE_WIDTH_ACTIVE } from './featureStyle';
 
 interface CoucheRegionsProps {
   features: Feature[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  pathGen: GeoPath<any, GeoPermissibleObjects>;
+  pathGen: D3PathGen;
   visible: boolean;
   /** Quand true : affiche uniquement les contours (fill transparent), sans interaction */
   borderOnly?: boolean;
@@ -36,7 +34,10 @@ export default memo(function CoucheRegions({
 
   // Calcul des paths une seule fois (ou quand features/pathGen changent)
   const paths = useMemo(
-    () => features.map((f) => ({ feature: f, d: pathGen(f), code: f.properties?.code as string | undefined })),
+    () => features.map((f) => {
+      const rawCode = f.properties?.code;
+      return { feature: f, d: pathGen(f), code: typeof rawCode === 'string' ? rawCode : undefined };
+    }),
     [features, pathGen],
   );
 

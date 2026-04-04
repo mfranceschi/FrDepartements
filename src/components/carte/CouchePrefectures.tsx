@@ -3,7 +3,6 @@ import type { GeoProjection } from 'd3';
 import { DEPARTEMENTS } from '../../data/departements';
 
 interface CouchePrefecturesProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   projection: GeoProjection;
   zoomK: number;
   visible: boolean;
@@ -45,9 +44,12 @@ export default memo(function CouchePrefectures({
     [projection],
   );
 
-  if (!visible) return null;
+  const visiblePoints = useMemo(
+    () => (onlyRegionales ? points.filter((p) => p.isRegionale) : points),
+    [points, onlyRegionales],
+  );
 
-  const visiblePoints = onlyRegionales ? points.filter((p) => p.isRegionale) : points;
+  if (!visible) return null;
 
   const r = 3 / zoomK;
   const rOuter = 5.5 / zoomK;

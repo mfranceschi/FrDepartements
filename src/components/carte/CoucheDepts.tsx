@@ -1,13 +1,11 @@
 import { memo, useMemo, useState } from 'react';
 import type { Feature } from 'geojson';
-import type { GeoPath, GeoPermissibleObjects } from 'd3';
 import { computeDeptColors } from '../../geo/colorMap';
-import { resolveStroke, STROKE_WIDTH_ACTIVE } from './featureStyle';
+import { type D3PathGen, isValidCentroid, resolveStroke, STROKE_WIDTH_ACTIVE } from './featureStyle';
 
 interface CoucheDepsProps {
   features: Feature[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  pathGen: GeoPath<any, GeoPermissibleObjects>;
+  pathGen: D3PathGen;
   visible: boolean;
   quizMode?: boolean;
   highlightCode?: string;
@@ -46,8 +44,10 @@ export default memo(function CoucheDepts({
   const paths = useMemo(
     () => features.map((f) => {
       const d = pathGen(f);
-      const code = f.properties?.code as string | undefined;
-      const nom = f.properties?.nom as string | undefined;
+      const rawCode = f.properties?.code;
+      const rawNom = f.properties?.nom;
+      const code = typeof rawCode === 'string' ? rawCode : undefined;
+      const nom = typeof rawNom === 'string' ? rawNom : undefined;
       const centroid = pathGen.centroid(f);
       const [[x0, y0], [x1, y1]] = pathGen.bounds(f);
       const minDim = Math.min(x1 - x0, y1 - y0);
@@ -94,8 +94,8 @@ export default memo(function CoucheDepts({
         const effective = minDim * zoomK;
         if (effective < SEUIL_CODE) return null;
         const showName = effective >= SEUIL_NOM;
+        if (!isValidCentroid(centroid)) return null;
         const [cx, cy] = centroid;
-        if (isNaN(cx) || isNaN(cy)) return null;
         const fs = 14 / zoomK; // taille fixe à l'écran (~14px) quelle que soit l'échelle
 
         return (

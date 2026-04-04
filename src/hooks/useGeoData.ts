@@ -1,6 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
 import type { FeatureCollection } from 'geojson';
 
+function assertFeatureCollection(data: unknown, name: string): FeatureCollection {
+  if (
+    data === null ||
+    typeof data !== 'object' ||
+    !('type' in data) ||
+    (data as Record<string, unknown>).type !== 'FeatureCollection' ||
+    !('features' in data) ||
+    !Array.isArray((data as Record<string, unknown>).features)
+  ) {
+    throw new Error(`${name} is not a valid GeoJSON FeatureCollection`);
+  }
+  return data as FeatureCollection;
+}
+
 interface GeoDataState {
   departements: FeatureCollection | null;
   regions: FeatureCollection | null;
@@ -44,8 +58,8 @@ export function useGeoData(): GeoDataState {
         import('../geo/departements.json'),
         import('../geo/regions.json'),
       ]).then(([depts, regs]) => {
-        cache.departements = depts.default as unknown as FeatureCollection;
-        cache.regions = regs.default as unknown as FeatureCollection;
+        cache.departements = assertFeatureCollection(depts.default, 'departements');
+        cache.regions = assertFeatureCollection(regs.default, 'regions');
       });
 
       const timeoutPromise = new Promise<never>((_, reject) =>
