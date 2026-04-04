@@ -122,7 +122,7 @@ export default function QuizPage() {
           </div>
         )}
         {phase === 'session' && config !== null && (
-          <div className="max-w-5xl mx-auto p-4">
+          <div className="max-w-7xl mx-auto p-4">
             <QuizSession
               config={config}
               onRestart={handleRestart}

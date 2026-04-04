@@ -37,6 +37,10 @@ const PROJECTION = geoConicConformal()
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const PATH_GEN: GeoPath<any, GeoPermissibleObjects> = geoPath(PROJECTION);
 
+// Zoom par défaut : 115 %, centré sur le centre de projection (530, 355)
+const DEFAULT_K = 1.15;
+const DEFAULT_ZOOM = zoomIdentity.translate(530 * (1 - DEFAULT_K), 355 * (1 - DEFAULT_K)).scale(DEFAULT_K);
+
 interface ZoomTransform { x: number; y: number; k: number }
 
 export default function CarteFrance({
@@ -54,7 +58,7 @@ export default function CarteFrance({
 }: CarteFranceProps) {
   type Layer = 'departements' | 'regions';
   const [activeLayer, setActiveLayer] = useState<Layer>('departements');
-  const [transform, setTransform] = useState<ZoomTransform>({ x: 0, y: 0, k: 1 });
+  const [transform, setTransform] = useState<ZoomTransform>({ x: DEFAULT_ZOOM.x, y: DEFAULT_ZOOM.y, k: DEFAULT_ZOOM.k });
   const [showLabels, setShowLabels] = useState(false);
   const [showPrefectures, setShowPrefectures] = useState(false);
 
@@ -76,6 +80,7 @@ export default function CarteFrance({
 
     zoomRef.current = zoomBehavior;
     select(svgRef.current).call(zoomBehavior);
+    select(svgRef.current).call(zoomBehavior.transform, DEFAULT_ZOOM);
 
     return () => {
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -122,7 +127,7 @@ export default function CarteFrance({
 
   const handleZoomReset = useCallback(() => {
     if (!svgRef.current || !zoomRef.current) return;
-    select(svgRef.current).transition().duration(300).call(zoomRef.current.transform, zoomIdentity);
+    select(svgRef.current).transition().duration(300).call(zoomRef.current.transform, DEFAULT_ZOOM);
   }, []);
 
   const showTooltip = useCallback((text: string, x: number, y: number) => {
@@ -201,34 +206,24 @@ export default function CarteFrance({
         {/* Boutons mode exploration uniquement */}
         {!quizMode && activeLayer === 'departements' && (
           <>
-            <button
-              type="button"
-              onClick={() => setShowLabels((v) => !v)}
-              title={showLabels ? 'Masquer les étiquettes' : 'Afficher les étiquettes'}
-              className={[
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
-                showLabels
-                  ? 'bg-blue-100 text-blue-700 border border-blue-300'
-                  : 'bg-gray-100 text-gray-500 hover:text-gray-700',
-              ].join(' ')}
-            >
-              <span className="text-xs leading-none">Aa</span>
-              Étiquettes
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowPrefectures((v) => !v)}
-              title={showPrefectures ? 'Masquer les préfectures' : 'Afficher les préfectures'}
-              className={[
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
-                showPrefectures
-                  ? 'bg-rose-100 text-rose-700 border border-rose-300'
-                  : 'bg-gray-100 text-gray-500 hover:text-gray-700',
-              ].join(' ')}
-            >
-              <span className="text-xs leading-none">●</span>
-              Préfectures
-            </button>
+            <label className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer select-none transition-colors bg-gray-100 hover:bg-gray-200 text-gray-700">
+              <input
+                type="checkbox"
+                checked={showLabels}
+                onChange={() => setShowLabels((v) => !v)}
+                className="w-4 h-4 accent-blue-600 cursor-pointer"
+              />
+              Afficher les noms
+            </label>
+            <label className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer select-none transition-colors bg-gray-100 hover:bg-gray-200 text-gray-700">
+              <input
+                type="checkbox"
+                checked={showPrefectures}
+                onChange={() => setShowPrefectures((v) => !v)}
+                className="w-4 h-4 accent-blue-600 cursor-pointer"
+              />
+              Afficher les préfectures
+            </label>
           </>
         )}
 
@@ -250,6 +245,9 @@ export default function CarteFrance({
           >
             −
           </button>
+          <span className="px-1 h-7 flex items-center justify-center text-xs font-mono text-gray-500 tabular-nums min-w-[3rem] text-center">
+            {Math.round(transform.k * 100)}%
+          </span>
           <button
             type="button"
             onClick={handleZoomReset}

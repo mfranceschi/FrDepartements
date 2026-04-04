@@ -174,7 +174,7 @@ export default function QuizShell({
         </div>
         {/* Score + streak */}
         <div className="flex items-center justify-between px-4 py-3 bg-gray-50">
-          <span className="text-sm font-medium text-gray-600">
+          <span className="text-base font-semibold text-gray-700">
             Question {currentIndex + 1} / {total}
           </span>
           <div className="flex items-center gap-2">
@@ -182,12 +182,12 @@ export default function QuizShell({
               <span
                 className="streak-badge inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-300"
               >
-                🔥 ×{streak}
+                🔥 Combo ×{streak}
               </span>
             )}
             <span className={`text-2xl font-bold tabular-nums ${scoreColor(liveRatio)}`}>
+              <span className="text-sm font-medium text-gray-500 mr-1">Score :</span>
               {score}
-              <span className="text-base font-normal text-gray-400"> / {answeredCount}</span>
             </span>
           </div>
         </div>

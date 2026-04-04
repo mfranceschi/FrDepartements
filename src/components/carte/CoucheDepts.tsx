@@ -20,10 +20,9 @@ interface CoucheDepsProps {
 }
 
 // Seuils en unités SVG × facteur de zoom :
-// - au-dessus de SEUIL_CODE : affiche le numéro seul
-// - au-dessus de SEUIL_NOM  : affiche numéro + nom
+// - au-dessus de SEUIL_CODE : affiche le numéro + nom
 const SEUIL_CODE = 100;
-const SEUIL_NOM = 180;
+const SEUIL_NOM = 100;
 
 export default memo(function CoucheDepts({
   features,

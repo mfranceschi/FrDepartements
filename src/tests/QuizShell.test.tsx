@@ -249,7 +249,7 @@ describe('QuizShell – badge streak', () => {
     expect(screen.queryByText(/🔥/)).not.toBeInTheDocument();
   });
 
-  it('affiche le badge "🔥 ×3" pour un streak de 3', () => {
+  it('affiche le badge "🔥 Combo ×3" pour un streak de 3', () => {
     render(
       <QuizShell
         session={makeSessionWithStreak(3)}
@@ -259,7 +259,7 @@ describe('QuizShell – badge streak', () => {
         onReviewErrors={vi.fn()}
       />,
     );
-    expect(screen.getByText(/🔥 ×3/)).toBeInTheDocument();
+    expect(screen.getByText(/🔥 Combo ×3/)).toBeInTheDocument();
   });
 
   it('affiche le bon compteur pour un streak de 5', () => {
@@ -272,7 +272,7 @@ describe('QuizShell – badge streak', () => {
         onReviewErrors={vi.fn()}
       />,
     );
-    expect(screen.getByText(/🔥 ×5/)).toBeInTheDocument();
+    expect(screen.getByText(/🔥 Combo ×5/)).toBeInTheDocument();
   });
 
   it("n'affiche pas de badge quand le streak est cassé par une mauvaise réponse", () => {
