@@ -90,7 +90,7 @@ test.describe('Carte interactive', () => {
 
     // Une info de région doit s'afficher (code à 2 chiffres + libellé « Région »)
     await expect(
-      page.getByRole('complementary').getByText('Région'),
+      page.getByRole('complementary').getByText('Région', { exact: true }),
     ).toBeVisible({ timeout: 5_000 });
   });
 });

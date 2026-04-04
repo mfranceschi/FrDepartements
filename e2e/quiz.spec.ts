@@ -14,9 +14,10 @@ async function detectQuestionType(page: Page): Promise<string> {
   if (text.includes('Cliquez sur la région'))       return 'TrouverRegionCarte';
   if (text.includes('Quel est le numéro'))           return 'DevinerCodeDept';
   if (text.includes('porte le numéro'))              return 'DevinerNomDept';
-  if (text.includes('Dans quelle région'))           return 'DevinerRegionDept';
   if (text.includes('Quel est ce département'))      return 'DevinerNomDeptCarte';
   if (text.includes('Quelle est cette région'))      return 'DevinerNomRegionCarte';
+  if (text.includes('préfecture du département'))    return 'DevinerPrefectureDept';
+  if (text.includes('préfecture de la région'))      return 'DevinerPrefectureRegion';
   return 'unknown';
 }
 
@@ -159,18 +160,16 @@ test.describe('Quiz – parcours complet', () => {
  * - Vérification que le bouton « Revoir mes erreurs (N) » reflète exactement
  *   le nombre d'erreurs comptabilisé pendant le quiz
  */
-test.describe('Quiz entier – 7 types de questions, score et évaluations cohérents', () => {
+test.describe('Quiz entier – score et évaluations cohérents', () => {
   // Timeout généreux : délai "Mémorisez…" (1.5 s) × jusqu'à 5 questions carte
   // + chargement GeoJSON + délais réseau CI
   test.setTimeout(90_000);
 
-  test('complète 10 questions (tous modes activés) et vérifie la cohérence du score final', async ({ page }) => {
+  test('complète 10 questions et vérifie la cohérence du score final', async ({ page }) => {
     await page.goto('/quiz');
 
     // ── 1. Configuration ────────────────────────────────────────────────────
-    // Activer tous les modes via les boutons de groupe Région + Département
-    await page.getByRole('button', { name: 'Région' }).click();
-    await page.getByRole('button', { name: 'Département' }).click();
+    // Sujet par défaut (depts-carte), on sélectionne 10 questions
     await page.getByRole('button', { name: '10' }).click();
     // Vérification visuelle : le bouton 10 doit être actif (fond bleu)
     await expect(page.getByRole('button', { name: '10' })).toHaveClass(/bg-blue-600/);
@@ -255,13 +254,14 @@ test.describe('Quiz entier – 7 types de questions, score et évaluations cohé
     // CategoryStats affiche uniquement la meilleure (↑) et la moins bonne (↓) catégorie.
     // On vérifie que leurs libellés sont bien issus des modes rencontrés.
     const MODE_LABELS: Record<string, string> = {
-      TrouverDeptCarte:    'Dept. sur carte',
-      TrouverRegionCarte:  'Région sur carte',
-      DevinerNomDeptCarte: 'Nom de dept. (carte)',
+      TrouverDeptCarte:      'Dept. sur carte',
+      TrouverRegionCarte:    'Région sur carte',
+      DevinerNomDeptCarte:   'Nom de dept. (carte)',
       DevinerNomRegionCarte: 'Nom de région',
-      DevinerCodeDept:     'Numéro de dept.',
-      DevinerNomDept:      'Nom de dept.',
-      DevinerRegionDept:   "Région d'un dept.",
+      DevinerCodeDept:       'Numéro de dept.',
+      DevinerNomDept:        'Nom de dept.',
+      DevinerPrefectureDept: 'Préfecture de dept.',
+      DevinerPrefectureRegion: 'Préfecture de région',
     };
     const validLabels = new Set([...seenModes].map(m => MODE_LABELS[m]).filter(Boolean));
     // Le texte dans le bloc ↑ doit être le label d'un des modes joués
