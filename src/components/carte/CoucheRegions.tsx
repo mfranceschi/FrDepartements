@@ -1,6 +1,7 @@
 import { memo, useMemo, useState } from 'react';
 import type { Feature } from 'geojson';
 import type { GeoPath, GeoPermissibleObjects } from 'd3';
+import { resolveStroke, STROKE_WIDTH_ACTIVE } from './featureStyle';
 
 interface CoucheRegionsProps {
   features: Feature[];
@@ -16,6 +17,8 @@ interface CoucheRegionsProps {
   onHover: (feature: Feature | null, x: number, y: number) => void;
   onClick?: (code: string) => void;
 }
+
+const BASE_STROKE = '#6aaa6a';
 
 export default memo(function CoucheRegions({
   features,
@@ -43,8 +46,6 @@ export default memo(function CoucheRegions({
     <g className="couche-regions">
       {paths.map(({ feature, d, code }) => {
         if (!d) return null;
-        const isHighlighted = code !== undefined && code === highlightCode;
-        const isWrong = code !== undefined && code === wrongCode;
 
         if (borderOnly) {
           return (
@@ -59,21 +60,26 @@ export default memo(function CoucheRegions({
           );
         }
 
+        const isHighlighted = code !== undefined && code === highlightCode;
+        const isWrong = code !== undefined && code === wrongCode;
         const isHovered = code !== undefined && code === hoveredCode;
-        const quizHighlightColor = highlightVariant === 'target' ? '#fbbf24' : '#4ade80';
+        const isQuizHighlighted = quizMode && isHighlighted;
+
         const fill = isHighlighted
-          ? (quizMode ? quizHighlightColor : 'white')
-          : isWrong ? '#fca5a5'
+          ? 'white'
+          : isWrong ? 'white'
           : (!quizMode && isHovered) ? 'white'
           : '#e8f4e8';
+        const stroke = resolveStroke(isQuizHighlighted, isWrong, highlightVariant, BASE_STROKE);
+        const strokeWidth = (isQuizHighlighted || isWrong) ? STROKE_WIDTH_ACTIVE : 1;
 
         return (
           <path
             key={code ?? d}
             d={d}
             fill={fill}
-            stroke={isWrong ? '#dc2626' : '#6aaa6a'}
-            strokeWidth={1}
+            stroke={stroke}
+            strokeWidth={strokeWidth}
             style={{ cursor: onClick ? 'pointer' : 'default' }}
             onMouseEnter={(e) => {
               setHoveredCode(code ?? null);

@@ -16,11 +16,12 @@ export type QuizMode =
   | 'DevinerPrefectureRegion';
 
 export type Difficulty = 'facile' | 'difficile';
+export type SessionLength = 10 | 25 | 50 | 'tout';
 
 export interface QuizConfig {
   sujet: QuizSujet;
   difficulty: Difficulty;
-  sessionLength: 10 | 25 | 50 | 'tout';
+  sessionLength: SessionLength;
 }
 
 export interface Question {
@@ -63,6 +64,8 @@ export interface QuestionProps {
   answerState: AnswerState;
   selectedCode: string | null;
   onAnswer: (code: string) => void;
+  onNext?: () => void;
+  isLastQuestion?: boolean;
 }
 
 export interface SessionState {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { QuizConfig, QuizSujet, Difficulty } from '../../quiz/types';
+import type { QuizConfig, QuizSujet, Difficulty, SessionLength } from '../../quiz/types';
 
 interface QuizConfigProps {
   onStart: (config: QuizConfig) => void;
@@ -51,7 +51,11 @@ const SUJETS: SujetOption[] = [
   },
 ];
 
-type SessionLength = 10 | 25 | 50 | 'tout';
+// Record for O(1) lookup without non-null assertions — TypeScript enforces all keys are present.
+const SUJETS_BY_KEY: Record<QuizSujet, SujetOption> = Object.fromEntries(
+  SUJETS.map((s) => [s.sujet, s]),
+) as Record<QuizSujet, SujetOption>;
+
 const SESSION_LENGTHS: SessionLength[] = [10, 25, 50, 'tout'];
 
 export default function QuizConfig({ onStart }: QuizConfigProps) {
@@ -59,7 +63,7 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
   const [difficulty, setDifficulty] = useState<Difficulty>('facile');
   const [sessionLength, setSessionLength] = useState<SessionLength>(25);
 
-  const selectedOption = SUJETS.find((s) => s.sujet === sujet)!;
+  const selectedOption = SUJETS_BY_KEY[sujet];
 
   const handleStart = () => {
     onStart({

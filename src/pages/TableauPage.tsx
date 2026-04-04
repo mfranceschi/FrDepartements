@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import AccordionRegions from '../components/tableau/AccordionRegions';
 import TableauFlat from '../components/tableau/TableauFlat';
+import { DEPARTEMENTS } from '../data/departements';
+import { REGIONS } from '../data/regions';
 
 type Tab = 'regions' | 'liste';
 
@@ -23,7 +25,7 @@ export default function TableauPage() {
           Départements français
         </h1>
         <p className="text-sm text-gray-500 mt-1">
-          101 départements répartis en 18 régions
+          {DEPARTEMENTS.length} départements répartis en {REGIONS.length} régions
         </p>
       </div>
 

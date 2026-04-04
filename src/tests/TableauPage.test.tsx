@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import TableauPage from '../pages/TableauPage';
+import { DEPARTEMENTS } from '../data/departements';
+import { REGIONS } from '../data/regions';
 
 // Les sous-composants sont mockés : on teste uniquement le comportement
 // de l'onglet (quel composant est monté), pas le contenu interne.
@@ -55,8 +57,12 @@ describe('TableauPage', () => {
     expect(listeBtn.className).not.toContain('bg-blue-600');
   });
 
-  it('affiche le sous-titre « 101 départements répartis en 18 régions »', () => {
+  it('affiche le sous-titre avec le nombre réel de départements et régions', () => {
     render(<TableauPage />);
-    expect(screen.getByText(/101 départements répartis en 18 régions/i)).toBeInTheDocument();
+    expect(
+      screen.getByText((_, el) =>
+        el?.textContent === `${DEPARTEMENTS.length} départements répartis en ${REGIONS.length} régions`,
+      ),
+    ).toBeInTheDocument();
   });
 });

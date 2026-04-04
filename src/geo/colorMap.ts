@@ -62,19 +62,23 @@ function computeAdjacency(features: Feature[]): Map<string, Set<string>> {
 
 // ─── Coloriage glouton ────────────────────────────────────────────────────────
 
-// Cache the result — input is static GeoJSON loaded once, so this is computed at most once
-let cachedColors: Map<string, string> | null = null;
+// WeakMap keyed by the features array — each unique array reference gets its
+// own cached result, which means test suites passing synthetic feature arrays
+// get independent caches instead of sharing a single module-level variable.
+const cache = new WeakMap<Feature[], Map<string, string>>();
 
 /**
  * Calcule un coloriage valide (aucun voisin de même couleur) par algorithme
  * glouton. Les départements les plus connectés sont colorés en premier pour
  * minimiser le nombre de couleurs nécessaires.
  *
- * Le résultat est déterministe : les features étant des données statiques,
- * le même ordre de traitement produit toujours la même carte.
+ * Le résultat est mis en cache par référence du tableau `features` : tant que
+ * la même référence est passée (ce qui est toujours le cas en production avec
+ * les GeoJSON statiques), le calcul n'est effectué qu'une seule fois.
  */
 export function computeDeptColors(features: Feature[]): Map<string, string> {
-  if (cachedColors !== null) return cachedColors;
+  const cached = cache.get(features);
+  if (cached) return cached;
 
   const adjacency = computeAdjacency(features);
 
@@ -96,9 +100,11 @@ export function computeDeptColors(features: Feature[]): Map<string, string> {
     colorIndex.set(code, chosen);
   }
 
-  cachedColors = new Map<string, string>();
+  const result = new Map<string, string>();
   for (const [code, idx] of colorIndex) {
-    cachedColors.set(code, PALETTE[idx % PALETTE.length]);
+    result.set(code, PALETTE[idx % PALETTE.length]);
   }
-  return cachedColors;
+
+  cache.set(features, result);
+  return result;
 }

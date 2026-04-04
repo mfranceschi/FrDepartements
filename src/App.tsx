@@ -1,5 +1,4 @@
-import { createBrowserRouter, RouterProvider, useLocation, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { createBrowserRouter, RouterProvider, useLocation, Navigate } from 'react-router-dom';
 import Nav from './components/Nav';
 import CartePage from './pages/CartePage';
 import QuizPage from './pages/QuizPage';
@@ -10,13 +9,10 @@ const VALID_PATHS = new Set(['/carte', '/quiz', '/tableau']);
 
 function AppInner() {
   const { pathname } = useLocation();
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!VALID_PATHS.has(pathname)) {
-      navigate('/quiz', { replace: true });
-    }
-  }, [pathname, navigate]);
+  if (!VALID_PATHS.has(pathname)) {
+    return <Navigate to="/quiz" replace />;
+  }
 
   return (
     <div className="h-screen flex flex-col">

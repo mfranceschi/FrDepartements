@@ -2,6 +2,7 @@ import { memo, useMemo, useState } from 'react';
 import type { Feature } from 'geojson';
 import type { GeoPath, GeoPermissibleObjects } from 'd3';
 import { computeDeptColors } from '../../geo/colorMap';
+import { resolveStroke, STROKE_WIDTH_ACTIVE } from './featureStyle';
 
 interface CoucheDepsProps {
   features: Feature[];
@@ -67,20 +68,18 @@ export default memo(function CoucheDepts({
 
         const isHovered = code !== undefined && code === hoveredCode;
         const baseFill = code ? (colorMap.get(code) ?? '#dbeafe') : '#dbeafe';
-        const quizHighlightColor = highlightVariant === 'target' ? '#fbbf24' : '#4ade80';
-        const fill = isHighlighted
-          ? (quizMode ? quizHighlightColor : 'white')
-          : isWrong ? '#fca5a5'
-          : (!quizMode && isHovered) ? 'white'
-          : baseFill;
+        const isQuizHighlighted = quizMode && isHighlighted;
+        const fill = (isHighlighted || isWrong || isHovered) ? 'white' : baseFill;
+        const stroke = resolveStroke(isQuizHighlighted, isWrong, highlightVariant, '#475569');
+        const strokeWidth = (isQuizHighlighted || isWrong) ? STROKE_WIDTH_ACTIVE : 0.5;
 
         return (
           <path
             key={code ?? d}
             d={d}
             fill={fill}
-            stroke={isWrong ? '#dc2626' : '#475569'}
-            strokeWidth={0.5}
+            stroke={stroke}
+            strokeWidth={strokeWidth}
             style={{ cursor: onClick ? 'pointer' : 'default' }}
             onMouseEnter={(e) => {
               setHoveredCode(code ?? null);

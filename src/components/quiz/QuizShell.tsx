@@ -152,6 +152,7 @@ export default function QuizShell({
   const question = questions[currentIndex];
   const isLastQuestion = currentIndex === total - 1;
   const isQcm = QCM_MODES.has(question.mode);
+  const isCarteQuestion = question.mode.endsWith('Carte');
   const QuestionComponent = QUESTION_COMPONENTS[question.mode];
 
   return (
@@ -207,10 +208,12 @@ export default function QuizShell({
           answerState={answerState}
           selectedCode={selectedCode}
           onAnswer={onAnswer}
+          onNext={isCarteQuestion ? onNext : undefined}
+          isLastQuestion={isLastQuestion}
         />
       </div>
 
-      {answered && (
+      {answered && !isCarteQuestion && (
         <div className="flex flex-col items-center gap-1 pt-2">
           <button
             type="button"

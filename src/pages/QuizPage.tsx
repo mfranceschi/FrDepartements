@@ -14,7 +14,7 @@ interface QuizSessionProps {
 }
 
 function QuizSession({ config, onRestart, onFinished }: QuizSessionProps) {
-  const { session, submitAnswer, nextQuestion, restart, restartWithErrors } = useQuiz(config);
+  const { session, submitAnswer, nextQuestion, restartWithErrors } = useQuiz(config);
 
   // Remonte l'état "terminé" vers QuizPage pour le blocker
   useEffect(() => {
@@ -22,7 +22,6 @@ function QuizSession({ config, onRestart, onFinished }: QuizSessionProps) {
   }, [session.finished, onFinished]);
 
   const handleRestart = () => {
-    restart();
     onRestart();
   };
 
@@ -117,16 +116,20 @@ export default function QuizPage() {
       )}
 
       <main className="flex-1 min-h-0 overflow-y-auto">
-        <div className="max-w-3xl mx-auto p-4">
-          {phase === 'config' && <QuizConfig onStart={handleStart} />}
-          {phase === 'session' && config !== null && (
+        {phase === 'config' && (
+          <div className="max-w-3xl mx-auto p-4">
+            <QuizConfig onStart={handleStart} />
+          </div>
+        )}
+        {phase === 'session' && config !== null && (
+          <div className="max-w-5xl mx-auto p-4">
             <QuizSession
               config={config}
               onRestart={handleRestart}
               onFinished={handleFinished}
             />
-          )}
-        </div>
+          </div>
+        )}
       </main>
     </>
   );

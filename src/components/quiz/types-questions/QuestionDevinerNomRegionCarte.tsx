@@ -9,6 +9,8 @@ export default function QuestionDevinerNomRegionCarte({
   answerState,
   selectedCode,
   onAnswer,
+  onNext,
+  isLastQuestion,
 }: QuestionProps) {
   const geoData = useGeoData();
 
@@ -20,9 +22,37 @@ export default function QuestionDevinerNomRegionCarte({
   const regionFeatures = geoData.regions.features as Feature[];
 
   return (
-    <div className="flex flex-col gap-4">
-      <p className="text-center text-lg">Quelle est cette région ?</p>
+    <div className="flex flex-col md:grid md:grid-cols-[2fr_3fr] gap-6 items-start">
+      {/* Colonne gauche : énoncé + choix QCM + bouton */}
+      <div className="flex flex-col gap-4">
+        <p className="text-center text-lg">Quelle est cette région ?</p>
 
+        <QcmChoices
+          choices={question.choices ?? []}
+          answerState={answerState}
+          selectedCode={selectedCode}
+          onAnswer={onAnswer}
+          wrongAnswerLabel={question.targetNom}
+        />
+
+        {answerState !== 'pending' && onNext && (
+          <div className="flex flex-col items-center gap-1 pt-2">
+            <button
+              type="button"
+              onClick={onNext}
+              className="px-8 py-3 font-semibold rounded-lg transition-colors bg-blue-600 text-white hover:bg-blue-700"
+            >
+              {isLastQuestion ? 'Voir le résultat' : 'Question suivante'}
+            </button>
+            <p className="text-xs text-gray-400">
+              ou appuyez sur{' '}
+              <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs">Entrée</kbd>
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Colonne droite : carte */}
       <CarteFrance
         key={question.id}
         features={{ departements: deptFeatures, regions: regionFeatures }}
@@ -31,14 +61,6 @@ export default function QuestionDevinerNomRegionCarte({
         highlightCode={question.targetCode}
         highlightType="region"
         highlightVariant="target"
-      />
-
-      <QcmChoices
-        choices={question.choices ?? []}
-        answerState={answerState}
-        selectedCode={selectedCode}
-        onAnswer={onAnswer}
-        wrongAnswerLabel={question.targetNom}
       />
     </div>
   );

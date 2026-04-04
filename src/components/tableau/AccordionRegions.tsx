@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { REGIONS } from '../../data/regions';
 import type { Region } from '../../data/regions';
 import { DEPARTEMENTS } from '../../data/departements';
@@ -7,9 +7,9 @@ import type { Departement } from '../../data/departements';
 // Grouper les départements par code région
 const deptsByRegion = new Map<string, Departement[]>();
 for (const dept of DEPARTEMENTS) {
-  const list = deptsByRegion.get(dept.regionCode) ?? [];
-  list.push(dept);
-  deptsByRegion.set(dept.regionCode, list);
+  const list = deptsByRegion.get(dept.regionCode);
+  if (list) list.push(dept);
+  else deptsByRegion.set(dept.regionCode, [dept]);
 }
 
 const sortedRegions: Region[] = [...REGIONS].sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
@@ -22,8 +22,9 @@ interface RegionRowProps {
 function RegionRow({ region, depts }: RegionRowProps) {
   const [open, setOpen] = useState(false);
 
-  const sorted = [...depts].sort((a, b) =>
-    a.code.localeCompare(b.code, 'fr', { numeric: true }),
+  const sorted = useMemo(
+    () => [...depts].sort((a, b) => a.code.localeCompare(b.code, 'fr', { numeric: true })),
+    [depts],
   );
 
   return (
