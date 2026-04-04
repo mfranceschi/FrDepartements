@@ -22,7 +22,7 @@ export default function QuestionDevinerNomRegionCarte({
   const regionFeatures = geoData.regions.features as Feature[];
 
   return (
-    <div className="flex flex-col md:grid md:grid-cols-[2fr_3fr] gap-6 items-start">
+    <div className="flex flex-col md:grid md:grid-cols-[1fr_2fr] gap-6 items-start">
       {/* Colonne gauche : énoncé + choix QCM + bouton */}
       <div className="flex flex-col gap-4">
         <p className="text-center text-lg">Quelle est cette région ?</p>
@@ -53,15 +53,17 @@ export default function QuestionDevinerNomRegionCarte({
       </div>
 
       {/* Colonne droite : carte */}
-      <CarteFrance
-        key={question.id}
-        features={{ departements: deptFeatures, regions: regionFeatures }}
-        quizMode={true}
-        quizLayer="regions"
-        highlightCode={question.targetCode}
-        highlightType="region"
-        highlightVariant="target"
-      />
+      <div className="border border-gray-300 rounded-lg overflow-hidden">
+        <CarteFrance
+          key={question.id}
+          features={{ departements: deptFeatures, regions: regionFeatures }}
+          quizMode={true}
+          quizLayer="regions"
+          highlightCode={question.targetCode}
+          highlightType="region"
+          highlightVariant="target"
+        />
+      </div>
     </div>
   );
 }

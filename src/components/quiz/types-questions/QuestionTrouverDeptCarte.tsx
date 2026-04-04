@@ -27,7 +27,7 @@ export default function QuestionTrouverDeptCarte({
   };
 
   return (
-    <div className="flex flex-col md:grid md:grid-cols-[2fr_3fr] gap-6 items-start">
+    <div className="flex flex-col md:grid md:grid-cols-[1fr_2fr] gap-6 items-start">
       {/* Colonne gauche : énoncé + feedback + bouton */}
       <div className="flex flex-col gap-4">
         <p className="text-center text-lg">
@@ -66,17 +66,19 @@ export default function QuestionTrouverDeptCarte({
       </div>
 
       {/* Colonne droite : carte */}
-      <CarteFrance
-        key={question.id}
-        features={{ departements: deptFeatures, regions: regionFeatures }}
-        quizMode={true}
-        quizLayer="departements"
-        highlightCode={answerState !== 'pending' ? question.targetCode : undefined}
-        highlightType="departement"
-        wrongCode={answerState === 'wrong' && selectedCode !== question.targetCode ? selectedCode ?? undefined : undefined}
-        wrongType="departement"
-        onFeatureClick={(code) => handleClick(code)}
-      />
+      <div className="border border-gray-300 rounded-lg overflow-hidden">
+        <CarteFrance
+          key={question.id}
+          features={{ departements: deptFeatures, regions: regionFeatures }}
+          quizMode={true}
+          quizLayer="departements"
+          highlightCode={answerState !== 'pending' ? question.targetCode : undefined}
+          highlightType="departement"
+          wrongCode={answerState === 'wrong' && selectedCode !== question.targetCode ? selectedCode ?? undefined : undefined}
+          wrongType="departement"
+          onFeatureClick={(code) => handleClick(code)}
+        />
+      </div>
     </div>
   );
 }
