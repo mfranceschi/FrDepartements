@@ -20,6 +20,7 @@ export interface CarteFranceProps {
   onFeatureClick?: (code: string, type: 'departement' | 'region') => void;
   highlightCode?: string;
   highlightType?: 'departement' | 'region';
+  highlightVariant?: 'correct' | 'target';
   wrongCode?: string;
   wrongType?: 'departement' | 'region';
   focusCode?: string;
@@ -43,6 +44,7 @@ export default function CarteFrance({
   onFeatureClick,
   highlightCode,
   highlightType,
+  highlightVariant = 'correct',
   wrongCode,
   wrongType,
   focusCode,
@@ -269,6 +271,7 @@ export default function CarteFrance({
             visible={effectiveShowRegions}
             quizMode={quizMode}
             highlightCode={highlightRegionCode}
+            highlightVariant={highlightVariant}
             wrongCode={wrongRegionCode}
             onHover={handleRegionHover}
             onClick={onFeatureClick ? handleRegionClick : undefined}
@@ -279,6 +282,7 @@ export default function CarteFrance({
             visible={effectiveShowDepts}
             quizMode={quizMode}
             highlightCode={highlightDeptCode}
+            highlightVariant={highlightVariant}
             wrongCode={wrongDeptCode}
             onHover={handleDeptHover}
             onClick={onFeatureClick ? handleDeptClick : undefined}

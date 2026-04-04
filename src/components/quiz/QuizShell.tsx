@@ -1,6 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import type { SessionState, QuizMode } from '../../quiz/types';
-import { MODE_LABELS } from '../../quiz/types';
+import type { SessionState } from '../../quiz/types';
 import { QCM_MODES } from '../../quiz/generateQuestions';
 import QuestionTrouverDeptCarte from './types-questions/QuestionTrouverDeptCarte';
 import QuestionTrouverRegionCarte from './types-questions/QuestionTrouverRegionCarte';
@@ -33,56 +32,6 @@ function getResultMessage(score: number, total: number): string {
   return 'Continuez !';
 }
 
-function CategoryStats({ history }: { history: SessionState['answerHistory'] }) {
-  if (history.length === 0) return null;
-
-  const byMode = new Map<QuizMode, { correct: number; total: number }>();
-  for (const record of history) {
-    const existing = byMode.get(record.mode) ?? { correct: 0, total: 0 };
-    byMode.set(record.mode, {
-      correct: existing.correct + (record.correct ? 1 : 0),
-      total: existing.total + 1,
-    });
-  }
-
-  if (byMode.size < 2) return null;
-
-  const entries = Array.from(byMode.entries())
-    .map(([mode, stats]) => ({
-      mode,
-      ratio: stats.total > 0 ? stats.correct / stats.total : 0,
-      correct: stats.correct,
-      total: stats.total,
-    }))
-    .sort((a, b) => b.ratio - a.ratio);
-
-  const best = entries[0];
-  const worst = entries[entries.length - 1];
-
-  return (
-    <div className="w-full max-w-xs space-y-2 text-sm">
-      <p className="text-xs text-gray-500 text-center uppercase tracking-wide font-medium">Par catégorie</p>
-      <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-        <span className="text-green-600 font-bold text-lg">↑</span>
-        <div>
-          <p className="font-semibold text-green-800">{MODE_LABELS[best.mode]}</p>
-          <p className="text-green-600 text-xs">
-            {best.correct}/{best.total} — {Math.round(best.ratio * 100)} %
-          </p>
-        </div>
-      </div>
-      <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-        <span className="text-red-500 font-bold text-lg">↓</span>
-        <div>
-          <p className="font-semibold text-red-800">{MODE_LABELS[worst.mode]}</p>
-          <p className="text-red-500 text-xs">
-            {worst.correct}/{worst.total} — {Math.round(worst.ratio * 100)} %
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function QuizShell({
   session,
@@ -162,8 +111,6 @@ export default function QuizShell({
           />
         </div>
         <p className="text-sm text-gray-500">{pct} % de bonnes réponses</p>
-
-        <CategoryStats history={answerHistory} />
 
         <div className="flex flex-col items-center gap-3 mt-4">
           {wrongCount > 0 && (

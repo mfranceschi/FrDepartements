@@ -37,6 +37,7 @@ export default function QuestionDevinerNomDeptCarte({
         quizLayer="departements"
         highlightCode={question.targetCode}
         highlightType="departement"
+        highlightVariant="target"
       />
 
       <QcmChoices

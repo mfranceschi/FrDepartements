@@ -11,6 +11,7 @@ interface CoucheRegionsProps {
   borderOnly?: boolean;
   quizMode?: boolean;
   highlightCode?: string;
+  highlightVariant?: 'correct' | 'target';
   wrongCode?: string;
   onHover: (feature: Feature | null, x: number, y: number) => void;
   onClick?: (code: string) => void;
@@ -23,6 +24,7 @@ export default memo(function CoucheRegions({
   borderOnly = false,
   quizMode = false,
   highlightCode,
+  highlightVariant = 'correct',
   wrongCode,
   onHover,
   onClick,
@@ -58,10 +60,11 @@ export default memo(function CoucheRegions({
         }
 
         const isHovered = code !== undefined && code === hoveredCode;
+        const quizHighlightColor = highlightVariant === 'target' ? '#fbbf24' : '#4ade80';
         const fill = isHighlighted
-          ? (quizMode ? '#4ade80' : 'white')
+          ? (quizMode ? quizHighlightColor : 'white')
           : isWrong ? '#fca5a5'
-          : isHovered ? 'white'
+          : (!quizMode && isHovered) ? 'white'
           : '#e8f4e8';
 
         return (
