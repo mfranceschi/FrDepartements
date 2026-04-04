@@ -10,6 +10,7 @@ interface SujetOption {
   label: string;
   description: string;
   hasDifficulty: boolean;
+  hasSessionLength: boolean;
 }
 
 const SUJETS: SujetOption[] = [
@@ -18,30 +19,35 @@ const SUJETS: SujetOption[] = [
     label: 'Régions — Carte',
     description: 'Retrouver les régions sur la carte de France',
     hasDifficulty: false,
+    hasSessionLength: false,
   },
   {
     sujet: 'depts-carte',
     label: 'Départements — Carte',
     description: 'Retrouver les départements sur la carte de France',
     hasDifficulty: true,
+    hasSessionLength: true,
   },
   {
     sujet: 'depts-numeros',
     label: 'Départements — Numéros',
     description: 'Associer les départements à leur numéro',
     hasDifficulty: true,
+    hasSessionLength: true,
   },
   {
     sujet: 'depts-prefectures',
     label: 'Départements — Préfectures',
     description: 'Retrouver la préfecture de chaque département',
     hasDifficulty: false,
+    hasSessionLength: true,
   },
   {
     sujet: 'regions-prefectures',
     label: 'Régions — Préfectures',
     description: 'Retrouver la préfecture de chaque région',
     hasDifficulty: false,
+    hasSessionLength: false,
   },
 ];
 
@@ -56,7 +62,11 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
   const selectedOption = SUJETS.find((s) => s.sujet === sujet)!;
 
   const handleStart = () => {
-    onStart({ sujet, difficulty, sessionLength });
+    onStart({
+      sujet,
+      difficulty,
+      sessionLength: selectedOption.hasSessionLength ? sessionLength : 'tout',
+    });
   };
 
   return (
@@ -118,26 +128,28 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
         </section>
       )}
 
-      {/* Nombre de questions */}
-      <section className="mb-8">
-        <h2 className="text-base font-medium mb-3">Nombre de questions</h2>
-        <div className="flex gap-3">
-          {SESSION_LENGTHS.map((len) => (
-            <button
-              key={len}
-              type="button"
-              onClick={() => setSessionLength(len)}
-              className={`px-4 py-2 rounded text-sm font-medium border transition-colors ${
-                sessionLength === len
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
-              }`}
-            >
-              {len === 'tout' ? 'Tout' : len}
-            </button>
-          ))}
-        </div>
-      </section>
+      {/* Nombre de questions — masqué pour les sujets régions (toujours "tout") */}
+      {selectedOption.hasSessionLength && (
+        <section className="mb-8">
+          <h2 className="text-base font-medium mb-3">Nombre de questions</h2>
+          <div className="flex gap-3">
+            {SESSION_LENGTHS.map((len) => (
+              <button
+                key={len}
+                type="button"
+                onClick={() => setSessionLength(len)}
+                className={`px-4 py-2 rounded text-sm font-medium border transition-colors ${
+                  sessionLength === len
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
+                }`}
+              >
+                {len === 'tout' ? 'Tout' : len}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Bouton Commencer */}
       <button
