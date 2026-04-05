@@ -46,16 +46,16 @@ describe('QuizConfig – affichage difficulté conditionnel', () => {
     expect(screen.queryByText(/Niveau de difficulté/i)).not.toBeInTheDocument();
   });
 
-  it('n\'affiche pas la difficulté pour depts-prefectures', () => {
+  it('affiche la difficulté pour depts-prefectures', () => {
     render(<QuizConfig onStart={vi.fn()} />);
     fireEvent.click(screen.getByRole('radio', { name: /Départements — Préfectures/i }));
-    expect(screen.queryByText(/Niveau de difficulté/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Niveau de difficulté/i)).toBeInTheDocument();
   });
 
-  it('n\'affiche pas la difficulté pour regions-prefectures', () => {
+  it('affiche la difficulté pour regions-prefectures', () => {
     render(<QuizConfig onStart={vi.fn()} />);
     fireEvent.click(screen.getByRole('radio', { name: /Régions — Préfectures/i }));
-    expect(screen.queryByText(/Niveau de difficulté/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Niveau de difficulté/i)).toBeInTheDocument();
   });
 
   it('affiche la difficulté pour depts-numeros', () => {

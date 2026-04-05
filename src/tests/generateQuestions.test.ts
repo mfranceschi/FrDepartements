@@ -99,23 +99,23 @@ describe('generateQuestions – fonction pure', () => {
     });
   });
 
-  it('difficile : les distracteurs de DevinerCodeDept sont dans la même région (quand la région a ≥ 3 autres depts)', () => {
+  it('difficile : les distracteurs de DevinerCodeDept sont numériquement proches du code cible', () => {
     const config: QuizConfig = { sujet: 'depts-numeros', difficulty: 'difficile', sessionLength: 'tout' };
     const questions = generateQuestions(config);
 
-    questions.filter((q) => q.mode === 'DevinerCodeDept').forEach((q) => {
-      const targetDept = DEPARTEMENTS.find((d) => d.code === q.targetCode)!;
-      const sameRegionCount = DEPARTEMENTS.filter(
-        (d) => d.regionCode === targetDept.regionCode && d.code !== targetDept.code,
-      ).length;
+    const toNum = (code: string) => code === '2A' ? 20.1 : code === '2B' ? 20.2 : parseInt(code, 10);
 
-      if (sameRegionCount >= 3) {
-        const wrongChoices = q.choices!.filter((c) => !c.correct);
-        wrongChoices.forEach((c) => {
-          const distractor = DEPARTEMENTS.find((d) => d.code === c.code)!;
-          expect(distractor.regionCode).toBe(targetDept.regionCode);
-        });
-      }
+    questions.filter((q) => q.mode === 'DevinerCodeDept').forEach((q) => {
+      const targetNum = toNum(q.targetCode);
+      const wrongChoices = q.choices!.filter((c) => !c.correct);
+      wrongChoices.forEach((c) => {
+        const distractorNum = toNum(c.code);
+        // Each distractor should be among the 6 numerically closest codes
+        const closerCount = DEPARTEMENTS.filter(
+          (d) => d.code !== q.targetCode && Math.abs(toNum(d.code) - targetNum) < Math.abs(distractorNum - targetNum),
+        ).length;
+        expect(closerCount).toBeLessThan(6);
+      });
     });
   });
 });

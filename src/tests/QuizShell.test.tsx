@@ -11,11 +11,13 @@ function makeFinishedSession(score: number, total: number): SessionState {
     ...Array.from({ length: score }, (_, i) => ({
       mode: 'DevinerNomDept' as const,
       correct: true,
+      answeredCode: String(i).padStart(2, '0'),
       question: { id: `q${i}`, mode: 'DevinerNomDept' as const, targetCode: String(i).padStart(2, '0'), targetNom: `Dept${i}` },
     })),
     ...Array.from({ length: wrongCount }, (_, i) => ({
       mode: 'DevinerNomDept' as const,
       correct: false,
+      answeredCode: '00',
       question: { id: `qw${i}`, mode: 'DevinerNomDept' as const, targetCode: String(i + 50).padStart(2, '0'), targetNom: `Dept${i + 50}` },
     })),
   ];
@@ -33,6 +35,7 @@ function makeFinishedSession(score: number, total: number): SessionState {
     selectedCode: null,
     finished: true,
     answerHistory,
+    isReview: false,
   };
 }
 
@@ -44,17 +47,20 @@ function makeSessionWithStreak(streak: number, brokenBy?: 'wrong'): SessionState
         ...Array.from({ length: streak }, (_, i) => ({
           mode: 'DevinerNomDept' as const,
           correct: true,
+          answeredCode: String(i).padStart(2, '0'),
           question: { id: `q${i}`, mode: 'DevinerNomDept' as const, targetCode: String(i).padStart(2, '0'), targetNom: `Dept${i}` },
         })),
         {
           mode: 'DevinerNomDept' as const,
           correct: false,
+          answeredCode: '00',
           question: { id: 'qw', mode: 'DevinerNomDept' as const, targetCode: '99', targetNom: 'DeptW' },
         },
       ]
     : Array.from({ length: streak }, (_, i) => ({
         mode: 'DevinerNomDept' as const,
         correct: true,
+        answeredCode: String(i).padStart(2, '0'),
         question: { id: `q${i}`, mode: 'DevinerNomDept' as const, targetCode: String(i).padStart(2, '0'), targetNom: `Dept${i}` },
       }));
 
@@ -77,6 +83,7 @@ function makeSessionWithStreak(streak: number, brokenBy?: 'wrong'): SessionState
     selectedCode: null,
     finished: false,
     answerHistory: history,
+    isReview: false,
   };
 }
 
@@ -103,6 +110,7 @@ function makeActiveSession(mode: 'DevinerNomDept' | 'DevinerCodeDept' = 'Deviner
     selectedCode: null,
     finished: false,
     answerHistory: [],
+    isReview: false,
   };
 }
 

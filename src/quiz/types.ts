@@ -55,6 +55,7 @@ export const MODE_LABELS: Readonly<Record<QuizMode, string>> = {
 export interface AnswerRecord {
   mode: QuizMode;
   correct: boolean;
+  answeredCode: string;
   question: Question;
 }
 
@@ -76,4 +77,5 @@ export interface SessionState {
   selectedCode: string | null;
   finished: boolean;
   answerHistory: AnswerRecord[];
+  isReview: boolean;
 }

@@ -39,14 +39,14 @@ const SUJETS: SujetOption[] = [
     sujet: 'depts-prefectures',
     label: 'Départements — Préfectures',
     description: 'Retrouver la préfecture de chaque département',
-    hasDifficulty: false,
+    hasDifficulty: true,
     hasSessionLength: true,
   },
   {
     sujet: 'regions-prefectures',
     label: 'Régions — Préfectures',
     description: 'Retrouver la préfecture de chaque région',
-    hasDifficulty: false,
+    hasDifficulty: true,
     hasSessionLength: false,
   },
 ];

@@ -3,7 +3,7 @@ import type { Choice } from './types';
 
 export interface DeptChoice { code: string; nom: string; regionCode: string }
 export interface RegionChoice { code: string; nom: string }
-export interface PrefDeptChoice { code: string; nom: string; prefecture: string }
+export interface PrefDeptChoice { code: string; nom: string; prefecture: string; regionCode: string }
 export interface PrefRegionChoice { code: string; nom: string; prefectureRegionale: string }
 
 // ─── Utilitaires ──────────────────────────────────────────────────────────────
@@ -96,12 +96,15 @@ export function buildCodeChoicesFacile(correct: DeptChoice, allDepts: DeptChoice
   return buildChoicesFrom(correct, allDepts, (d) => d.code, (d) => d.code);
 }
 
-/** Code de département — distractors prioritairement dans la même région. */
+/** Code de département — distractors prioritairement parmi les codes numériquement proches. */
 export function buildCodeChoicesDifficile(correct: DeptChoice, allDepts: DeptChoice[]): Choice[] {
-  const sameRegion = allDepts.filter(
-    (d) => d.regionCode === correct.regionCode && d.code !== correct.code,
-  );
-  return buildChoicesFrom(correct, allDepts, (d) => d.code, (d) => d.code, sameRegion);
+  const toNum = (code: string) => code === '2A' ? 20.1 : code === '2B' ? 20.2 : parseInt(code, 10);
+  const correctNum = toNum(correct.code);
+  const numericallyClose = allDepts
+    .filter((d) => d.code !== correct.code)
+    .sort((a, b) => Math.abs(toNum(a.code) - correctNum) - Math.abs(toNum(b.code) - correctNum))
+    .slice(0, 6);
+  return buildChoicesFrom(correct, allDepts, (d) => d.code, (d) => d.code, numericallyClose);
 }
 
 /** Nom de région — distractors aléatoires. */
@@ -116,12 +119,27 @@ export function buildRegionChoicesDifficile(correctRegion: RegionChoice, allRegi
   return buildChoicesFrom(correctRegion, allRegions, (r) => r.code, (r) => r.nom, adjacent);
 }
 
-/** Préfecture de département — distractors aléatoires. */
-export function buildPrefDeptChoices(correct: PrefDeptChoice, allDepts: PrefDeptChoice[]): Choice[] {
+/** Préfecture de département — distractors aléatoires toutes régions confondues. */
+export function buildPrefDeptChoicesFacile(correct: PrefDeptChoice, allDepts: PrefDeptChoice[]): Choice[] {
   return buildChoicesFrom(correct, allDepts, (d) => d.code, (d) => d.prefecture);
 }
 
+/** Préfecture de département — distractors prioritairement dans la même région. */
+export function buildPrefDeptChoicesDifficile(correct: PrefDeptChoice, allDepts: PrefDeptChoice[]): Choice[] {
+  const sameRegion = allDepts.filter(
+    (d) => d.regionCode === correct.regionCode && d.code !== correct.code,
+  );
+  return buildChoicesFrom(correct, allDepts, (d) => d.code, (d) => d.prefecture, sameRegion);
+}
+
 /** Préfecture de région — distractors aléatoires. */
-export function buildPrefRegionChoices(correct: PrefRegionChoice, allRegions: PrefRegionChoice[]): Choice[] {
+export function buildPrefRegionChoicesFacile(correct: PrefRegionChoice, allRegions: PrefRegionChoice[]): Choice[] {
   return buildChoicesFrom(correct, allRegions, (r) => r.code, (r) => r.prefectureRegionale);
+}
+
+/** Préfecture de région — distractors prioritairement parmi les régions géographiquement voisines. */
+export function buildPrefRegionChoicesDifficile(correct: PrefRegionChoice, allRegions: PrefRegionChoice[]): Choice[] {
+  const adjacentCodes = REGION_ADJACENCY[correct.code] ?? [];
+  const adjacent = allRegions.filter((r) => adjacentCodes.includes(r.code));
+  return buildChoicesFrom(correct, allRegions, (r) => r.code, (r) => r.prefectureRegionale, adjacent);
 }

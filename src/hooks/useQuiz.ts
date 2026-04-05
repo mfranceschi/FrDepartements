@@ -33,7 +33,7 @@ export function useQuiz(config: QuizConfig): {
       const question = prev.questions[prev.currentIndex];
       const correct = code === question.targetCode;
 
-      const record: AnswerRecord = { mode: question.mode, correct, question };
+      const record: AnswerRecord = { mode: question.mode, correct, answeredCode: code, question };
 
       return {
         ...prev,
@@ -86,6 +86,7 @@ export function useQuiz(config: QuizConfig): {
         selectedCode: null,
         finished: false,
         answerHistory: [],
+        isReview: true,
       };
     });
   }, []);

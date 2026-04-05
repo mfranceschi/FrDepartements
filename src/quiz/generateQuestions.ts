@@ -8,8 +8,10 @@ import {
   buildCodeChoicesDifficile,
   buildRegionChoicesFacile,
   buildRegionChoicesDifficile,
-  buildPrefDeptChoices,
-  buildPrefRegionChoices,
+  buildPrefDeptChoicesFacile,
+  buildPrefDeptChoicesDifficile,
+  buildPrefRegionChoicesFacile,
+  buildPrefRegionChoicesDifficile,
   type DeptChoice,
   type PrefDeptChoice,
   type PrefRegionChoice,
@@ -183,14 +185,20 @@ export function generateQuestions(config: QuizConfig): Question[] {
       case 'DevinerPrefectureDept': {
         const deptItem = allDeptsPref.find((d) => d.code === item.code);
         if (deptItem) {
-          base.choices = buildPrefDeptChoices(deptItem, allDeptsPref);
+          base.choices =
+            config.difficulty === 'facile'
+              ? buildPrefDeptChoicesFacile(deptItem, allDeptsPref)
+              : buildPrefDeptChoicesDifficile(deptItem, allDeptsPref);
         }
         break;
       }
       case 'DevinerPrefectureRegion': {
         const regionItem = allRegionsPref.find((r) => r.code === item.code);
         if (regionItem) {
-          base.choices = buildPrefRegionChoices(regionItem, allRegionsPref);
+          base.choices =
+            config.difficulty === 'facile'
+              ? buildPrefRegionChoicesFacile(regionItem, allRegionsPref)
+              : buildPrefRegionChoicesDifficile(regionItem, allRegionsPref);
         }
         break;
       }
@@ -215,5 +223,6 @@ export function buildInitialSession(config: QuizConfig): SessionState {
     selectedCode: null,
     finished: false,
     answerHistory: [],
+    isReview: false,
   };
 }
