@@ -19,7 +19,7 @@ vi.mock('../components/carte/CarteFrance', () => ({
 describe('App – smoke test', () => {
   it('se monte sans erreur et affiche la navigation', () => {
     render(<App />);
-    const nav = screen.getByRole('navigation');
+    const nav = screen.getByRole('navigation', { name: 'Navigation principale' });
     expect(nav).toBeInTheDocument();
     expect(within(nav).getByText('Carte')).toBeInTheDocument();
     expect(within(nav).getByText('Quiz')).toBeInTheDocument();

@@ -11,8 +11,8 @@ test.describe('Navigation', () => {
 
   test('affiche la page Carte par défaut', async ({ page }) => {
     await expect(page).toHaveURL('/carte');
-    // La carte SVG doit être présente
-    await expect(page.locator('svg')).toBeVisible();
+    // La carte SVG principale doit être présente (svg.block = CarteFrance, pas les icônes nav)
+    await expect(page.locator('svg.block')).toBeVisible();
   });
 
   test('redirige / vers /quiz', async ({ page }) => {

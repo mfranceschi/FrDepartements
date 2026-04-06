@@ -90,7 +90,8 @@ describe('CartePage – panneau d\'informations', () => {
 
 describe('CartePage – recherche dans la sidebar', () => {
   function getSearchInput() {
-    return screen.getByPlaceholderText(/Rechercher un département/i);
+    // Deux inputs existent dans le DOM (mobile + sidebar desktop) — on cible le premier
+    return screen.getAllByPlaceholderText(/Rechercher un département/i)[0];
   }
 
   it('affiche le champ de recherche', () => {
@@ -98,23 +99,27 @@ describe('CartePage – recherche dans la sidebar', () => {
     expect(getSearchInput()).toBeInTheDocument();
   });
 
+  // Note: le dropdown est rendu dans deux conteneurs (mobile + sidebar desktop).
+  // jsdom n'applique pas les classes CSS (lg:hidden/hidden), donc les deux sont
+  // présents dans le DOM. On utilise [0] pour cibler le premier.
+
   it('affiche des résultats en tapant un nom de département', () => {
     render(<CartePage />);
     fireEvent.change(getSearchInput(), { target: { value: 'Paris' } });
-    expect(screen.getByText('Paris', { selector: 'span.font-medium' })).toBeInTheDocument();
+    expect(screen.getAllByText('Paris', { selector: 'span.font-medium' })[0]).toBeInTheDocument();
   });
 
   it('affiche des résultats en tapant un code département', () => {
     render(<CartePage />);
     fireEvent.change(getSearchInput(), { target: { value: '29' } });
-    expect(screen.getByText('Finistère', { selector: 'span.font-medium' })).toBeInTheDocument();
+    expect(screen.getAllByText('Finistère', { selector: 'span.font-medium' })[0]).toBeInTheDocument();
   });
 
   it('sélectionner un résultat affiche ses infos dans le panneau', () => {
     render(<CartePage />);
     fireEvent.change(getSearchInput(), { target: { value: 'Paris' } });
 
-    const resultBtn = screen.getByText('Paris', { selector: 'span.font-medium' }).closest('button')!;
+    const resultBtn = screen.getAllByText('Paris', { selector: 'span.font-medium' })[0].closest('button')!;
     fireEvent.mouseDown(resultBtn);
 
     const sidebar = getSidebar();
@@ -126,7 +131,7 @@ describe('CartePage – recherche dans la sidebar', () => {
     render(<CartePage />);
     fireEvent.change(getSearchInput(), { target: { value: 'Paris' } });
     fireEvent.mouseDown(
-      screen.getByText('Paris', { selector: 'span.font-medium' }).closest('button')!,
+      screen.getAllByText('Paris', { selector: 'span.font-medium' })[0].closest('button')!,
     );
     expect(getSearchInput()).toHaveValue('');
   });
@@ -134,16 +139,16 @@ describe('CartePage – recherche dans la sidebar', () => {
   it('le bouton ✕ vide le champ de recherche', () => {
     render(<CartePage />);
     fireEvent.change(getSearchInput(), { target: { value: 'Paris' } });
-    expect(screen.getByText('✕')).toBeInTheDocument();
+    expect(screen.getAllByText('✕')[0]).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText('✕'));
+    fireEvent.click(screen.getAllByText('✕')[0]);
     expect(getSearchInput()).toHaveValue('');
-    expect(screen.queryByText('Paris', { selector: 'span.font-medium' })).not.toBeInTheDocument();
+    expect(screen.queryAllByText('Paris', { selector: 'span.font-medium' })).toHaveLength(0);
   });
 
   it('un résultat de type région est aussi accessible', () => {
     render(<CartePage />);
     fireEvent.change(getSearchInput(), { target: { value: 'Bretagne' } });
-    expect(screen.getByText('Bretagne', { selector: 'span.font-medium' })).toBeInTheDocument();
+    expect(screen.getAllByText('Bretagne', { selector: 'span.font-medium' })[0]).toBeInTheDocument();
   });
 });

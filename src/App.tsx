@@ -17,13 +17,14 @@ function AppInner() {
   return (
     <div className="h-screen flex flex-col">
       <Nav />
-      <div className={`flex flex-col flex-1 min-h-0 overflow-hidden ${pathname === '/carte' ? 'page-enter' : 'hidden'}`}>
+      {/* pb-16 lg:pb-0 : réserve l'espace pour la bottom bar mobile */}
+      <div className={`flex flex-col flex-1 min-h-0 overflow-hidden pb-16 lg:pb-0 ${pathname === '/carte' ? 'page-enter' : 'hidden'}`}>
         <ErrorBoundary name="Carte"><CartePage /></ErrorBoundary>
       </div>
-      <div className={`flex flex-col flex-1 min-h-0 overflow-hidden ${pathname === '/quiz' ? 'page-enter' : 'hidden'}`}>
+      <div className={`flex flex-col flex-1 min-h-0 overflow-hidden pb-16 lg:pb-0 ${pathname === '/quiz' ? 'page-enter' : 'hidden'}`}>
         <ErrorBoundary name="Quiz"><QuizPage /></ErrorBoundary>
       </div>
-      <div className={`flex flex-col flex-1 min-h-0 overflow-hidden ${pathname === '/tableau' ? 'page-enter' : 'hidden'}`}>
+      <div className={`flex flex-col flex-1 min-h-0 overflow-hidden pb-16 lg:pb-0 ${pathname === '/tableau' ? 'page-enter' : 'hidden'}`}>
         <ErrorBoundary name="Tableau"><TableauPage /></ErrorBoundary>
       </div>
     </div>

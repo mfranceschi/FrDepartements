@@ -44,19 +44,20 @@ test.describe('Carte interactive', () => {
   });
 
   test('la barre de recherche filtre les résultats', async ({ page }) => {
-    const searchInput = page.getByPlaceholder(/rechercher|search/i);
+    // Sur desktop, c'est l'input de la sidebar (hidden lg:block) qui est visible
+    const searchInput = page.getByPlaceholder(/rechercher|search/i).filter({ visible: true });
     await expect(searchInput).toBeVisible();
 
     await searchInput.fill('Paris');
-    // Des suggestions doivent apparaître
-    await expect(page.getByText(/paris/i).first()).toBeVisible({ timeout: 3_000 });
+    // Des suggestions doivent apparaître (filter visible car le dropdown existe aussi dans la barre mobile cachée)
+    await expect(page.getByText(/paris/i).filter({ visible: true }).first()).toBeVisible({ timeout: 3_000 });
   });
 
   test('cliquer sur un résultat de recherche met à jour la sidebar', async ({ page }) => {
-    const searchInput = page.getByPlaceholder(/rechercher|search/i);
+    const searchInput = page.getByPlaceholder(/rechercher|search/i).filter({ visible: true });
     await searchInput.fill('Finistère');
 
-    const suggestion = page.getByText(/finistère/i).first();
+    const suggestion = page.getByText(/finistère/i).filter({ visible: true }).first();
     await expect(suggestion).toBeVisible({ timeout: 3_000 });
     await suggestion.click();
 

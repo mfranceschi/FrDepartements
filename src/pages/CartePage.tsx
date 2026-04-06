@@ -212,10 +212,73 @@ export default function CartePage() {
     regions: regions.features as Feature[],
   };
 
+  const searchBar = (
+    <div className="relative">
+      <svg
+        className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={2}
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.197 5.197a7.5 7.5 0 0 0 10.606 10.606Z" />
+      </svg>
+      <input
+        type="text"
+        placeholder="Rechercher un département…"
+        value={searchQuery}
+        onChange={(e) => { setSearchQuery(e.target.value); setShowResults(true); }}
+        onFocus={() => setShowResults(true)}
+        onBlur={() => setTimeout(() => setShowResults(false), DROPDOWN_BLUR_DELAY_MS)}
+        className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+      />
+      {searchQuery && (
+        <button
+          type="button"
+          onClick={() => { setSearchQuery(''); setShowResults(false); }}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+        >
+          ✕
+        </button>
+      )}
+    </div>
+  );
+
+  const searchDropdown = showResults && searchResults.length > 0 && (
+    <ul className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-20 overflow-hidden">
+      {searchResults.map((r) => (
+        <li key={`${r.type}-${r.code}`}>
+          <button
+            type="button"
+            onMouseDown={() => handleSearchSelect(r)}
+            className="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 flex items-center gap-2"
+          >
+            <span
+              className={`inline-block w-2.5 h-2.5 rounded-sm border shrink-0 ${
+                r.type === 'region'
+                  ? 'bg-green-100 border-green-500'
+                  : 'bg-blue-100 border-blue-500'
+              }`}
+            />
+            <span className="font-medium text-gray-800 truncate">{r.nom}</span>
+            <span className="text-gray-400 font-mono text-xs shrink-0">{r.code}</span>
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+
   return (
     <main className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden" style={{ height: '100%' }}>
+      {/* Barre de recherche mobile — au-dessus de la carte, masquée sur desktop */}
+      <div className="lg:hidden shrink-0 px-3 py-2 border-b border-gray-200 bg-white relative">
+        {searchBar}
+        {searchDropdown}
+      </div>
+
       {/* Map */}
-      <div className="flex-1 min-w-0 min-h-0 p-2 overflow-hidden" style={{ minHeight: '320px' }}>
+      <div className="flex-1 min-w-0 min-h-0 p-2 overflow-hidden" style={{ minHeight: '200px' }}>
         <CarteFrance
           features={features}
           onFeatureClick={handleFeatureClick}
@@ -228,63 +291,10 @@ export default function CartePage() {
 
       {/* Info sidebar */}
       <aside className="lg:w-64 xl:w-72 border-t lg:border-t-0 lg:border-l border-gray-200 bg-gray-50 flex flex-col shrink-0 overflow-y-auto max-h-[40vh] lg:max-h-none">
-        {/* Search */}
-        <div className="p-3 border-b border-gray-200 relative">
-          <div className="relative">
-            <svg
-              className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.197 5.197a7.5 7.5 0 0 0 10.606 10.606Z" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Rechercher un département…"
-              value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setShowResults(true); }}
-              onFocus={() => setShowResults(true)}
-              onBlur={() => setTimeout(() => setShowResults(false), DROPDOWN_BLUR_DELAY_MS)}
-              className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => { setSearchQuery(''); setShowResults(false); }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-
-          {/* Dropdown résultats */}
-          {showResults && searchResults.length > 0 && (
-            <ul className="absolute left-3 right-3 top-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-20 overflow-hidden">
-              {searchResults.map((r) => (
-                <li key={`${r.type}-${r.code}`}>
-                  <button
-                    type="button"
-                    onMouseDown={() => handleSearchSelect(r)}
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 flex items-center gap-2"
-                  >
-                    <span
-                      className={`inline-block w-2.5 h-2.5 rounded-sm border shrink-0 ${
-                        r.type === 'region'
-                          ? 'bg-green-100 border-green-500'
-                          : 'bg-blue-100 border-blue-500'
-                      }`}
-                    />
-                    <span className="font-medium text-gray-800 truncate">{r.nom}</span>
-                    <span className="text-gray-400 font-mono text-xs shrink-0">{r.code}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+        {/* Search — desktop uniquement dans la sidebar */}
+        <div className="hidden lg:block p-3 border-b border-gray-200 relative">
+          {searchBar}
+          {searchDropdown}
         </div>
 
         {/* Infos territoire */}
