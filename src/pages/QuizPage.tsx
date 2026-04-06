@@ -5,6 +5,7 @@ import QuizConfig from '../components/quiz/QuizConfig';
 import QuizShell from '../components/quiz/QuizShell';
 import type { QuizConfig as QuizConfigType } from '../quiz/types';
 import { useQuizHistory } from '../storage/useQuizHistory';
+import { useItemStats } from '../storage/useItemStats';
 
 type QuizPhase = 'config' | 'session';
 
@@ -17,6 +18,7 @@ interface QuizSessionProps {
 function QuizSession({ config, onRestart, onFinished }: QuizSessionProps) {
   const { session, submitAnswer, nextQuestion, restartWithErrors } = useQuiz(config);
   const [, addSession] = useQuizHistory();
+  const { recordAnswers } = useItemStats();
   const savedRef = useRef(false);
 
   // Remonte l'état "terminé" vers QuizPage pour le blocker
@@ -34,6 +36,7 @@ function QuizSession({ config, onRestart, onFinished }: QuizSessionProps) {
         score: session.score,
         total: session.questions.length,
       });
+      recordAnswers(config.sujet, session.answerHistory);
     }
     if (!session.finished) {
       savedRef.current = false;

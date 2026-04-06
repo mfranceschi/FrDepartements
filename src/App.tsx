@@ -3,9 +3,10 @@ import Nav from './components/Nav';
 import CartePage from './pages/CartePage';
 import QuizPage from './pages/QuizPage';
 import TableauPage from './pages/TableauPage';
+import StatsPage from './pages/StatsPage';
 import ErrorBoundary from './components/ErrorBoundary';
 
-const VALID_PATHS = new Set(['/carte', '/quiz', '/tableau']);
+const VALID_PATHS = new Set(['/carte', '/quiz', '/tableau', '/stats']);
 
 function AppInner() {
   const { pathname } = useLocation();
@@ -26,6 +27,9 @@ function AppInner() {
       </div>
       <div className={`flex flex-col flex-1 min-h-0 overflow-hidden pb-16 lg:pb-0 ${pathname === '/tableau' ? 'page-enter' : 'hidden'}`}>
         <ErrorBoundary name="Tableau"><TableauPage /></ErrorBoundary>
+      </div>
+      <div className={`flex flex-col flex-1 min-h-0 overflow-hidden pb-16 lg:pb-0 ${pathname === '/stats' ? 'page-enter' : 'hidden'}`}>
+        <ErrorBoundary name="Stats"><StatsPage /></ErrorBoundary>
       </div>
     </div>
   );
