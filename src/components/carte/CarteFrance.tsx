@@ -284,7 +284,7 @@ export default function CarteFrance({
         ref={svgRef}
         viewBox="0 0 1200 730"
         preserveAspectRatio="xMidYMid meet"
-        style={{ width: '100%', height: '100%', minHeight: 0, cursor: 'grab' }}
+        style={{ width: '100%', height: '100%', minHeight: 0, cursor: 'grab', touchAction: 'none' }}
         className="block flex-1"
       >
         <g transform={`translate(${transform.x},${transform.y}) scale(${transform.k})`}>

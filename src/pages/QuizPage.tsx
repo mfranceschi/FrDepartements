@@ -143,7 +143,7 @@ export default function QuizPage() {
           </div>
         )}
         {phase === 'session' && config !== null && (
-          <div className="flex-1 min-h-0 flex flex-col max-w-7xl mx-auto w-full px-4 py-4">
+          <div className={`flex-1 min-h-0 flex flex-col max-w-7xl mx-auto w-full px-4 py-4 ${sessionFinished ? 'overflow-y-auto' : 'overflow-hidden'}`}>
             <QuizSession
               config={config}
               onRestart={handleRestart}

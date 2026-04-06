@@ -85,7 +85,8 @@ describe('DevinerNomDeptCarte', () => {
 
   it('affiche les 4 choix de noms de département', () => {
     render(<DevinerNomDeptCarte question={qNomDept} answerState="pending" selectedCode={null} onAnswer={vi.fn()} />);
-    expect(screen.getAllByRole('button')).toHaveLength(4);
+    const qcmButtons = screen.getAllByRole('button').filter(b => !b.dataset.testid?.includes('toggle'));
+    expect(qcmButtons).toHaveLength(4);
     expect(screen.getByText('Finistère')).toBeInTheDocument();
     expect(screen.getByText("Côtes-d'Armor")).toBeInTheDocument();
   });
@@ -111,8 +112,8 @@ describe('DevinerNomDeptCarte', () => {
   it('désactive les boutons après réponse', () => {
     const onAnswer = vi.fn();
     render(<DevinerNomDeptCarte question={qNomDept} answerState="wrong" selectedCode="22" onAnswer={onAnswer} />);
-    // Seuls les 4 boutons QCM doivent être désactivés (pas le bouton suivant)
-    const qcmButtons = screen.getAllByRole('button').filter((b) => !b.textContent?.includes('suivante') && !b.textContent?.includes('résultat'));
+    // Seuls les 4 boutons QCM doivent être désactivés (pas le bouton suivant ni le toggle)
+    const qcmButtons = screen.getAllByRole('button').filter((b) => !b.textContent?.includes('suivante') && !b.textContent?.includes('résultat') && !b.dataset.testid?.includes('toggle'));
     qcmButtons.forEach((btn) => expect(btn).toBeDisabled());
   });
 
@@ -169,7 +170,8 @@ describe('DevinerNomRegionCarte', () => {
 
   it('affiche les 4 choix de noms de région', () => {
     render(<DevinerNomRegionCarte question={qNomRegion} answerState="pending" selectedCode={null} onAnswer={vi.fn()} />);
-    expect(screen.getAllByRole('button')).toHaveLength(4);
+    const qcmButtons = screen.getAllByRole('button').filter(b => !b.dataset.testid?.includes('toggle'));
+    expect(qcmButtons).toHaveLength(4);
     expect(screen.getByText('Bretagne')).toBeInTheDocument();
     expect(screen.getByText('Pays de la Loire')).toBeInTheDocument();
   });
@@ -194,7 +196,7 @@ describe('DevinerNomRegionCarte', () => {
 
   it('désactive les boutons après réponse', () => {
     render(<DevinerNomRegionCarte question={qNomRegion} answerState="correct" selectedCode="53" onAnswer={vi.fn()} />);
-    const qcmButtons = screen.getAllByRole('button').filter((b) => !b.textContent?.includes('suivante') && !b.textContent?.includes('résultat'));
+    const qcmButtons = screen.getAllByRole('button').filter((b) => !b.textContent?.includes('suivante') && !b.textContent?.includes('résultat') && !b.dataset.testid?.includes('toggle'));
     qcmButtons.forEach((btn) => expect(btn).toBeDisabled());
   });
 
