@@ -40,9 +40,17 @@ function scoreColor(ratio: number): string {
 function getResultMessage(score: number, total: number, isReview: boolean): string {
   if (isReview && score === total) return 'Toutes vos erreurs sont corrigées !';
   const ratio = total > 0 ? score / total : 0;
+  if (ratio === 1) return 'Parfait !';
   if (ratio >= 0.85) return 'Excellent !';
   if (ratio >= 0.6) return 'Bien !';
   return 'Continuez !';
+}
+
+function getStars(ratio: number): number {
+  if (ratio === 1) return 3;
+  if (ratio >= 0.85) return 3;
+  if (ratio >= 0.6) return 2;
+  return 1;
 }
 
 function getAnsweredLabel(record: AnswerRecord): string | null {
@@ -111,7 +119,9 @@ export default function QuizShell({
     const { isReview } = session;
     const ratio = total > 0 ? score / total : 0;
     const pct = Math.round(ratio * 100);
+    const isPerfect = ratio === 1;
     const message = getResultMessage(score, total, isReview);
+    const stars = getStars(ratio);
 
     const wrongRecords = answerHistory.filter((r) => !r.correct);
     const wrongCount = wrongRecords.length;
@@ -125,11 +135,24 @@ export default function QuizShell({
           </span>
         )}
 
-        <h2 className={`text-3xl font-bold ${allCorrected ? 'text-green-600' : 'text-gray-800'}`}>
-          {message}
+        {/* Étoiles */}
+        <div className="flex gap-1 text-3xl" aria-label={`${stars} étoile${stars > 1 ? 's' : ''} sur 3`}>
+          {[1, 2, 3].map((n) => (
+            <span
+              key={n}
+              className={n <= stars ? 'text-yellow-400' : 'text-gray-200'}
+              style={{ animationDelay: `${(n - 1) * 120}ms` }}
+            >
+              ★
+            </span>
+          ))}
+        </div>
+
+        <h2 className={`text-3xl font-bold ${isPerfect || allCorrected ? 'text-green-600' : 'text-gray-800'}`}>
+          {isPerfect && !isReview ? '🎉 ' : ''}{message}
         </h2>
 
-        <p className={`text-6xl font-bold ${scoreColor(ratio)}`}>
+        <p className={`text-6xl font-bold score-pop ${scoreColor(ratio)}`}>
           {score}
           <span className="text-3xl text-gray-400 font-normal"> / {total}</span>
         </p>
@@ -209,23 +232,47 @@ export default function QuizShell({
   const isCarteQuestion = question.mode.endsWith('Carte');
   const QuestionComponent = QUESTION_COMPONENTS[question.mode];
 
+  const showDots = total <= 20;
+
   return (
     <div className="flex flex-col gap-4 w-full h-full">
       {/* Bandeau supérieur avec score bien visible */}
       <div className="rounded-lg border border-gray-200 overflow-hidden">
-        {/* Barre de progression fine */}
-        <div className="relative h-1.5 bg-gray-100">
-          <div
-            className="absolute inset-0 rounded-r"
-            style={{
-              background: 'linear-gradient(to right, #ef4444, #f59e0b 50%, #22c55e)',
-            }}
-          />
-          <div
-            className="absolute top-0 right-0 bottom-0 bg-gray-100 transition-all duration-300"
-            style={{ width: `${100 - progressPct}%` }}
-          />
-        </div>
+        {/* Indicateur de progression : points (≤20q) ou barre fine (>20q) */}
+        {showDots ? (
+          <div className="flex gap-1 px-3 py-2 bg-gray-50 justify-center flex-wrap">
+            {questions.map((_, i) => {
+              const record = answerHistory[i];
+              const isCurrent = i === currentIndex;
+              let cls = 'w-3 h-3 rounded-full transition-colors duration-200 ';
+              if (record) {
+                cls += record.correct ? 'bg-green-400' : 'bg-red-400';
+              } else if (isCurrent) {
+                cls += answerState === 'correct'
+                  ? 'bg-green-400'
+                  : answerState === 'wrong'
+                  ? 'bg-red-400'
+                  : 'bg-blue-400 ring-2 ring-blue-200';
+              } else {
+                cls += 'bg-gray-200';
+              }
+              return <span key={i} className={cls} aria-hidden="true" />;
+            })}
+          </div>
+        ) : (
+          <div className="relative h-1.5 bg-gray-100">
+            <div
+              className="absolute inset-0 rounded-r"
+              style={{
+                background: 'linear-gradient(to right, #ef4444, #f59e0b 50%, #22c55e)',
+              }}
+            />
+            <div
+              className="absolute top-0 right-0 bottom-0 bg-gray-100 transition-all duration-300"
+              style={{ width: `${100 - progressPct}%` }}
+            />
+          </div>
+        )}
         {/* Score + streak */}
         <div className="flex items-center justify-between px-4 py-3 bg-gray-50">
           <div className="flex items-center gap-2">

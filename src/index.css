@@ -1,7 +1,30 @@
 @import "tailwindcss";
 
+/* ─── Design tokens ────────────────────────────────────────────────────────── */
+:root {
+  --bg-page:    #ffffff;
+  --bg-surface: #f9fafb; /* gray-50 */
+  --bg-card:    #ffffff;
+  --text-primary:   #111827; /* gray-900 */
+  --text-secondary: #6b7280; /* gray-500 */
+  --border:     #e5e7eb; /* gray-200 */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-page:    #0f172a; /* slate-900 */
+    --bg-surface: #1e293b; /* slate-800 */
+    --bg-card:    #1e293b;
+    --text-primary:   #f1f5f9; /* slate-100 */
+    --text-secondary: #94a3b8; /* slate-400 */
+    --border:     #334155; /* slate-700 */
+  }
+}
+
 body {
   margin: 0;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
 }
 
 @keyframes flash-green {
@@ -32,4 +55,23 @@ body {
 
 .streak-badge {
   animation: streak-pulse 1s ease-out infinite;
+}
+
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.page-enter {
+  animation: page-enter 180ms ease-out;
+}
+
+@keyframes score-pop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  65%  { transform: scale(1.12); }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+.score-pop {
+  animation: score-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }

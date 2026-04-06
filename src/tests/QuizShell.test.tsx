@@ -135,7 +135,7 @@ describe('QuizShell – écran de fin', () => {
   it('affiche "Excellent !" pour un score ≥ 85 %', () => {
     render(
       <QuizShell
-        session={makeFinishedSession(10, 10)}
+        session={makeFinishedSession(9, 10)}
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
@@ -300,10 +300,46 @@ describe('QuizShell – badge streak', () => {
 // ── Barre de progression ──────────────────────────────────────────────────────
 
 describe('QuizShell – barre de progression', () => {
-  it('la barre fine est présente pendant la session', () => {
+  it('affiche des points de progression pour une session ≤ 20 questions', () => {
     const { container } = render(
       <QuizShell
         session={makeActiveSession()}
+        onAnswer={vi.fn()}
+        onNext={vi.fn()}
+        onRestart={vi.fn()}
+        onReviewErrors={vi.fn()}
+      />,
+    );
+    // Sessions ≤ 20 questions : points colorés (w-3 h-3 rounded-full)
+    const dot = container.querySelector('.w-3.h-3.rounded-full');
+    expect(dot).toBeInTheDocument();
+  });
+
+  it('affiche la barre fine pour une session > 20 questions', () => {
+    const longSession: SessionState = {
+      questions: Array.from({ length: 25 }, (_, i) => ({
+        id: `q${i}`,
+        mode: 'DevinerNomDept' as const,
+        targetCode: String(i).padStart(2, '0'),
+        targetNom: `Dept${i}`,
+        choices: [
+          { code: String(i).padStart(2, '0'), label: `Dept${i}`, correct: true },
+          { code: '97', label: 'Autre1', correct: false },
+          { code: '98', label: 'Autre2', correct: false },
+          { code: '99', label: 'Autre3', correct: false },
+        ],
+      })),
+      currentIndex: 0,
+      score: 0,
+      answerState: 'pending',
+      selectedCode: null,
+      finished: false,
+      answerHistory: [],
+      isReview: false,
+    };
+    const { container } = render(
+      <QuizShell
+        session={longSession}
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
