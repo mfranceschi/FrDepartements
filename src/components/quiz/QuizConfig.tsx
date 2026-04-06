@@ -1,5 +1,8 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
 import type { QuizConfig, QuizSujet, Difficulty, SessionLength } from '../../quiz/types';
+import { useQuizConfig } from '../../storage/useQuizConfig';
+import { useQuizHistory, relativeTime } from '../../storage/useQuizHistory';
+import type { SessionResult } from '../../storage/useQuizHistory';
 
 interface QuizConfigProps {
   onStart: (config: QuizConfig) => void;
@@ -59,9 +62,21 @@ const SUJETS_BY_KEY: Record<QuizSujet, SujetOption> = Object.fromEntries(
 const SESSION_LENGTHS: SessionLength[] = [10, 25, 50, 'tout'];
 
 export default function QuizConfig({ onStart }: QuizConfigProps) {
-  const [sujet, setSujet] = useState<QuizSujet>('depts-carte');
-  const [difficulty, setDifficulty] = useState<Difficulty>('facile');
-  const [sessionLength, setSessionLength] = useState<SessionLength>(25);
+  const [config, updateConfig] = useQuizConfig();
+  const { sujet, difficulty, sessionLength } = config;
+
+  const setSujet = (s: QuizSujet) => updateConfig({ sujet: s });
+  const setDifficulty = (d: Difficulty) => updateConfig({ difficulty: d });
+  const setSessionLength = (l: SessionLength) => updateConfig({ sessionLength: l });
+
+  const [sessions] = useQuizHistory();
+  const lastSessionBySujet = useMemo(() => {
+    const map = new Map<QuizSujet, SessionResult>();
+    for (const s of sessions) {
+      if (!map.has(s.sujet)) map.set(s.sujet, s);
+    }
+    return map;
+  }, [sessions]);
 
   const selectedOption = SUJETS_BY_KEY[sujet];
 
@@ -100,9 +115,22 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
                 onChange={() => setSujet(option.sujet)}
                 className="accent-blue-600 shrink-0"
               />
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm font-semibold text-gray-800">{option.label}</p>
                 <p className="text-xs text-gray-500">{option.description}</p>
+                {lastSessionBySujet.get(option.sujet) && (() => {
+                  const last = lastSessionBySujet.get(option.sujet)!;
+                  const pct = Math.round((last.score / last.total) * 100);
+                  return (
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Dernière session :{' '}
+                      <span className={`font-medium ${pct >= 85 ? 'text-green-600' : pct >= 60 ? 'text-yellow-500' : 'text-red-500'}`}>
+                        {last.score}/{last.total}
+                      </span>
+                      {' · '}{relativeTime(last.date)}
+                    </p>
+                  );
+                })()}
               </div>
             </label>
           ))}

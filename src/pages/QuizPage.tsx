@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useBlocker } from 'react-router-dom';
 import { useQuiz } from '../hooks/useQuiz';
 import QuizConfig from '../components/quiz/QuizConfig';
 import QuizShell from '../components/quiz/QuizShell';
 import type { QuizConfig as QuizConfigType } from '../quiz/types';
+import { useQuizHistory } from '../storage/useQuizHistory';
 
 type QuizPhase = 'config' | 'session';
 
@@ -15,11 +16,29 @@ interface QuizSessionProps {
 
 function QuizSession({ config, onRestart, onFinished }: QuizSessionProps) {
   const { session, submitAnswer, nextQuestion, restartWithErrors } = useQuiz(config);
+  const [, addSession] = useQuizHistory();
+  const savedRef = useRef(false);
 
   // Remonte l'état "terminé" vers QuizPage pour le blocker
   useEffect(() => {
     onFinished(session.finished);
   }, [session.finished, onFinished]);
+
+  // Sauvegarde la session quand elle se termine (hors mode révision)
+  useEffect(() => {
+    if (session.finished && !session.isReview && !savedRef.current) {
+      savedRef.current = true;
+      addSession({
+        date: new Date().toISOString(),
+        sujet: config.sujet,
+        score: session.score,
+        total: session.questions.length,
+      });
+    }
+    if (!session.finished) {
+      savedRef.current = false;
+    }
+  }, [session.finished, session.isReview, session.score, session.questions.length, config.sujet, addSession]);
 
   const handleRestart = () => {
     onRestart();
