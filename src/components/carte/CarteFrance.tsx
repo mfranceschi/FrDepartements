@@ -11,7 +11,9 @@ import type { Feature } from 'geojson';
 import CoucheRegions from './CoucheRegions';
 import CoucheDepts from './CoucheDepts';
 import CouchePrefectures from './CouchePrefectures';
+import CoucheFleuves from './CoucheFleuves';
 import { isValidCentroid } from './featureStyle';
+import { useFleuveData } from '../../hooks/useFleuveData';
 
 const FOCUS_SVG_W = 900;
 const FOCUS_SVG_H = 700;
@@ -65,6 +67,9 @@ export default function CarteFrance({
   const [transform, setTransform] = useState<ZoomTransform>({ x: 0, y: 0, k: 1 });
   const [showLabels, setShowLabels] = useState(false);
   const [showPrefectures, setShowPrefectures] = useState(false);
+  const [showFleuves, setShowFleuves] = useState(false);
+
+  const { fleuves: fleuveFeatures } = useFleuveData(showFleuves);
 
   const svgRef = useRef<SVGSVGElement>(null);
   const zoomRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | undefined>(undefined);
@@ -269,6 +274,16 @@ export default function CarteFrance({
             </>
           )}
 
+          <label className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer select-none transition-colors bg-gray-100 hover:bg-gray-200 text-gray-700">
+            <input
+              type="checkbox"
+              checked={showFleuves}
+              onChange={() => setShowFleuves((v) => !v)}
+              className="w-4 h-4 accent-blue-600 cursor-pointer"
+            />
+            Cours d'eau
+          </label>
+
           <div className="ml-auto">{zoomControls}</div>
         </div>
       )}
@@ -311,6 +326,12 @@ export default function CarteFrance({
             onClick={onFeatureClick ? handleDeptClick : undefined}
             zoomK={transform.k}
             showLabels={showLabels}
+          />
+          <CoucheFleuves
+            features={fleuveFeatures?.features ?? []}
+            pathGen={PATH_GEN}
+            visible={!quizMode && showFleuves}
+            zoomK={transform.k}
           />
           <CouchePrefectures
             projection={PROJECTION}
