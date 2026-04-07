@@ -21,6 +21,7 @@ interface FleuveDataState {
   error: Error | null;
 }
 
+// Module-level cache — chargé une seule fois quelle que soit l'instance
 const cache: {
   fleuves: FeatureCollection | null;
   promise: Promise<void> | null;
@@ -30,6 +31,10 @@ const cache: {
 };
 
 const LOAD_TIMEOUT_MS = 15_000;
+
+// URL servie depuis public/ — JSON.parse natif, bien plus rapide que
+// l'évaluation d'un module JS Vite pour des fichiers de plusieurs centaines de Ko.
+const FLEUVES_URL = '/fleuves.json';
 
 export function useFleuveData(enabled: boolean): FleuveDataState {
   const [state, setState] = useState<FleuveDataState>({
@@ -49,16 +54,25 @@ export function useFleuveData(enabled: boolean): FleuveDataState {
     if (!enabled) return;
 
     if (cache.fleuves !== null) {
-      setState({ fleuves: cache.fleuves, loading: false, error: null });
+      queueMicrotask(() => {
+        if (mountedRef.current) setState({ fleuves: cache.fleuves!, loading: false, error: null });
+      });
       return;
     }
 
-    setState(prev => ({ ...prev, loading: true }));
+    queueMicrotask(() => {
+      if (mountedRef.current) setState(prev => ({ ...prev, loading: true }));
+    });
 
     if (cache.promise === null) {
-      const loadPromise = import('../geo/fleuves.json').then((data) => {
-        cache.fleuves = assertFeatureCollection(data.default, 'fleuves');
-      });
+      const loadPromise = fetch(FLEUVES_URL)
+        .then(res => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        })
+        .then((data: unknown) => {
+          cache.fleuves = assertFeatureCollection(data, 'fleuves');
+        });
 
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('Délai de chargement dépassé')), LOAD_TIMEOUT_MS),
@@ -73,14 +87,10 @@ export function useFleuveData(enabled: boolean): FleuveDataState {
 
     cache.promise
       .then(() => {
-        if (mountedRef.current) {
-          setState({ fleuves: cache.fleuves, loading: false, error: null });
-        }
+        if (mountedRef.current) setState({ fleuves: cache.fleuves, loading: false, error: null });
       })
       .catch((err: unknown) => {
-        if (mountedRef.current) {
-          setState({ fleuves: null, loading: false, error: err instanceof Error ? err : new Error(String(err)) });
-        }
+        if (mountedRef.current) setState({ fleuves: null, loading: false, error: err instanceof Error ? err : new Error(String(err)) });
       });
   }, [enabled]);
 

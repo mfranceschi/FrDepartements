@@ -81,6 +81,37 @@ test.describe('Carte interactive', () => {
     ).toBeVisible({ timeout: 5_000 });
   });
 
+  test('affiche le checkbox "Cours d\'eau" dans la toolbar', async ({ page }) => {
+    await expect(page.getByLabel(/cours d'eau/i)).toBeVisible();
+  });
+
+  test('cocher "Cours d\'eau" charge et affiche les paths de fleuves', async ({ page }) => {
+    await page.getByLabel(/cours d'eau/i).check();
+    // Attend que le chargement async soit terminé : des <path> doivent apparaître dans le groupe
+    await expect(page.locator('.couche-fleuves path').first()).toHaveCount(1, { timeout: 15_000 });
+    // Le groupe lui-même est présent dans le DOM
+    expect(await page.locator('.couche-fleuves').count()).toBeGreaterThan(0);
+  });
+
+  test('survoler un fleuve affiche un tooltip avec son nom', async ({ page }) => {
+    await page.getByLabel(/cours d'eau/i).check();
+    // Attend que les paths soient dans le DOM
+    await page.waitForFunction(
+      () => document.querySelectorAll('.couche-fleuves path').length > 0,
+      { timeout: 15_000 },
+    );
+
+    // Survol avec force pour contourner la zone étroite des traits SVG
+    await page.locator('.couche-fleuves path').first().hover({ force: true });
+
+    // Le tooltip doit apparaître avec un texte non-vide
+    const tooltip = page.locator('div.fixed.z-50.pointer-events-none');
+    await expect(tooltip).toBeVisible({ timeout: 3_000 });
+    const text = await tooltip.textContent();
+    expect(text).toBeTruthy();
+    expect(text!.length).toBeGreaterThan(0);
+  });
+
   test('cliquer sur un path SVG de la couche régions met à jour la sidebar', async ({ page }) => {
     // Bascule vers la couche régions
     await page.getByRole('button', { name: /régions/i }).click();

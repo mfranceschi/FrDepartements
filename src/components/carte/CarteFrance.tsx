@@ -183,6 +183,14 @@ export default function CarteFrance({
     [showTooltip, hideTooltip],
   );
 
+  const handleFleuveHover = useCallback(
+    (name: string | null, x: number, y: number) => {
+      if (name) showTooltip(name, x, y);
+      else hideTooltip();
+    },
+    [showTooltip, hideTooltip],
+  );
+
   const effectiveShowRegions = quizMode ? quizLayer === 'regions' : activeLayer === 'regions';
   const effectiveShowDepts = quizMode ? quizLayer === 'departements' : activeLayer === 'departements';
   // Contours de régions superposés sur les départements colorés (mode carte uniquement)
@@ -303,6 +311,14 @@ export default function CarteFrance({
         className="block flex-1"
       >
         <g transform={`translate(${transform.x},${transform.y}) scale(${transform.k})`}>
+          <defs>
+            <clipPath id="clip-france">
+              {features.regions.map((f, i) => {
+                const d = PATH_GEN(f);
+                return d ? <path key={i} d={d} /> : null;
+              })}
+            </clipPath>
+          </defs>
           <CoucheRegions
             features={features.regions}
             pathGen={PATH_GEN}
@@ -332,6 +348,7 @@ export default function CarteFrance({
             pathGen={PATH_GEN}
             visible={!quizMode && showFleuves}
             zoomK={transform.k}
+            onHover={handleFleuveHover}
           />
           <CouchePrefectures
             projection={PROJECTION}
