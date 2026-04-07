@@ -18,7 +18,9 @@
       "Bash(/tmp/simple_check.sh:*)",
       "Bash(__NEW_LINE_2c22be42394636d9__ bash:*)",
       "Bash(git add:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)"
     ]
   },
   "hooks": {
