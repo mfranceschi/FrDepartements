@@ -54,15 +54,12 @@ export function useFleuveData(enabled: boolean): FleuveDataState {
     if (!enabled) return;
 
     if (cache.fleuves !== null) {
-      queueMicrotask(() => {
-        if (mountedRef.current) setState({ fleuves: cache.fleuves!, loading: false, error: null });
-      });
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setState({ fleuves: cache.fleuves, loading: false, error: null });
       return;
     }
 
-    queueMicrotask(() => {
-      if (mountedRef.current) setState(prev => ({ ...prev, loading: true }));
-    });
+    setState(prev => ({ ...prev, loading: true }));
 
     if (cache.promise === null) {
       const loadPromise = fetch(FLEUVES_URL)

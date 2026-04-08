@@ -1,4 +1,40 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+const FLEUVE_STUB = {
+  type: 'FeatureCollection',
+  features: [
+    {
+      type: 'Feature',
+      properties: { name: 'Loire', scalerank: 2 },
+      geometry: { type: 'LineString', coordinates: [[-2.0, 47.5], [0.0, 47.2], [2.3, 47.0]] },
+    },
+  ],
+};
+
+/**
+ * Patch window.fetch dans le browser pour renvoyer un stub minimal pour /fleuves.json.
+ * On bypass page.route() car Playwright n'intercepte pas de manière fiable les fetches
+ * déclenchés depuis les hooks React dans ce contexte.
+ */
+async function mockFleuves(page: Page): Promise<void> {
+  await page.evaluate((stub) => {
+    const original = window.fetch.bind(window);
+    window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input
+        : input instanceof URL ? input.href
+        : (input as Request).url;
+      if (url.includes('fleuves.json')) {
+        return Promise.resolve(
+          new Response(JSON.stringify(stub), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        );
+      }
+      return original(input, init);
+    };
+  }, FLEUVE_STUB);
+}
 
 /**
  * Tests E2E de la page Carte.
@@ -86,25 +122,23 @@ test.describe('Carte interactive', () => {
   });
 
   test('cocher "Cours d\'eau" charge et affiche les paths de fleuves', async ({ page }) => {
+    await mockFleuves(page);
     await page.getByLabel(/cours d'eau/i).check();
-    // Attend que le chargement async soit terminé : des <path> doivent apparaître dans le groupe
-    await expect(page.locator('.couche-fleuves path').first()).toHaveCount(1, { timeout: 15_000 });
-    // Le groupe lui-même est présent dans le DOM
-    expect(await page.locator('.couche-fleuves').count()).toBeGreaterThan(0);
+    await expect(page.locator('.couche-fleuves path').first()).toBeVisible({ timeout: 10_000 });
   });
 
   test('survoler un fleuve affiche un tooltip avec son nom', async ({ page }) => {
+    await mockFleuves(page);
     await page.getByLabel(/cours d'eau/i).check();
-    // Attend que les paths soient dans le DOM
-    await page.waitForFunction(
-      () => document.querySelectorAll('.couche-fleuves path').length > 0,
-      { timeout: 15_000 },
-    );
 
-    // Survol avec force pour contourner la zone étroite des traits SVG
-    await page.locator('.couche-fleuves path').first().hover({ force: true });
+    // Attend que la zone de hit (stroke transparent) soit dans le DOM
+    const hitPath = page.locator('.couche-fleuves path[stroke="transparent"]').first();
+    await expect(hitPath).toBeAttached({ timeout: 10_000 });
 
-    // Le tooltip doit apparaître avec un texte non-vide
+    // Survol de la zone de hit — seule celle-ci a les handlers React
+    await hitPath.hover({ force: true });
+
+    // Le tooltip doit apparaître avec le nom du fleuve
     const tooltip = page.locator('div.fixed.z-50.pointer-events-none');
     await expect(tooltip).toBeVisible({ timeout: 3_000 });
     const text = await tooltip.textContent();
