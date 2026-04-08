@@ -41,7 +41,7 @@ function QuizSession({ config, onRestart, onFinished }: QuizSessionProps) {
     if (!session.finished) {
       savedRef.current = false;
     }
-  }, [session.finished, session.isReview, session.score, session.questions.length, config.sujet, addSession]);
+  }, [session.finished, session.isReview, session.score, session.questions.length, session.answerHistory, config.sujet, addSession, recordAnswers]);
 
   const handleRestart = () => {
     onRestart();

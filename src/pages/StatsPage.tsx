@@ -53,9 +53,9 @@ export default function StatsPage() {
   const [confirmClear, setConfirmClear] = useState(false);
 
   const meta = SUJETS.find(s => s.sujet === selectedSujet)!;
-  const sujetStats = stats[selectedSujet] ?? {};
 
   const { seenItems, totalEntities } = useMemo(() => {
+    const sujetStats = stats[selectedSujet] ?? {};
     const allEntities = meta.isDept ? DEPARTEMENTS : REGIONS;
     const seen = allEntities
       .map(entity => {
@@ -70,7 +70,7 @@ export default function StatsPage() {
         return b.stat.fail - a.stat.fail;
       });
     return { seenItems: seen, totalEntities: allEntities.length };
-  }, [selectedSujet, sujetStats, meta.isDept]);
+  }, [selectedSujet, stats, meta.isDept]);
 
   const globalOk   = seenItems.reduce((s, { stat }) => s + stat.ok, 0);
   const globalFail = seenItems.reduce((s, { stat }) => s + stat.fail, 0);
