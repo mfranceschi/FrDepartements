@@ -28,7 +28,7 @@ export default memo(function CoucheFleuves({
         d: pathGen(f),
         centroid: pathGen.centroid(f),
         name: typeof f.properties?.name === 'string' ? f.properties.name : null,
-        id: String(f.properties?.ne_id ?? f.properties?.name ?? `idx-${i}`),
+        id: `${String(f.properties?.ne_id ?? f.properties?.name ?? 'r')}-${i}`,
       })),
     [features, pathGen],
   );
