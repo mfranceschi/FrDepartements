@@ -30,7 +30,7 @@ const cache: {
   promise: null,
 };
 
-const LOAD_TIMEOUT_MS = 15_000;
+const LOAD_TIMEOUT_MS = 60_000;
 
 // URL servie depuis public/ — JSON.parse natif, bien plus rapide que
 // l'évaluation d'un module JS Vite pour des fichiers de plusieurs centaines de Ko.

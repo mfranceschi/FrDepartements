@@ -1,40 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
-
-const FLEUVE_STUB = {
-  type: 'FeatureCollection',
-  features: [
-    {
-      type: 'Feature',
-      properties: { name: 'Loire', scalerank: 2 },
-      geometry: { type: 'LineString', coordinates: [[-2.0, 47.5], [0.0, 47.2], [2.3, 47.0]] },
-    },
-  ],
-};
-
-/**
- * Patch window.fetch dans le browser pour renvoyer un stub minimal pour /fleuves.json.
- * On bypass page.route() car Playwright n'intercepte pas de manière fiable les fetches
- * déclenchés depuis les hooks React dans ce contexte.
- */
-async function mockFleuves(page: Page): Promise<void> {
-  await page.evaluate((stub) => {
-    const original = window.fetch.bind(window);
-    window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = typeof input === 'string' ? input
-        : input instanceof URL ? input.href
-        : (input as Request).url;
-      if (url.includes('fleuves.json')) {
-        return Promise.resolve(
-          new Response(JSON.stringify(stub), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        );
-      }
-      return original(input, init);
-    };
-  }, FLEUVE_STUB);
-}
+import { test, expect } from '@playwright/test';
 
 /**
  * Tests E2E de la page Carte.
@@ -121,31 +85,6 @@ test.describe('Carte interactive', () => {
     await expect(page.getByLabel(/cours d'eau/i)).toBeVisible();
   });
 
-  test('cocher "Cours d\'eau" charge et affiche les paths de fleuves', async ({ page }) => {
-    await mockFleuves(page);
-    await page.getByLabel(/cours d'eau/i).check();
-    await expect(page.locator('.couche-fleuves path').first()).toBeVisible({ timeout: 10_000 });
-  });
-
-  test('survoler un fleuve affiche un tooltip avec son nom', async ({ page }) => {
-    await mockFleuves(page);
-    await page.getByLabel(/cours d'eau/i).check();
-
-    // Attend que la zone de hit (stroke transparent) soit dans le DOM
-    const hitPath = page.locator('.couche-fleuves path[stroke="transparent"]').first();
-    await expect(hitPath).toBeAttached({ timeout: 10_000 });
-
-    // Survol de la zone de hit — seule celle-ci a les handlers React
-    await hitPath.hover({ force: true });
-
-    // Le tooltip doit apparaître avec le nom du fleuve
-    const tooltip = page.locator('div.fixed.z-50.pointer-events-none');
-    await expect(tooltip).toBeVisible({ timeout: 3_000 });
-    const text = await tooltip.textContent();
-    expect(text).toBeTruthy();
-    expect(text!.length).toBeGreaterThan(0);
-  });
-
   test('cliquer sur un path SVG de la couche régions met à jour la sidebar', async ({ page }) => {
     // Bascule vers la couche régions
     await page.getByRole('button', { name: /régions/i }).click();
@@ -158,5 +97,36 @@ test.describe('Carte interactive', () => {
     await expect(
       page.getByRole('complementary').getByText('Région', { exact: true }),
     ).toBeVisible({ timeout: 5_000 });
+  });
+});
+
+// Describe séparé : le hook charge le vrai fleuves.json depuis public/ (lent en Playwright,
+// ~20s à cause du stream CDP) — test.slow() triple le timeout à 90s.
+test.describe('Carte interactive – couche fleuves', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/carte');
+    await expect(page.locator('svg.block')).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('cocher "Cours d\'eau" charge et affiche les paths de fleuves', async ({ page }) => {
+    test.slow();
+    await page.getByLabel(/cours d'eau/i).check();
+    await expect(page.locator('.couche-fleuves path').first()).toBeVisible({ timeout: 50_000 });
+  });
+
+  test('survoler un fleuve affiche un tooltip avec son nom', async ({ page }) => {
+    test.slow();
+    await page.getByLabel(/cours d'eau/i).check();
+
+    const hitPath = page.locator('.couche-fleuves path[stroke="transparent"]').first();
+    await expect(hitPath).toBeAttached({ timeout: 50_000 });
+
+    await hitPath.hover({ force: true });
+
+    const tooltip = page.locator('div.fixed.z-50.pointer-events-none');
+    await expect(tooltip).toBeVisible({ timeout: 5_000 });
+    const text = await tooltip.textContent();
+    expect(text).toBeTruthy();
+    expect(text!.length).toBeGreaterThan(0);
   });
 });
