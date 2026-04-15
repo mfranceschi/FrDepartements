@@ -4,20 +4,28 @@ Tu es en mode **expédition**. Suis ces étapes dans l'ordre, sans sauter aucune
 
 ---
 
-## Étape 1 — Auto-revue du code non commité
+## Étape 1 — Prise de connaissance des changements locaux
 
-Commence par récupérer l'état des changements :
+**Avant toute chose**, lis et mémorise l'intégralité des changements en cours :
 ```
 git status
 git diff HEAD
 ```
 
-Lis chaque fichier modifié. Pour chacun, cherche :
+Lis chaque fichier modifié. Pour chacun, comprends :
+- Quelle nouvelle feature ou modification est introduite
+- Quelle est l'intention derrière le changement
+
+Rédige immédiatement un **brouillon de message de commit** (format `type(scope): description courte`) qui capture fidèlement l'intention de ces changements. Présente-le à l'utilisateur.
+
+> **Règle fondamentale** : ce brouillon représente ce qui **doit** être expédié. Toute la suite du processus (lint, build, tests) doit aboutir à shipper ces changements — pas à les annuler. Si des tests échouent, c'est eux qu'il faut adapter, pas les nouvelles features.
+
+Ensuite, cherche dans les fichiers modifiés :
 - Des bugs évidents ou erreurs de logique
 - Du code mort, des duplications, des noms trompeurs
 - Des améliorations de lisibilité ou de robustesse qui sont **sans risque**
 
-Règles strictes pour les modifications :
+Règles strictes pour les modifications cosmétiques :
 - Ne modifie que ce qui est clairement améliorable sans changer le comportement observable
 - N'ajoute pas de features, ne refactorise pas au-delà des fichiers touchés
 - En cas de doute sur l'impact, laisse tel quel
@@ -47,13 +55,19 @@ En cas d'erreur : corrige les erreurs TypeScript ou de build, puis relance.
 ```
 npm test
 ```
-En cas d'échec : analyse le test qui échoue, corrige le code source (pas le test sauf s'il est manifestement erroné), puis relance.
+En cas d'échec : avant de toucher quoi que ce soit, diagnostique la cause de l'échec en te référant au brouillon de commit de l'étape 1. Trois cas possibles :
+
+- **Le test testait l'ancien comportement** (le changement local est intentionnel et correct) → mets le test à jour pour refléter le nouveau comportement.
+- **Le changement local a introduit un vrai bug** (le test a raison de lever une alarme) → corrige le bug dans le code, sans toucher au test.
+- **Le test est fragile ou mal écrit** (l'échec n'est pas lié au changement) → refactorise le test.
+
+Ne reviens jamais sur une feature ou une modification locale pour faire passer un test sans avoir d'abord déterminé dans quel cas tu te trouves.
 
 ### 2d. Tests E2E
 ```
 npm run test:e2e
 ```
-En cas d'échec : analyse le test Playwright qui échoue, corrige le code source, puis relance.
+En cas d'échec : même diagnostic en trois cas — adapte le test Playwright si le comportement a légitimement changé, corrige le code s'il y a un vrai bug, ne supprime pas ou ne contourne pas la feature.
 
 Une fois que les 4 étapes passent, annonce-le clairement et passe à l'étape 3.
 

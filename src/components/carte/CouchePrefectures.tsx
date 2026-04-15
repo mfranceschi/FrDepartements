@@ -95,6 +95,20 @@ export default memo(function CouchePrefectures({
               stroke={stroke}
               strokeWidth={sw}
             />
+            {/* Nom de la préfecture */}
+            <text
+              x={x + 5 / zoomK}
+              y={y + 3 / zoomK}
+              fontSize={14 / zoomK}
+              fill={isHighlighted ? 'white' : '#9f1239'}
+              stroke="white"
+              strokeWidth={2.5 / zoomK}
+              paintOrder="stroke"
+              pointerEvents="none"
+              style={{ userSelect: 'none' }}
+            >
+              {prefecture}
+            </text>
           </g>
         );
       })}

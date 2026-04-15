@@ -38,7 +38,7 @@ function SuccessBar({ ok, fail }: { ok: number; fail: number }) {
   const total = ok + fail;
   const pct = total > 0 ? (ok / total) * 100 : 0;
   return (
-    <div className="w-20 h-1.5 rounded-full bg-gray-200 overflow-hidden shrink-0">
+    <div className="w-20 h-1.5 rounded-full overflow-hidden shrink-0" style={{ backgroundColor: 'var(--border)' }}>
       <div
         className={`h-full rounded-full ${barColor(pct)}`}
         style={{ width: `${pct}%` }}
@@ -85,8 +85,8 @@ export default function StatsPage() {
 
         {/* Titre */}
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Statistiques</h1>
-          <p className="text-sm text-gray-500 mt-1">Maîtrise par item, accumulée sur toutes vos sessions</p>
+          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Statistiques</h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Maîtrise par item, accumulée sur toutes vos sessions</p>
         </div>
 
         {/* Onglets sujet */}
@@ -96,11 +96,12 @@ export default function StatsPage() {
               key={sujet}
               type="button"
               onClick={() => { setSelectedSujet(sujet); setConfirmClear(false); }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+              className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+              style={
                 selectedSujet === sujet
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400'
-              }`}
+                  ? { backgroundColor: '#2563eb', color: '#fff', border: '1px solid #2563eb' }
+                  : { backgroundColor: 'var(--bg-card)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }
+              }
             >
               {label}
             </button>
@@ -108,24 +109,27 @@ export default function StatsPage() {
         </div>
 
         {/* Résumé */}
-        <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 flex flex-wrap gap-4 text-sm">
+        <div
+          className="rounded-lg px-4 py-3 flex flex-wrap gap-4 text-sm"
+          style={{ border: '1px solid var(--border)', backgroundColor: 'var(--bg-surface)' }}
+        >
           <span>
-            <span className="font-semibold text-gray-800">{seenItems.length}</span>
-            <span className="text-gray-500"> / {totalEntities} vus</span>
+            <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{seenItems.length}</span>
+            <span style={{ color: 'var(--text-secondary)' }}> / {totalEntities} vus</span>
           </span>
           {globalPct !== null && (
             <span>
               <span className={`font-semibold ${pctColor(globalPct)}`}>{globalPct}%</span>
-              <span className="text-gray-500"> de réussite</span>
+              <span style={{ color: 'var(--text-secondary)' }}> de réussite</span>
             </span>
           )}
           {globalOk + globalFail > 0 && (
-            <span className="text-gray-400">
+            <span style={{ color: 'var(--text-muted)' }}>
               {globalOk + globalFail} réponse{globalOk + globalFail > 1 ? 's' : ''} au total
             </span>
           )}
           {seenItems.length === 0 && (
-            <span className="text-gray-400">Aucune donnée — lancez un quiz pour commencer.</span>
+            <span style={{ color: 'var(--text-muted)' }}>Aucune donnée — lancez un quiz pour commencer.</span>
           )}
         </div>
 
@@ -141,13 +145,14 @@ export default function StatsPage() {
               return (
                 <li
                   key={entity.code}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-gray-200 bg-white"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg"
+                  style={{ border: '1px solid var(--border)', backgroundColor: 'var(--bg-card)' }}
                 >
                   {/* Nom + code/région */}
                   <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium text-gray-800">{entity.nom}</span>
+                    <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{entity.nom}</span>
                     {meta.isDept && (
-                      <span className="text-xs text-gray-400 ml-2">
+                      <span className="text-xs ml-2" style={{ color: 'var(--text-muted)' }}>
                         {entity.code}{regionNom ? ` · ${regionNom}` : ''}
                       </span>
                     )}
@@ -159,12 +164,12 @@ export default function StatsPage() {
                     <span className={`text-xs font-semibold tabular-nums w-9 text-right ${pctColor(pct)}`}>
                       {pct}%
                     </span>
-                    <span className="text-xs text-gray-400 tabular-nums">
+                    <span className="text-xs tabular-nums" style={{ color: 'var(--text-muted)' }}>
                       <span className="text-green-600">{stat.ok}✓</span>
                       {' '}
                       <span className="text-red-400">{stat.fail}✗</span>
                     </span>
-                    <span className="hidden sm:inline text-xs text-gray-300 w-20 text-right">
+                    <span className="hidden sm:inline text-xs w-20 text-right" style={{ color: 'var(--text-muted)' }}>
                       {relativeTime(stat.lastSeen)}
                     </span>
                   </div>
@@ -176,13 +181,13 @@ export default function StatsPage() {
 
         {/* Items pas encore vus */}
         {unseenCount > 0 && seenItems.length > 0 && (
-          <p className="text-xs text-center text-gray-400">
+          <p className="text-xs text-center" style={{ color: 'var(--text-muted)' }}>
             {unseenCount} {meta.isDept ? 'département' : 'région'}{unseenCount > 1 ? 's' : ''} pas encore rencontrés
           </p>
         )}
 
         {/* Bouton vider */}
-        <div className="pt-4 border-t border-gray-100">
+        <div className="pt-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
           {!confirmClear ? (
             <button
               type="button"
@@ -193,7 +198,7 @@ export default function StatsPage() {
             </button>
           ) : (
             <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-600">Confirmer la suppression ?</span>
+              <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Confirmer la suppression ?</span>
               <button
                 type="button"
                 onClick={() => { clearStats(); setConfirmClear(false); }}
@@ -204,7 +209,8 @@ export default function StatsPage() {
               <button
                 type="button"
                 onClick={() => setConfirmClear(false)}
-                className="px-3 py-1.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                className="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors hover-surface"
+                style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
               >
                 Annuler
               </button>

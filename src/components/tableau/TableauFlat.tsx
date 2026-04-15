@@ -58,16 +58,9 @@ export default function TableauFlat() {
   }, [filtered, sortKey, sortDir]);
 
   const indicator = (key: SortKey) => {
-    if (sortKey !== key) return <span className="ml-1 text-gray-300">↕</span>;
-    return (
-      <span className="ml-1 text-blue-600">
-        {sortDir === 'asc' ? '↑' : '↓'}
-      </span>
-    );
+    if (sortKey !== key) return <span className="ml-1" style={{ color: 'var(--text-muted)' }}>↕</span>;
+    return <span className="ml-1 text-blue-500">{sortDir === 'asc' ? '↑' : '↓'}</span>;
   };
-
-  const thClass =
-    'px-4 py-3 text-left text-sm font-semibold text-gray-700 select-none cursor-pointer whitespace-nowrap hover:bg-gray-100 transition-colors';
 
   return (
     <div className="space-y-4">
@@ -78,58 +71,56 @@ export default function TableauFlat() {
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           placeholder="Filtrer par numéro, nom ou région…"
-          className="w-full max-w-sm border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full max-w-sm rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          style={{
+            backgroundColor: 'var(--bg-card)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--border)',
+          }}
         />
         {filter && (
-          <span className="text-sm text-gray-500">
+          <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
             {sorted.length} résultat{sorted.length !== 1 ? 's' : ''}
           </span>
         )}
       </div>
 
       {/* Tableau */}
-      <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
-        <table className="min-w-full divide-y divide-gray-200 text-sm">
-          <thead className="bg-gray-50">
+      <div className="overflow-x-auto rounded-lg shadow-sm" style={{ border: '1px solid var(--border)' }}>
+        <table className="table-theme min-w-full text-sm" style={{ borderCollapse: 'collapse' }}>
+          <thead>
             <tr>
-              <th className={thClass} onClick={() => handleHeaderClick('code')}>
-                Numéro {indicator('code')}
-              </th>
-              <th className={thClass} onClick={() => handleHeaderClick('nom')}>
-                Nom {indicator('nom')}
-              </th>
-              <th className={thClass} onClick={() => handleHeaderClick('region')}>
-                Région {indicator('region')}
-              </th>
-              <th className={thClass} onClick={() => handleHeaderClick('prefecture')}>
-                Préfecture {indicator('prefecture')}
-              </th>
+              {(['code', 'nom', 'region', 'prefecture'] as SortKey[]).map((key) => (
+                <th
+                  key={key}
+                  onClick={() => handleHeaderClick(key)}
+                  className="hover-surface px-4 py-3 text-left font-semibold select-none cursor-pointer whitespace-nowrap transition-colors"
+                  style={{ color: 'var(--text-primary)', borderBottom: '1px solid var(--border)' }}
+                >
+                  {{ code: 'Numéro', nom: 'Nom', region: 'Région', prefecture: 'Préfecture' }[key]}
+                  {indicator(key)}
+                </th>
+              ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody>
             {sorted.length === 0 ? (
               <tr>
-                <td
-                  colSpan={4}
-                  className="px-4 py-8 text-center text-gray-400 italic"
-                >
+                <td colSpan={4} className="px-4 py-8 text-center italic" style={{ color: 'var(--text-muted)' }}>
                   Aucun département ne correspond à votre recherche.
                 </td>
               </tr>
             ) : (
               sorted.map((dept) => (
-                <tr
-                  key={dept.code}
-                  className="odd:bg-white even:bg-blue-50 hover:bg-blue-100 transition-colors"
-                >
-                  <td className="px-4 py-2.5 font-mono font-medium text-gray-800">
+                <tr key={dept.code} className="transition-colors">
+                  <td className="px-4 py-2.5 font-mono font-medium" style={{ color: 'var(--text-primary)' }}>
                     {dept.code}
                   </td>
-                  <td className="px-4 py-2.5 text-gray-800">{dept.nom}</td>
-                  <td className="px-4 py-2.5 text-gray-600">
+                  <td className="px-4 py-2.5" style={{ color: 'var(--text-primary)' }}>{dept.nom}</td>
+                  <td className="px-4 py-2.5" style={{ color: 'var(--text-secondary)' }}>
                     {regionMap.get(dept.regionCode) ?? dept.regionCode}
                   </td>
-                  <td className="px-4 py-2.5 text-gray-600">
+                  <td className="px-4 py-2.5" style={{ color: 'var(--text-secondary)' }}>
                     {dept.prefecture}
                   </td>
                 </tr>
@@ -139,7 +130,7 @@ export default function TableauFlat() {
         </table>
       </div>
 
-      <p className="text-xs text-gray-400 text-right">
+      <p className="text-xs text-right" style={{ color: 'var(--text-muted)' }}>
         {sorted.length} / {DEPARTEMENTS.length} départements
       </p>
     </div>

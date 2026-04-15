@@ -28,51 +28,52 @@ function RegionRow({ region, depts }: RegionRowProps) {
   );
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden">
+    <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--border)' }}>
       {/* En-tête cliquable */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-3 px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+        className="w-full flex items-center gap-3 px-4 py-3 transition-colors text-left hover-surface"
+        style={{ backgroundColor: 'var(--bg-surface)' }}
         aria-expanded={open}
       >
         {/* Flèche avec rotation animée */}
         <span
-          className="text-gray-400 text-xs transition-transform duration-200"
-          style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}
+          className="text-xs transition-transform duration-200"
+          style={{ color: 'var(--text-muted)', transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}
         >
           ▶
         </span>
 
         {/* Code région */}
-        <span className="font-mono text-xs text-gray-500 w-8 shrink-0">
+        <span className="font-mono text-xs w-8 shrink-0" style={{ color: 'var(--text-secondary)' }}>
           {region.code}
         </span>
 
         {/* Nom région */}
-        <span className="font-semibold text-gray-800 flex-1">{region.nom}</span>
+        <span className="font-semibold flex-1" style={{ color: 'var(--text-primary)' }}>{region.nom}</span>
 
         {/* Compteur */}
-        <span className="text-sm text-gray-500 shrink-0">
+        <span className="text-sm shrink-0" style={{ color: 'var(--text-secondary)' }}>
           {depts.length} dept{depts.length > 1 ? 's' : ''}
         </span>
       </button>
 
       {/* Contenu dépliable */}
       {open && (
-        <div className="px-4 py-3 border-t border-gray-100 bg-white">
-          <p className="text-xs text-gray-500 mb-2.5">
+        <div className="px-4 py-3" style={{ borderTop: '1px solid var(--border-subtle)', backgroundColor: 'var(--bg-card)' }}>
+          <p className="text-xs mb-2.5" style={{ color: 'var(--text-secondary)' }}>
             Préfecture régionale :{' '}
-            <span className="font-semibold text-rose-700">{region.prefectureRegionale}</span>
+            <span className="font-semibold text-rose-600">{region.prefectureRegionale}</span>
           </p>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
             {sorted.map((dept) => (
               <li key={dept.code} className="flex items-center gap-2 text-sm">
-                <span className="font-mono text-gray-500 w-8 shrink-0">
+                <span className="font-mono w-8 shrink-0" style={{ color: 'var(--text-secondary)' }}>
                   {dept.code}
                 </span>
-                <span className="text-gray-700 flex-1">{dept.nom}</span>
-                <span className="text-gray-400 text-xs shrink-0 hidden sm:inline">{dept.prefecture}</span>
+                <span className="flex-1" style={{ color: 'var(--text-primary)' }}>{dept.nom}</span>
+                <span className="text-xs shrink-0 hidden sm:inline" style={{ color: 'var(--text-muted)' }}>{dept.prefecture}</span>
               </li>
             ))}
           </ul>

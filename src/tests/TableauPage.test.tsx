@@ -42,19 +42,19 @@ describe('TableauPage', () => {
     expect(screen.queryByTestId('accordion-regions')).not.toBeInTheDocument();
   });
 
-  it("l'onglet actif porte la classe bg-blue-600", () => {
+  it("l'onglet actif a le style de mise en évidence", () => {
     render(<TableauPage />);
     const listeBtn = screen.getByRole('button', { name: /liste complète/i });
     const regionsBtn = screen.getByRole('button', { name: /par région/i });
 
-    // Par défaut « Liste complète » est actif
-    expect(listeBtn.className).toContain('bg-blue-600');
-    expect(regionsBtn.className).not.toContain('bg-blue-600');
+    // Par défaut « Liste complète » est actif (fond bleu via style inline)
+    expect(listeBtn.style.backgroundColor).toBe('rgb(37, 99, 235)');
+    expect(regionsBtn.style.backgroundColor).not.toBe('rgb(37, 99, 235)');
 
     fireEvent.click(regionsBtn);
 
-    expect(regionsBtn.className).toContain('bg-blue-600');
-    expect(listeBtn.className).not.toContain('bg-blue-600');
+    expect(regionsBtn.style.backgroundColor).toBe('rgb(37, 99, 235)');
+    expect(listeBtn.style.backgroundColor).not.toBe('rgb(37, 99, 235)');
   });
 
   it('affiche le sous-titre avec le nombre réel de départements et régions', () => {

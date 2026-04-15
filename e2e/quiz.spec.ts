@@ -100,8 +100,8 @@ test.describe('Quiz – parcours complet', () => {
   test('peut avancer à la question suivante après avoir répondu', async ({ page }) => {
     await page.getByRole('button', { name: /commencer|démarrer|lancer/i }).click();
 
-    // Cherche les boutons de choix QCM
-    const choiceButtons = page.getByRole('button').filter({ hasNotText: /zoom|reset|\+|−|↺/i });
+    // Cherche les boutons de choix QCM (scoper à main pour exclure les boutons de nav)
+    const choiceButtons = page.locator('main').getByRole('button').filter({ hasNotText: /zoom|reset|\+|−|↺/i });
     const firstChoice = choiceButtons.first();
 
     if (await firstChoice.isVisible({ timeout: 8_000 })) {

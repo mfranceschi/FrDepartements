@@ -54,12 +54,12 @@ test.describe('Tableau des départements', () => {
   test("l'accordéon peut s'ouvrir sur une région", async ({ page }) => {
     // Bascule sur l'onglet "Par région"
     await page.getByRole('button', { name: /par région/i }).click();
-    const firstAccordionBtn = page.getByRole('button').filter({ hasNotText: /par région|liste/i }).first();
+    const firstAccordionBtn = page.locator('main').getByRole('button').filter({ hasNotText: /par région|liste/i }).first();
     await expect(firstAccordionBtn).toBeVisible({ timeout: 5_000 });
     await firstAccordionBtn.click();
 
     // Des éléments de liste (<li>) doivent apparaître dans l'accordéon ouvert
-    await expect(page.locator('li').first()).toBeVisible({ timeout: 3_000 });
+    await expect(page.locator('main li').first()).toBeVisible({ timeout: 3_000 });
   });
 
   test('affiche 96 départements au total dans la liste complète', async ({ page }) => {

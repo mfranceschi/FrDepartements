@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import ThemeToggle from './ThemeToggle';
 
 const links = [
   {
@@ -51,41 +52,43 @@ export default function Nav() {
   return (
     <>
       {/* Top bar — toujours visible */}
-      <nav aria-label="Navigation principale" className="flex gap-4 px-6 py-3 border-b border-gray-200 bg-white">
-        {links.map(({ to, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              isActive
-                ? 'font-semibold text-blue-600 border-b-2 border-blue-600 pb-1'
-                : 'text-gray-600 hover:text-gray-900 pb-1'
-            }
-          >
-            {label}
-          </NavLink>
-        ))}
+      <nav
+        aria-label="Navigation principale"
+        className="flex items-center justify-between px-6 py-3 border-b"
+        style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border)' }}
+      >
+        <div className="flex gap-4">
+          {links.map(({ to, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className="pb-1 font-medium transition-colors"
+              style={({ isActive }) =>
+                isActive
+                  ? { color: '#2563eb', borderBottom: '2px solid #2563eb' }
+                  : { color: 'var(--text-secondary)' }
+              }
+            >
+              {label}
+            </NavLink>
+          ))}
+        </div>
+        <ThemeToggle />
       </nav>
 
       {/* Bottom bar — mobile uniquement (lg:hidden) */}
-      <nav aria-label="Navigation mobile" aria-hidden="true" className="lg:hidden fixed bottom-0 inset-x-0 z-40 flex bg-white border-t border-gray-200" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <nav aria-label="Navigation mobile" aria-hidden="true" className="lg:hidden fixed bottom-0 inset-x-0 z-40 flex border-t" style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {links.map(({ to, label, icon }) => (
           <NavLink
             key={to}
             to={to}
-            className={({ isActive }) =>
-              [
-                'flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium transition-colors',
-                isActive ? 'text-blue-600' : 'text-gray-500 hover:text-gray-800',
-              ].join(' ')
+            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium transition-colors"
+            style={({ isActive }) =>
+              isActive ? { color: '#2563eb' } : { color: 'var(--text-secondary)' }
             }
           >
-            {({ isActive }) => (
-              <>
-                <span className={isActive ? 'text-blue-600' : 'text-gray-400'}>{icon}</span>
-                {label}
-              </>
-            )}
+            {icon}
+            {label}
           </NavLink>
         ))}
       </nav>
