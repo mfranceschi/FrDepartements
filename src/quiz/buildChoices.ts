@@ -8,6 +8,10 @@ export interface PrefRegionChoice { code: string; nom: string; prefectureRegiona
 
 // ─── Utilitaires ──────────────────────────────────────────────────────────────
 
+/** Convertit un code de département en valeur numérique pour le tri. */
+const deptCodeToNum = (code: string) =>
+  code === '2A' ? 20.1 : code === '2B' ? 20.2 : parseInt(code, 10);
+
 /**
  * Mélange un tableau de manière aléatoire uniforme (algorithme Fisher-Yates).
  * Retourne une nouvelle copie du tableau — l'original n'est pas muté.
@@ -93,18 +97,19 @@ export function buildDeptChoicesDifficile(correct: DeptChoice, allDepts: DeptCho
 
 /** Code de département — distractors aléatoires toutes régions confondues. */
 export function buildCodeChoicesFacile(correct: DeptChoice, allDepts: DeptChoice[]): Choice[] {
-  return buildChoicesFrom(correct, allDepts, (d) => d.code, (d) => d.code);
+  return buildChoicesFrom(correct, allDepts, (d) => d.code, (d) => d.code)
+    .sort((a, b) => deptCodeToNum(a.label) - deptCodeToNum(b.label));
 }
 
 /** Code de département — distractors prioritairement parmi les codes numériquement proches. */
 export function buildCodeChoicesDifficile(correct: DeptChoice, allDepts: DeptChoice[]): Choice[] {
-  const toNum = (code: string) => code === '2A' ? 20.1 : code === '2B' ? 20.2 : parseInt(code, 10);
-  const correctNum = toNum(correct.code);
+  const correctNum = deptCodeToNum(correct.code);
   const numericallyClose = allDepts
     .filter((d) => d.code !== correct.code)
-    .sort((a, b) => Math.abs(toNum(a.code) - correctNum) - Math.abs(toNum(b.code) - correctNum))
+    .sort((a, b) => Math.abs(deptCodeToNum(a.code) - correctNum) - Math.abs(deptCodeToNum(b.code) - correctNum))
     .slice(0, 6);
-  return buildChoicesFrom(correct, allDepts, (d) => d.code, (d) => d.code, numericallyClose);
+  return buildChoicesFrom(correct, allDepts, (d) => d.code, (d) => d.code, numericallyClose)
+    .sort((a, b) => deptCodeToNum(a.label) - deptCodeToNum(b.label));
 }
 
 /** Nom de région — distractors aléatoires. */
