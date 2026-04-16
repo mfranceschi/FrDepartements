@@ -19,9 +19,13 @@
       "Bash(__NEW_LINE_2c22be42394636d9__ bash:*)",
       "Bash(git add:*)",
       "Bash(git push:*)",
+      "Bash(git log:*)",
       "WebSearch",
       "WebFetch(domain:github.com)",
-      "Bash(curl --version)"
+      "Bash(curl --version)",
+      "Bash(gh run list *)",
+      "Bash(gh run watch *)",
+      "Bash(gh run view *)"
     ]
   },
   "hooks": {
