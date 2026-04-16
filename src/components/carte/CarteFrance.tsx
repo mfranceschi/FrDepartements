@@ -221,7 +221,7 @@ export default function CarteFrance({
       >
         −
       </button>
-      <span className="px-1 h-7 flex items-center justify-center text-xs font-mono text-gray-500 tabular-nums min-w-[3rem] text-center">
+      <span className="px-1 h-7 flex items-center justify-center text-sm font-medium text-gray-500 tabular-nums min-w-[3rem] text-center">
         {Math.round(transform.k * 100)}%
       </span>
       <button
@@ -268,7 +268,7 @@ export default function CarteFrance({
                   onChange={() => setShowLabels((v) => !v)}
                   className="w-4 h-4 accent-blue-600 cursor-pointer"
                 />
-                Afficher les noms
+                Noms
               </label>
               <label className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer select-none transition-colors bg-gray-100 hover:bg-gray-200 text-gray-700">
                 <input
@@ -277,7 +277,7 @@ export default function CarteFrance({
                   onChange={() => setShowPrefectures((v) => !v)}
                   className="w-4 h-4 accent-blue-600 cursor-pointer"
                 />
-                Afficher les préfectures
+                Préfectures
               </label>
             </>
           )}
