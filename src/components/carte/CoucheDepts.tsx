@@ -15,6 +15,8 @@ interface CoucheDepsProps {
   onClick?: (code: string) => void;
   zoomK?: number;
   showLabels?: boolean;
+  /** Quand false : rend uniquement les labels (textes), sans les paths de remplissage */
+  showFills?: boolean;
 }
 
 // Seuils en unités SVG × facteur de zoom :
@@ -34,6 +36,7 @@ export default memo(function CoucheDepts({
   onClick,
   zoomK = 1,
   showLabels = true,
+  showFills = true,
 }: CoucheDepsProps) {
   // Coloriage des départements (déterministe, calculé une seule fois)
   const colorMap = useMemo(() => computeDeptColors(features), [features]);
@@ -60,7 +63,7 @@ export default memo(function CoucheDepts({
 
   return (
     <g className="couche-depts">
-      {paths.map(({ feature, d, code }) => {
+      {showFills && paths.map(({ feature, d, code }) => {
         if (!d) return null;
         const isHighlighted = code !== undefined && code === highlightCode;
         const isWrong = code !== undefined && code === wrongCode;

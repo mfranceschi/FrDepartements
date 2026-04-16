@@ -62,7 +62,6 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [lint-and-typecheck, unit-tests]
 
     steps:
       - name: Checkout
@@ -93,7 +92,7 @@ jobs:
     timeout-minutes: 20
     # Les tests E2E tournent après le build pour ne pas bloquer le merge en cas
     # d'échec isolé dû à l'environnement (flakiness réseau, etc.)
-    needs: build
+    needs: [lint-and-typecheck, unit-tests, build]
 
     steps:
       - name: Checkout

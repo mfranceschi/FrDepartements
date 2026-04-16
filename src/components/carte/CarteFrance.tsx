@@ -47,8 +47,6 @@ const PATH_GEN = geoPath(PROJECTION);
 const DEFAULT_ZOOM = zoomIdentity;
 const NOOP_HOVER = () => {};
 
-interface ZoomTransform { x: number; y: number; k: number }
-
 export default function CarteFrance({
   features,
   onFeatureClick,
@@ -64,7 +62,9 @@ export default function CarteFrance({
 }: CarteFranceProps) {
   type Layer = 'departements' | 'regions';
   const [activeLayer, setActiveLayer] = useState<Layer>('departements');
-  const [transform, setTransform] = useState<ZoomTransform>({ x: 0, y: 0, k: 1 });
+  // zoomK est le seul state lié au zoom : mis à jour uniquement quand k change,
+  // pas à chaque frame de pan. Le transform du <g> est appliqué en impératif.
+  const [zoomK, setZoomK] = useState(1);
   const [showLabels, setShowLabels] = useState(false);
   const [showPrefectures, setShowPrefectures] = useState(false);
   const [showFleuves, setShowFleuves] = useState(false);
@@ -72,6 +72,8 @@ export default function CarteFrance({
   const { fleuves: fleuveFeatures } = useFleuveData(showFleuves);
 
   const svgRef = useRef<SVGSVGElement>(null);
+  const gRef = useRef<SVGGElement>(null);
+  const lastKRef = useRef(1);
   const zoomRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | undefined>(undefined);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const featuresRef = useRef(features);
@@ -84,7 +86,15 @@ export default function CarteFrance({
       .scaleExtent([0.5, 8])
       .on('zoom', (event: D3ZoomEvent<SVGSVGElement, unknown>) => {
         const { x, y, k } = event.transform;
-        setTransform({ x, y, k });
+        // Mise à jour DOM directe : zéro re-render React pendant le pan
+        if (gRef.current) {
+          gRef.current.style.transform = `translate(${x}px,${y}px) scale(${k})`;
+        }
+        // Re-render React seulement quand le facteur de zoom change (pas le pan)
+        if (k !== lastKRef.current) {
+          lastKRef.current = k;
+          setZoomK(k);
+        }
       });
 
     zoomRef.current = zoomBehavior;
@@ -222,7 +232,7 @@ export default function CarteFrance({
         −
       </button>
       <span className="px-1 h-7 flex items-center justify-center text-sm font-medium text-gray-500 tabular-nums min-w-[3rem] text-center">
-        {Math.round(transform.k * 100)}%
+        {Math.round(zoomK * 100)}%
       </span>
       <button
         type="button"
@@ -233,7 +243,7 @@ export default function CarteFrance({
         ↺
       </button>
     </div>
-  ), [handleZoomIn, handleZoomOut, handleZoomReset, transform.k]);
+  ), [handleZoomIn, handleZoomOut, handleZoomReset, zoomK]);
 
   return (
     <div className="relative w-full h-full flex flex-col" style={{ minHeight: '480px' }}>
@@ -310,15 +320,18 @@ export default function CarteFrance({
         style={{ width: '100%', height: '100%', minHeight: 0, cursor: 'grab', touchAction: 'none' }}
         className="block flex-1"
       >
-        <g transform={`translate(${transform.x},${transform.y}) scale(${transform.k})`}>
-          <defs>
-            <clipPath id="clip-france">
-              {features.regions.map((f, i) => {
-                const d = PATH_GEN(f);
-                return d ? <path key={i} d={d} /> : null;
-              })}
-            </clipPath>
-          </defs>
+        <defs>
+          <clipPath id="clip-france">
+            {features.regions.map((f, i) => {
+              const d = PATH_GEN(f);
+              return d ? <path key={i} d={d} /> : null;
+            })}
+          </clipPath>
+        </defs>
+        {/* ref impératif : le transform est mis à jour via setAttribute, sans re-render React */}
+        {/* transformOrigin: '0 0' est obligatoire — CSS origin par défaut est 50%/50%, */}
+        {/* alors que D3 calcule ses translations depuis (0,0) comme l'attribut SVG */}
+        <g ref={gRef} style={{ transformOrigin: '0 0' }}>
           <CoucheRegions
             features={features.regions}
             pathGen={PATH_GEN}
@@ -330,6 +343,7 @@ export default function CarteFrance({
             onHover={handleRegionHover}
             onClick={onFeatureClick ? handleRegionClick : undefined}
           />
+          {/* Remplissages des départements — sans labels pour qu'ils restent au-dessus des contours */}
           <CoucheDepts
             features={features.departements}
             pathGen={PATH_GEN}
@@ -340,25 +354,10 @@ export default function CarteFrance({
             wrongCode={wrongDeptCode}
             onHover={handleDeptHover}
             onClick={onFeatureClick ? handleDeptClick : undefined}
-            zoomK={transform.k}
-            showLabels={showLabels}
+            zoomK={zoomK}
+            showLabels={false}
           />
-          <CoucheFleuves
-            features={fleuveFeatures?.features ?? []}
-            pathGen={PATH_GEN}
-            visible={!quizMode && showFleuves}
-            zoomK={transform.k}
-            onHover={handleFleuveHover}
-          />
-          <CouchePrefectures
-            projection={PROJECTION}
-            zoomK={transform.k}
-            visible={!quizMode && showPrefectures}
-            highlightDeptCode={highlightDeptCode}
-            onHover={handlePrefectureHover}
-            onlyRegionales={effectiveShowRegions}
-          />
-          {/* Contours de régions en surcouche sur les départements colorés */}
+          {/* Contours de régions : par-dessus les remplissages, sous fleuves/préfectures/labels */}
           <CoucheRegions
             features={features.regions}
             pathGen={PATH_GEN}
@@ -366,6 +365,35 @@ export default function CarteFrance({
             borderOnly={true}
             quizMode={false}
             onHover={NOOP_HOVER}
+          />
+          <CoucheFleuves
+            features={fleuveFeatures?.features ?? []}
+            pathGen={PATH_GEN}
+            visible={!quizMode && showFleuves}
+            zoomK={zoomK}
+            onHover={handleFleuveHover}
+          />
+          <CouchePrefectures
+            projection={PROJECTION}
+            zoomK={zoomK}
+            visible={!quizMode && showPrefectures}
+            highlightDeptCode={highlightDeptCode}
+            onHover={handlePrefectureHover}
+            onlyRegionales={effectiveShowRegions}
+          />
+          {/* Labels des départements en dernière couche : toujours par-dessus tout */}
+          <CoucheDepts
+            features={features.departements}
+            pathGen={PATH_GEN}
+            visible={effectiveShowDepts}
+            quizMode={quizMode}
+            highlightCode={highlightDeptCode}
+            highlightVariant={highlightVariant}
+            wrongCode={wrongDeptCode}
+            onHover={NOOP_HOVER}
+            zoomK={zoomK}
+            showLabels={showLabels}
+            showFills={false}
           />
         </g>
 
