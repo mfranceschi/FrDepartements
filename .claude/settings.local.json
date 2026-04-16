@@ -22,7 +22,8 @@
       "Bash(curl --version)",
       "Bash(gh run list *)",
       "Bash(gh run watch *)",
-      "Bash(gh run view *)"
+      "Bash(gh run view *)",
+      "Bash(node scripts/compute-fleuves-depts.mjs)"
     ]
   },
   "hooks": {
