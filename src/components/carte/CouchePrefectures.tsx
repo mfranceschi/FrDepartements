@@ -7,7 +7,9 @@ interface CouchePrefecturesProps {
   zoomK: number;
   visible: boolean;
   highlightDeptCode?: string;
+  selectedDeptCode?: string;
   onHover: (label: string | null, x: number, y: number) => void;
+  onClick?: (deptCode: string) => void;
   onlyRegionales?: boolean;
 }
 
@@ -16,7 +18,9 @@ export default memo(function CouchePrefectures({
   zoomK,
   visible,
   highlightDeptCode,
+  selectedDeptCode,
   onHover,
+  onClick,
   onlyRegionales = false,
 }: CouchePrefecturesProps) {
   // Projeter les coordonnées une seule fois (la projection ne change pas)
@@ -44,10 +48,20 @@ export default memo(function CouchePrefectures({
     [projection],
   );
 
-  const visiblePoints = useMemo(
+  const filteredPoints = useMemo(
     () => (onlyRegionales ? points.filter((p) => p.isRegionale) : points),
     [points, onlyRegionales],
   );
+
+  // Render selected prefecture last so it appears on top
+  const visiblePoints = useMemo(() => {
+    if (!selectedDeptCode) return filteredPoints;
+    return [...filteredPoints].sort((a, b) => {
+      if (a.code === selectedDeptCode) return 1;
+      if (b.code === selectedDeptCode) return -1;
+      return 0;
+    });
+  }, [filteredPoints, selectedDeptCode]);
 
   if (!visible) return null;
 
@@ -58,14 +72,19 @@ export default memo(function CouchePrefectures({
   return (
     <g className="couche-prefectures">
       {visiblePoints.map(({ code, prefecture, nomDept, x, y, isRegionale }) => {
-        const isHighlighted = code === highlightDeptCode;
-        const fill = isHighlighted ? 'white' : '#9f1239';
-        const stroke = '#9f1239';
+        const isSelected = code === selectedDeptCode;
+        const isHighlighted = !isSelected && code === highlightDeptCode;
+
+        const dotRadius = isSelected ? 4.5 / zoomK : r;
+        const fill = isSelected ? '#f59e0b' : isHighlighted ? 'white' : '#9f1239';
+        const stroke = isSelected ? '#92400e' : '#9f1239';
+        const textFill = isSelected ? '#78350f' : isHighlighted ? 'white' : '#9f1239';
 
         return (
           <g
             key={code}
-            style={{ cursor: 'default' }}
+            style={{ cursor: onClick ? 'pointer' : 'default' }}
+            onClick={onClick ? () => onClick(code) : undefined}
             onMouseMove={(e) =>
               onHover(
                 `${prefecture} — préf. ${isRegionale ? 'régionale · ' : ''}${nomDept} (${code})`,
@@ -75,8 +94,19 @@ export default memo(function CouchePrefectures({
             }
             onMouseLeave={() => onHover(null, 0, 0)}
           >
+            {/* Anneau sélection */}
+            {isSelected && (
+              <circle
+                cx={x}
+                cy={y}
+                r={rOuter * 1.5}
+                fill="none"
+                stroke="#f59e0b"
+                strokeWidth={sw * 1.5}
+              />
+            )}
             {/* Anneau extérieur pour les préfectures régionales */}
-            {isRegionale && (
+            {isRegionale && !isSelected && (
               <circle
                 cx={x}
                 cy={y}
@@ -90,7 +120,7 @@ export default memo(function CouchePrefectures({
             <circle
               cx={x}
               cy={y}
-              r={r}
+              r={dotRadius}
               fill={fill}
               stroke={stroke}
               strokeWidth={sw}
@@ -99,8 +129,9 @@ export default memo(function CouchePrefectures({
             <text
               x={x + 5 / zoomK}
               y={y + 3 / zoomK}
-              fontSize={14 / zoomK}
-              fill={isHighlighted ? 'white' : '#9f1239'}
+              fontSize={isSelected ? 15 / zoomK : 14 / zoomK}
+              fontWeight={isSelected ? 'bold' : 'normal'}
+              fill={textFill}
               stroke="white"
               strokeWidth={2.5 / zoomK}
               paintOrder="stroke"

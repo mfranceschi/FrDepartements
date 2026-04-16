@@ -26,13 +26,22 @@ export interface CarteFranceProps {
     regions: Feature[];
   };
   onFeatureClick?: (code: string, type: 'departement' | 'region') => void;
+  onPrefectureClick?: (deptCode: string) => void;
+  onFleuveClick?: (name: string) => void;
+  selectedFleuveName?: string;
   highlightCode?: string;
   highlightType?: 'departement' | 'region';
   highlightVariant?: 'correct' | 'target';
   wrongCode?: string;
   wrongType?: 'departement' | 'region';
+  selectedPrefectureCode?: string;
   focusCode?: string;
   focusType?: 'departement' | 'region';
+  showPrefectures?: boolean;
+  onShowPrefecturesChange?: (v: boolean) => void;
+  showFleuves?: boolean;
+  onShowFleuvesChange?: (v: boolean) => void;
+  traversedDeptCodes?: string[];
   quizMode?: boolean;
   quizLayer?: 'departements' | 'regions';
 }
@@ -50,13 +59,22 @@ const NOOP_HOVER = () => {};
 export default function CarteFrance({
   features,
   onFeatureClick,
+  onPrefectureClick,
+  onFleuveClick,
+  selectedFleuveName,
   highlightCode,
   highlightType,
   highlightVariant = 'correct',
   wrongCode,
   wrongType,
+  selectedPrefectureCode,
   focusCode,
   focusType,
+  showPrefectures: showPrefecturesProp,
+  onShowPrefecturesChange,
+  showFleuves: showFleuvesProps,
+  onShowFleuvesChange,
+  traversedDeptCodes,
   quizMode = false,
   quizLayer = 'departements',
 }: CarteFranceProps) {
@@ -66,8 +84,12 @@ export default function CarteFrance({
   // pas à chaque frame de pan. Le transform du <g> est appliqué en impératif.
   const [zoomK, setZoomK] = useState(1);
   const [showLabels, setShowLabels] = useState(false);
-  const [showPrefectures, setShowPrefectures] = useState(false);
-  const [showFleuves, setShowFleuves] = useState(false);
+  const [showPrefecturesInternal, setShowPrefecturesInternal] = useState(false);
+  const showPrefectures = showPrefecturesProp ?? showPrefecturesInternal;
+  const setShowPrefectures = onShowPrefecturesChange ?? setShowPrefecturesInternal;
+  const [showFleuvesInternal, setShowFleuvesInternal] = useState(false);
+  const showFleuves = showFleuvesProps ?? showFleuvesInternal;
+  const setShowFleuves = onShowFleuvesChange ?? setShowFleuvesInternal;
 
   const { fleuves: fleuveFeatures } = useFleuveData(showFleuves);
 
@@ -193,6 +215,16 @@ export default function CarteFrance({
     [showTooltip, hideTooltip],
   );
 
+  const handlePrefectureClick = useCallback(
+    (deptCode: string) => onPrefectureClick?.(deptCode),
+    [onPrefectureClick],
+  );
+
+  const handleFleuveClick = useCallback(
+    (name: string) => onFleuveClick?.(name),
+    [onFleuveClick],
+  );
+
   const handleFleuveHover = useCallback(
     (name: string | null, x: number, y: number) => {
       if (name) showTooltip(name, x, y);
@@ -284,7 +316,7 @@ export default function CarteFrance({
                 <input
                   type="checkbox"
                   checked={showPrefectures}
-                  onChange={() => setShowPrefectures((v) => !v)}
+                  onChange={() => setShowPrefectures(!showPrefectures)}
                   className="w-4 h-4 accent-blue-600 cursor-pointer"
                 />
                 Préfectures
@@ -296,7 +328,7 @@ export default function CarteFrance({
             <input
               type="checkbox"
               checked={showFleuves}
-              onChange={() => setShowFleuves((v) => !v)}
+              onChange={() => setShowFleuves(!showFleuves)}
               className="w-4 h-4 accent-blue-600 cursor-pointer"
             />
             Cours d'eau
@@ -352,6 +384,7 @@ export default function CarteFrance({
             highlightCode={highlightDeptCode}
             highlightVariant={highlightVariant}
             wrongCode={wrongDeptCode}
+            traversedCodes={traversedDeptCodes}
             onHover={handleDeptHover}
             onClick={onFeatureClick ? handleDeptClick : undefined}
             zoomK={zoomK}
@@ -372,13 +405,17 @@ export default function CarteFrance({
             visible={!quizMode && showFleuves}
             zoomK={zoomK}
             onHover={handleFleuveHover}
+            onClick={!quizMode ? handleFleuveClick : undefined}
+            selectedName={selectedFleuveName}
           />
           <CouchePrefectures
             projection={PROJECTION}
             zoomK={zoomK}
             visible={!quizMode && showPrefectures}
             highlightDeptCode={highlightDeptCode}
+            selectedDeptCode={selectedPrefectureCode}
             onHover={handlePrefectureHover}
+            onClick={!quizMode ? handlePrefectureClick : undefined}
             onlyRegionales={effectiveShowRegions}
           />
           {/* Labels des départements en dernière couche : toujours par-dessus tout */}

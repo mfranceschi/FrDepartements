@@ -11,6 +11,8 @@ interface CoucheDepsProps {
   highlightCode?: string;
   highlightVariant?: 'correct' | 'target';
   wrongCode?: string;
+  /** Codes des départements traversés par un cours d'eau sélectionné */
+  traversedCodes?: string[];
   onHover: (feature: Feature | null, x: number, y: number) => void;
   onClick?: (code: string) => void;
   zoomK?: number;
@@ -32,6 +34,7 @@ export default memo(function CoucheDepts({
   highlightCode,
   highlightVariant = 'correct',
   wrongCode,
+  traversedCodes,
   onHover,
   onClick,
   zoomK = 1,
@@ -67,13 +70,13 @@ export default memo(function CoucheDepts({
         if (!d) return null;
         const isHighlighted = code !== undefined && code === highlightCode;
         const isWrong = code !== undefined && code === wrongCode;
-
         const isHovered = code !== undefined && code === hoveredCode;
+        const isTraversed = !isHighlighted && !isWrong && !isHovered && code !== undefined && (traversedCodes?.includes(code) ?? false);
         const baseFill = code ? (colorMap.get(code) ?? '#dbeafe') : '#dbeafe';
         const isQuizHighlighted = quizMode && isHighlighted;
-        const fill = (isHighlighted || isWrong || isHovered) ? 'white' : baseFill;
-        const stroke = resolveStroke(isQuizHighlighted, isWrong, highlightVariant, '#475569');
-        const strokeWidth = (isQuizHighlighted || isWrong) ? STROKE_WIDTH_ACTIVE : 0.5;
+        const fill = (isHighlighted || isWrong || isHovered) ? 'white' : isTraversed ? '#bfdbfe' : baseFill;
+        const stroke = resolveStroke(isQuizHighlighted, isWrong, highlightVariant, isTraversed ? '#3b82f6' : '#475569');
+        const strokeWidth = (isQuizHighlighted || isWrong) ? STROKE_WIDTH_ACTIVE : isTraversed ? 1 : 0.5;
 
         return (
           <path

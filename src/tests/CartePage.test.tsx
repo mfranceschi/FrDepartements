@@ -3,7 +3,6 @@ import { render, screen, fireEvent, within } from '@testing-library/react';
 import CartePage from '../pages/CartePage';
 import type { CarteFranceProps } from '../components/carte/CarteFrance';
 
-// useGeoData renvoie des données vides mais non-null pour passer les gardes
 vi.mock('../hooks/useGeoData', () => ({
   useGeoData: () => ({
     departements: { type: 'FeatureCollection', features: [] },
@@ -12,21 +11,17 @@ vi.mock('../hooks/useGeoData', () => ({
   }),
 }));
 
-// CarteFrance expose des boutons cliquables pour simuler les clics sur la carte
 vi.mock('../components/carte/CarteFrance', () => ({
-  default: ({ onFeatureClick }: CarteFranceProps) => (
+  default: ({ onFeatureClick, onFleuveClick }: CarteFranceProps) => (
     <div data-testid="carte-france">
-      <button
-        data-testid="btn-dept-75"
-        onClick={() => onFeatureClick?.('75', 'departement')}
-      >
+      <button data-testid="btn-dept-75" onClick={() => onFeatureClick?.('75', 'departement')}>
         Paris [dept]
       </button>
-      <button
-        data-testid="btn-region-11"
-        onClick={() => onFeatureClick?.('11', 'region')}
-      >
+      <button data-testid="btn-region-11" onClick={() => onFeatureClick?.('11', 'region')}>
         Île-de-France [région]
+      </button>
+      <button data-testid="btn-fleuve-loire" onClick={() => onFleuveClick?.('Loire')}>
+        Loire [fleuve]
       </button>
     </div>
   ),
@@ -39,7 +34,7 @@ function getSidebar() {
 describe('CartePage – panneau d\'informations', () => {
   it('affiche le message par défaut quand rien n\'est sélectionné', () => {
     render(<CartePage />);
-    expect(within(getSidebar()).getByText(/Cliquez sur un département ou une région/i)).toBeInTheDocument();
+    expect(within(getSidebar()).getByText(/Cliquez sur un département/i)).toBeInTheDocument();
   });
 
   it('affiche les infos du département après un clic sur la carte', () => {
@@ -50,7 +45,6 @@ describe('CartePage – panneau d\'informations', () => {
     expect(within(sidebar).getByRole('heading', { level: 2 })).toHaveTextContent('Paris');
     expect(within(sidebar).getByText('75')).toBeInTheDocument();
     expect(within(sidebar).getByText('Département')).toBeInTheDocument();
-    // La région associée doit apparaître
     expect(within(sidebar).getByText('Île-de-France')).toBeInTheDocument();
   });
 
@@ -67,10 +61,10 @@ describe('CartePage – panneau d\'informations', () => {
   it('désélectionne le territoire en cliquant deux fois sur le même', () => {
     render(<CartePage />);
     fireEvent.click(screen.getByTestId('btn-dept-75'));
-    expect(within(getSidebar()).queryByText(/Cliquez sur un département ou une région/i)).not.toBeInTheDocument();
+    expect(within(getSidebar()).queryByText(/Cliquez sur un département/i)).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('btn-dept-75'));
-    expect(within(getSidebar()).getByText(/Cliquez sur un département ou une région/i)).toBeInTheDocument();
+    expect(within(getSidebar()).getByText(/Cliquez sur un département/i)).toBeInTheDocument();
   });
 
   it('bascule vers un autre territoire sans désélectionner le premier', () => {
@@ -83,25 +77,41 @@ describe('CartePage – panneau d\'informations', () => {
     expect(within(sidebar).getByText('Région')).toBeInTheDocument();
   });
 
+  it('sélection fleuve et territoire coexistent dans le panneau', () => {
+    render(<CartePage />);
+    fireEvent.click(screen.getByTestId('btn-fleuve-loire'));
+    fireEvent.click(screen.getByTestId('btn-dept-75'));
+
+    const sidebar = getSidebar();
+    // Les deux headings doivent être présents
+    const headings = within(sidebar).getAllByRole('heading', { level: 2 });
+    const texts = headings.map((h) => h.textContent);
+    expect(texts).toContain('Loire');
+    expect(texts).toContain('Paris');
+  });
+
+  it('cliquer un territoire ne désélectionne pas le fleuve', () => {
+    render(<CartePage />);
+    fireEvent.click(screen.getByTestId('btn-fleuve-loire'));
+    fireEvent.click(screen.getByTestId('btn-dept-75'));
+
+    const sidebar = getSidebar();
+    expect(within(sidebar).getByText('Cours d\'eau')).toBeInTheDocument();
+    expect(within(sidebar).getByText('Département')).toBeInTheDocument();
+  });
 });
 
-// ── Recherche dans la sidebar ─────────────────────────────────────────────────
-// useSearch utilise DEPARTEMENTS/REGIONS statiques — pas besoin de données géo.
+// ── Recherche ─────────────────────────────────────────────────────────────────
 
 describe('CartePage – recherche dans la sidebar', () => {
   function getSearchInput() {
-    // Deux inputs existent dans le DOM (mobile + sidebar desktop) — on cible le premier
-    return screen.getAllByPlaceholderText(/Rechercher un département/i)[0];
+    return screen.getAllByPlaceholderText(/Rechercher/i)[0];
   }
 
   it('affiche le champ de recherche', () => {
     render(<CartePage />);
     expect(getSearchInput()).toBeInTheDocument();
   });
-
-  // Note: le dropdown est rendu dans deux conteneurs (mobile + sidebar desktop).
-  // jsdom n'applique pas les classes CSS (lg:hidden/hidden), donc les deux sont
-  // présents dans le DOM. On utilise [0] pour cibler le premier.
 
   it('affiche des résultats en tapant un nom de département', () => {
     render(<CartePage />);
@@ -113,6 +123,12 @@ describe('CartePage – recherche dans la sidebar', () => {
     render(<CartePage />);
     fireEvent.change(getSearchInput(), { target: { value: '29' } });
     expect(screen.getAllByText('Finistère', { selector: 'span.font-medium' })[0]).toBeInTheDocument();
+  });
+
+  it('affiche des résultats de type fleuve', () => {
+    render(<CartePage />);
+    fireEvent.change(getSearchInput(), { target: { value: 'Loire' } });
+    expect(screen.getAllByText('Loire', { selector: 'span.font-medium' })[0]).toBeInTheDocument();
   });
 
   it('sélectionner un résultat affiche ses infos dans le panneau', () => {
