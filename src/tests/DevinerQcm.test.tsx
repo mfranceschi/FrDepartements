@@ -5,8 +5,8 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import DevinerCodeDept from '../components/quiz/types-questions/QuestionDevinerCodeDept';
-import DevinerNomDept from '../components/quiz/types-questions/QuestionDevinerNomDept';
+import DevinerCodeDept from '../components/quiz/types-questions/QuestionDevinerDeptQcm';
+import DevinerNomDept from '../components/quiz/types-questions/QuestionDevinerDeptQcm';
 import type { Question } from '../quiz/types';
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────

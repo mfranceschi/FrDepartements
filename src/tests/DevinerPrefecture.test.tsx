@@ -5,8 +5,8 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import DevinerPrefectureDept from '../components/quiz/types-questions/QuestionDevinerPrefectureDept';
-import DevinerPrefectureRegion from '../components/quiz/types-questions/QuestionDevinerPrefectureRegion';
+import DevinerPrefectureDept from '../components/quiz/types-questions/QuestionDevinerPrefecture';
+import DevinerPrefectureRegion from '../components/quiz/types-questions/QuestionDevinerPrefecture';
 import type { Question } from '../quiz/types';
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────

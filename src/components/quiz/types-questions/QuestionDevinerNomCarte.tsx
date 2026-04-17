@@ -3,7 +3,7 @@ import CarteQuestionLayout from '../CarteQuestionLayout';
 import QuizNextButton from '../QuizNextButton';
 import QcmChoices from '../QcmChoices';
 
-export default function QuestionDevinerNomDeptCarte({
+export default function QuestionDevinerNomCarte({
   question,
   answerState,
   selectedCode,
@@ -11,24 +11,30 @@ export default function QuestionDevinerNomDeptCarte({
   onNext,
   isLastQuestion,
 }: QuestionProps) {
+  const isRegion = question.mode === 'DevinerNomRegionCarte';
+  const layer = isRegion ? 'regions' : 'departements' as const;
+  const entityType = isRegion ? 'region' : 'departement' as const;
+  const label = isRegion ? 'Quelle est cette région ?' : 'Quel est ce département ?';
+  const wrongAnswerLabel = isRegion ? question.targetNom : `${question.targetNom} (${question.targetCode})`;
+
   return (
     <CarteQuestionLayout
       questionId={question.id}
       mapProps={{
         quizMode: true,
-        quizLayer: 'departements',
+        quizLayer: layer,
         highlightCode: question.targetCode,
-        highlightType: 'departement',
+        highlightType: entityType,
         highlightVariant: 'target',
       }}
     >
-      <p className="text-center text-lg">Quel est ce département ?</p>
+      <p className="text-center text-lg">{label}</p>
       <QcmChoices
         choices={question.choices ?? []}
         answerState={answerState}
         selectedCode={selectedCode}
         onAnswer={onAnswer}
-        wrongAnswerLabel={`${question.targetNom} (${question.targetCode})`}
+        wrongAnswerLabel={wrongAnswerLabel}
       />
       {answerState !== 'pending' && onNext && (
         <QuizNextButton onNext={onNext} isLastQuestion={isLastQuestion} />

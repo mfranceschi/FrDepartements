@@ -33,7 +33,7 @@ test.describe('Navigation', () => {
   });
 
   test('navigue vers la page Tableau', async ({ page }) => {
-    await page.getByRole('link', { name: /tableau/i }).click();
+    await page.getByRole('link', { name: /données/i }).click();
     await expect(page).toHaveURL('/tableau');
     // Les onglets du tableau doivent être présents
     await expect(page.getByRole('button', { name: /par région/i })).toBeVisible();
@@ -44,10 +44,10 @@ test.describe('Navigation', () => {
     await page.getByRole('link', { name: /quiz/i }).click();
     await expect(page).toHaveURL('/quiz');
 
-    await page.getByRole('link', { name: /tableau/i }).click();
+    await page.getByRole('link', { name: /données/i }).click();
     await expect(page).toHaveURL('/tableau');
 
-    await page.getByRole('link', { name: /carte/i }).click();
+    await page.getByRole('link', { name: /exploration/i }).click();
     await expect(page).toHaveURL('/carte');
   });
 });

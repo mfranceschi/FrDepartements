@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import QuestionTrouverDeptCarte from '../components/quiz/types-questions/QuestionTrouverDeptCarte';
+import QuestionTrouverDeptCarte from '../components/quiz/types-questions/QuestionTrouverCarte';
 import type { CarteFranceProps } from '../components/carte/CarteFrance';
 import type { Question } from '../quiz/types';
 

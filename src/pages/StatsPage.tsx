@@ -3,10 +3,9 @@ import { useItemStats } from '../storage/useItemStats';
 import { relativeTime } from '../storage/useQuizHistory';
 import { DEPARTEMENTS } from '../data/departements';
 import { REGIONS } from '../data/regions';
+import { DEPT_MAP, REGION_MAP } from '../data/maps';
+import { scoreColor, barColor } from '../utils/scoreTheme';
 import type { QuizSujet } from '../quiz/types';
-
-const DEPT_MAP = new Map(DEPARTEMENTS.map(d => [d.code, d]));
-const REGION_NOM_MAP = new Map(REGIONS.map(r => [r.code, r.nom]));
 
 interface SujetMeta {
   sujet: QuizSujet;
@@ -22,26 +21,14 @@ const SUJETS: SujetMeta[] = [
   { sujet: 'regions-prefectures', label: 'Régions — Préfectures', isDept: false },
 ];
 
-function pctColor(pct: number) {
-  if (pct >= 85) return 'text-green-600';
-  if (pct >= 60) return 'text-yellow-500';
-  return 'text-red-500';
-}
-
-function barColor(pct: number) {
-  if (pct >= 85) return 'bg-green-500';
-  if (pct >= 60) return 'bg-yellow-400';
-  return 'bg-red-400';
-}
-
 function SuccessBar({ ok, fail }: { ok: number; fail: number }) {
   const total = ok + fail;
-  const pct = total > 0 ? (ok / total) * 100 : 0;
+  const ratio = total > 0 ? ok / total : 0;
   return (
     <div className="w-20 h-1.5 rounded-full overflow-hidden shrink-0" style={{ backgroundColor: 'var(--border)' }}>
       <div
-        className={`h-full rounded-full ${barColor(pct)}`}
-        style={{ width: `${pct}%` }}
+        className={`h-full rounded-full ${barColor(ratio)}`}
+        style={{ width: `${ratio * 100}%` }}
       />
     </div>
   );
@@ -74,9 +61,8 @@ export default function StatsPage() {
 
   const globalOk   = seenItems.reduce((s, { stat }) => s + stat.ok, 0);
   const globalFail = seenItems.reduce((s, { stat }) => s + stat.fail, 0);
-  const globalPct  = globalOk + globalFail > 0
-    ? Math.round((globalOk / (globalOk + globalFail)) * 100)
-    : null;
+  const globalRatio = globalOk + globalFail > 0 ? globalOk / (globalOk + globalFail) : null;
+  const globalPct  = globalRatio !== null ? Math.round(globalRatio * 100) : null;
   const unseenCount = totalEntities - seenItems.length;
 
   return (
@@ -117,9 +103,9 @@ export default function StatsPage() {
             <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{seenItems.length}</span>
             <span style={{ color: 'var(--text-secondary)' }}> / {totalEntities} vus</span>
           </span>
-          {globalPct !== null && (
+          {globalRatio !== null && globalPct !== null && (
             <span>
-              <span className={`font-semibold ${pctColor(globalPct)}`}>{globalPct}%</span>
+              <span className={`font-semibold ${scoreColor(globalRatio)}`}>{globalPct}%</span>
               <span style={{ color: 'var(--text-secondary)' }}> de réussite</span>
             </span>
           )}
@@ -138,9 +124,10 @@ export default function StatsPage() {
           <ul className="flex flex-col gap-1.5">
             {seenItems.map(({ entity, stat }) => {
               const dept = meta.isDept ? DEPT_MAP.get(entity.code) : null;
-              const regionNom = dept ? REGION_NOM_MAP.get(dept.regionCode) : null;
+              const regionNom = dept ? REGION_MAP.get(dept.regionCode)?.nom : null;
               const total = stat.ok + stat.fail;
-              const pct = Math.round((stat.ok / total) * 100);
+              const ratio = stat.ok / total;
+              const pct = Math.round(ratio * 100);
 
               return (
                 <li
@@ -161,7 +148,7 @@ export default function StatsPage() {
                   {/* Barre + stats */}
                   <div className="flex items-center gap-2 shrink-0">
                     <SuccessBar ok={stat.ok} fail={stat.fail} />
-                    <span className={`text-xs font-semibold tabular-nums w-9 text-right ${pctColor(pct)}`}>
+                    <span className={`text-xs font-semibold tabular-nums w-9 text-right ${scoreColor(ratio)}`}>
                       {pct}%
                     </span>
                     <span className="text-xs tabular-nums" style={{ color: 'var(--text-muted)' }}>

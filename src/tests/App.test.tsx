@@ -21,9 +21,9 @@ describe('App – smoke test', () => {
     render(<App />);
     const nav = screen.getByRole('navigation', { name: 'Navigation principale' });
     expect(nav).toBeInTheDocument();
-    expect(within(nav).getByText('Carte')).toBeInTheDocument();
+    expect(within(nav).getByText('Exploration')).toBeInTheDocument();
     expect(within(nav).getByText('Quiz')).toBeInTheDocument();
-    expect(within(nav).getByText('Tableau')).toBeInTheDocument();
+    expect(within(nav).getByText('Données')).toBeInTheDocument();
   });
 
   it('redirige vers /quiz par défaut et affiche la page quiz', () => {

@@ -1,15 +1,18 @@
 interface QuizNextButtonProps {
   onNext: () => void;
   isLastQuestion?: boolean;
+  safeArea?: boolean;
 }
 
-export default function QuizNextButton({ onNext, isLastQuestion }: QuizNextButtonProps) {
+export default function QuizNextButton({ onNext, isLastQuestion, safeArea }: QuizNextButtonProps) {
   return (
-    <div className="flex flex-col items-center gap-1 pt-2">
+    <div
+      className={`flex flex-col items-center gap-1 pt-2${safeArea ? ' pb-[env(safe-area-inset-bottom,0px)]' : ''}`}
+    >
       <button
         type="button"
         onClick={onNext}
-        className="px-8 py-3 font-semibold rounded-lg transition-colors bg-blue-600 text-white hover:bg-blue-700"
+        className="min-h-[44px] px-8 py-3 font-semibold rounded-lg transition-colors bg-blue-600 text-white hover:bg-blue-700"
       >
         {isLastQuestion ? 'Voir le résultat' : 'Question suivante'}
       </button>

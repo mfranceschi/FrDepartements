@@ -14,6 +14,7 @@ import CouchePrefectures from './CouchePrefectures';
 import CoucheFleuves from './CoucheFleuves';
 import { isValidCentroid } from './featureStyle';
 import { useFleuveData } from '../../hooks/useFleuveData';
+import { useTooltip } from '../../hooks/useTooltip';
 
 const FOCUS_SVG_W = 900;
 const FOCUS_SVG_H = 700;
@@ -37,6 +38,7 @@ export interface CarteFranceProps {
   selectedPrefectureCode?: string;
   focusCode?: string;
   focusType?: 'departement' | 'region';
+  focusSeq?: number;
   showPrefectures?: boolean;
   onShowPrefecturesChange?: (v: boolean) => void;
   showFleuves?: boolean;
@@ -70,6 +72,7 @@ export default function CarteFrance({
   selectedPrefectureCode,
   focusCode,
   focusType,
+  focusSeq,
   showPrefectures: showPrefecturesProp,
   onShowPrefecturesChange,
   showFleuves: showFleuvesProps,
@@ -97,7 +100,7 @@ export default function CarteFrance({
   const gRef = useRef<SVGGElement>(null);
   const lastKRef = useRef(1);
   const zoomRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | undefined>(undefined);
-  const tooltipRef = useRef<HTMLDivElement>(null);
+  const { tooltipRef, showTooltip, hideTooltip } = useTooltip();
   const featuresRef = useRef(features);
   featuresRef.current = features;
 
@@ -150,7 +153,7 @@ export default function CarteFrance({
       .transition()
       .duration(500)
       .call(zoomRef.current.transform, newTransform);
-  }, [focusCode, focusType]);
+  }, [focusCode, focusType, focusSeq]);
 
   const handleZoomIn = useCallback(() => {
     if (!svgRef.current || !zoomRef.current) return;
@@ -167,19 +170,6 @@ export default function CarteFrance({
     select(svgRef.current).transition().duration(300).call(zoomRef.current.transform, DEFAULT_ZOOM);
   }, []);
 
-  const showTooltip = useCallback((text: string, x: number, y: number) => {
-    const el = tooltipRef.current;
-    if (!el) return;
-    el.textContent = text;
-    el.style.left = `${x + 12}px`;
-    el.style.top = `${y - 30}px`;
-    el.style.display = 'block';
-  }, []);
-
-  const hideTooltip = useCallback(() => {
-    const el = tooltipRef.current;
-    if (el) el.style.display = 'none';
-  }, []);
 
   const handleDeptHover = useCallback((feature: Feature | null, x: number, y: number) => {
     if (!feature) { hideTooltip(); return; }

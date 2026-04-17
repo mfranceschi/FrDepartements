@@ -1,25 +1,23 @@
 import { useEffect, useMemo } from 'react';
-import type { SessionState, QuizMode, QuestionProps, AnswerRecord } from '../../quiz/types';
-import { MODE_LABELS } from '../../quiz/types';
+import type { SessionState, QuizMode, QuestionProps } from '../../quiz/types';
 import { QCM_MODES } from '../../quiz/generateQuestions';
-import QuestionTrouverDeptCarte from './types-questions/QuestionTrouverDeptCarte';
-import QuestionTrouverRegionCarte from './types-questions/QuestionTrouverRegionCarte';
-import QuestionDevinerNomRegionCarte from './types-questions/QuestionDevinerNomRegionCarte';
-import QuestionDevinerNomDeptCarte from './types-questions/QuestionDevinerNomDeptCarte';
-import QuestionDevinerCodeDept from './types-questions/QuestionDevinerCodeDept';
-import QuestionDevinerNomDept from './types-questions/QuestionDevinerNomDept';
-import QuestionDevinerPrefectureDept from './types-questions/QuestionDevinerPrefectureDept';
-import QuestionDevinerPrefectureRegion from './types-questions/QuestionDevinerPrefectureRegion';
+import QuestionTrouverCarte from './types-questions/QuestionTrouverCarte';
+import QuestionDevinerNomCarte from './types-questions/QuestionDevinerNomCarte';
+import QuestionDevinerDeptQcm from './types-questions/QuestionDevinerDeptQcm';
+import QuestionDevinerPrefecture from './types-questions/QuestionDevinerPrefecture';
+import QuizResults from './QuizResults';
+import QuizNextButton from './QuizNextButton';
+import { scoreColor } from '../../utils/scoreTheme';
 
 const QUESTION_COMPONENTS: Record<QuizMode, React.ComponentType<QuestionProps>> = {
-  TrouverDeptCarte: QuestionTrouverDeptCarte,
-  TrouverRegionCarte: QuestionTrouverRegionCarte,
-  DevinerNomRegionCarte: QuestionDevinerNomRegionCarte,
-  DevinerNomDeptCarte: QuestionDevinerNomDeptCarte,
-  DevinerCodeDept: QuestionDevinerCodeDept,
-  DevinerNomDept: QuestionDevinerNomDept,
-  DevinerPrefectureDept: QuestionDevinerPrefectureDept,
-  DevinerPrefectureRegion: QuestionDevinerPrefectureRegion,
+  TrouverDeptCarte: QuestionTrouverCarte,
+  TrouverRegionCarte: QuestionTrouverCarte,
+  DevinerNomRegionCarte: QuestionDevinerNomCarte,
+  DevinerNomDeptCarte: QuestionDevinerNomCarte,
+  DevinerCodeDept: QuestionDevinerDeptQcm,
+  DevinerNomDept: QuestionDevinerDeptQcm,
+  DevinerPrefectureDept: QuestionDevinerPrefecture,
+  DevinerPrefectureRegion: QuestionDevinerPrefecture,
 };
 
 interface QuizShellProps {
@@ -29,40 +27,6 @@ interface QuizShellProps {
   onRestart: () => void;
   onReviewErrors: () => void;
 }
-
-
-function scoreColor(ratio: number): string {
-  if (ratio >= 0.85) return 'text-green-600';
-  if (ratio >= 0.6) return 'text-yellow-500';
-  return 'text-red-500';
-}
-
-function getResultMessage(score: number, total: number, isReview: boolean): string {
-  if (isReview && score === total) return 'Toutes vos erreurs sont corrigées !';
-  const ratio = total > 0 ? score / total : 0;
-  if (ratio === 1) return 'Parfait !';
-  if (ratio >= 0.85) return 'Excellent !';
-  if (ratio >= 0.6) return 'Bien !';
-  return 'Continuez !';
-}
-
-function getStars(ratio: number): number {
-  if (ratio === 1) return 3;
-  if (ratio >= 0.85) return 3;
-  if (ratio >= 0.6) return 2;
-  return 1;
-}
-
-function getAnsweredLabel(record: AnswerRecord): string | null {
-  if (!record.question.choices) return null;
-  return record.question.choices.find(c => c.code === record.answeredCode)?.label ?? null;
-}
-
-function getCorrectLabel(record: AnswerRecord): string | null {
-  if (!record.question.choices) return null;
-  return record.question.choices.find(c => c.correct)?.label ?? null;
-}
-
 
 export default function QuizShell({
   session,
@@ -77,7 +41,6 @@ export default function QuizShell({
   const answeredCount = currentIndex + (answered ? 1 : 0);
   const liveRatio = answeredCount > 0 ? score / answeredCount : 1;
 
-  // Calcul du streak (bonnes réponses consécutives)
   const streak = useMemo(() => {
     let count = 0;
     for (let i = answerHistory.length - 1; i >= 0; i--) {
@@ -114,116 +77,8 @@ export default function QuizShell({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [questions, currentIndex, answered, answerState, onAnswer, onNext]);
 
-  // ─── Écran de fin ────────────────────────────────────────────────────────
   if (finished) {
-    const { isReview } = session;
-    const ratio = total > 0 ? score / total : 0;
-    const pct = Math.round(ratio * 100);
-    const isPerfect = ratio === 1;
-    const message = getResultMessage(score, total, isReview);
-    const stars = getStars(ratio);
-
-    const wrongRecords = answerHistory.filter((r) => !r.correct);
-    const wrongCount = wrongRecords.length;
-    const allCorrected = isReview && wrongCount === 0;
-
-    return (
-      <div className="flex flex-col items-center gap-6 py-12 px-6">
-        {isReview && (
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-300">
-            Mode révision
-          </span>
-        )}
-
-        {/* Étoiles */}
-        <div className="flex gap-1 text-3xl" aria-label={`${stars} étoile${stars > 1 ? 's' : ''} sur 3`}>
-          {[1, 2, 3].map((n) => (
-            <span
-              key={n}
-              className={n <= stars ? 'text-yellow-400' : 'text-gray-200'}
-              style={{ animationDelay: `${(n - 1) * 120}ms` }}
-            >
-              ★
-            </span>
-          ))}
-        </div>
-
-        <h2 className={`text-3xl font-bold ${isPerfect || allCorrected ? 'text-green-600' : 'text-gray-800'}`}>
-          {isPerfect && !isReview ? '🎉 ' : ''}{message}
-        </h2>
-
-        <p className={`text-6xl font-bold score-pop ${scoreColor(ratio)}`}>
-          {score}
-          <span className="text-3xl text-gray-400 font-normal"> / {total}</span>
-        </p>
-
-        <div className="relative w-full max-w-xs h-3 rounded-full overflow-hidden bg-gray-200">
-          <div
-            className="absolute inset-0 rounded-full"
-            style={{ background: 'linear-gradient(to right, #ef4444, #f59e0b 50%, #22c55e)' }}
-          />
-          <div
-            className="absolute top-0 right-0 bottom-0 bg-gray-200 transition-all duration-700"
-            style={{ width: `${100 - pct}%` }}
-          />
-        </div>
-        <p className="text-sm text-gray-500">{pct} % de bonnes réponses</p>
-
-        {wrongCount > 0 && (
-          <details className="w-full max-w-sm" open={wrongCount <= 10}>
-            <summary className="cursor-pointer select-none text-sm font-medium text-gray-600 hover:text-gray-800">
-              {wrongCount} erreur{wrongCount > 1 ? 's' : ''} — voir le détail
-            </summary>
-            <ul className="mt-3 flex flex-col gap-1.5 max-h-52 overflow-y-auto pr-1">
-              {wrongRecords.map((r, i) => {
-                const correctLabel = getCorrectLabel(r);
-                const answeredLabel = getAnsweredLabel(r);
-                return (
-                  <li key={i} className="flex items-start gap-2 px-3 py-2 bg-red-50 border border-red-100 rounded-lg text-xs">
-                    <span className="shrink-0 text-red-400 mt-0.5">✕</span>
-                    <div className="flex flex-col gap-0.5 min-w-0">
-                      <span className="font-semibold text-gray-800 truncate">{r.question.targetNom}</span>
-                      <span className="text-gray-400">{MODE_LABELS[r.mode]}</span>
-                      {correctLabel && (
-                        <span className="text-gray-600">
-                          Bonne réponse : <span className="font-medium text-green-700">{correctLabel}</span>
-                          {answeredLabel && answeredLabel !== correctLabel && (
-                            <span className="text-red-500"> · vous : {answeredLabel}</span>
-                          )}
-                        </span>
-                      )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </details>
-        )}
-
-        <div className="flex flex-col items-center gap-3 mt-2">
-          {wrongCount > 0 && (
-            <button
-              type="button"
-              onClick={onReviewErrors}
-              className="px-8 py-3 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors"
-            >
-              Revoir mes erreurs ({wrongCount})
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={onRestart}
-            className={`px-8 py-3 font-semibold rounded-lg transition-colors ${
-              wrongCount > 0
-                ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
-            }`}
-          >
-            Rejouer
-          </button>
-        </div>
-      </div>
-    );
+    return <QuizResults session={session} onRestart={onRestart} onReviewErrors={onReviewErrors} />;
   }
 
   const question = questions[currentIndex];
@@ -238,7 +93,6 @@ export default function QuizShell({
     <div className="flex flex-col gap-4 w-full h-full">
       {/* Bandeau supérieur avec score bien visible */}
       <div className="rounded-lg border border-gray-200 overflow-hidden">
-        {/* Indicateur de progression : points (≤20q) ou barre fine (>20q) */}
         {showDots ? (
           <div className="flex gap-1 px-3 py-2 bg-gray-50 justify-center flex-wrap">
             {questions.map((_, i) => {
@@ -263,9 +117,7 @@ export default function QuizShell({
           <div className="relative h-1.5 bg-gray-100">
             <div
               className="absolute inset-0 rounded-r"
-              style={{
-                background: 'linear-gradient(to right, #ef4444, #f59e0b 50%, #22c55e)',
-              }}
+              style={{ background: 'linear-gradient(to right, #ef4444, #f59e0b 50%, #22c55e)' }}
             />
             <div
               className="absolute top-0 right-0 bottom-0 bg-gray-100 transition-all duration-300"
@@ -287,9 +139,7 @@ export default function QuizShell({
           </div>
           <div className="flex items-center gap-2">
             {streak >= 3 && (
-              <span
-                className="streak-badge inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-300"
-              >
+              <span className="streak-badge inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-300">
                 🔥 Combo ×{streak}
               </span>
             )}
@@ -322,19 +172,11 @@ export default function QuizShell({
       </div>
 
       {answered && !isCarteQuestion && (
-        <div className="flex flex-col items-center gap-1 pt-2 pb-[env(safe-area-inset-bottom,0px)]">
-          <button
-            type="button"
-            onClick={onNext}
-            className="min-h-[44px] px-8 py-3 font-semibold rounded-lg transition-colors bg-blue-600 text-white hover:bg-blue-700"
-          >
-            {isLastQuestion ? 'Voir le résultat' : 'Question suivante'}
-          </button>
-          <p className="text-xs text-gray-400">
-            ou appuyez sur{' '}
-            <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs">Entrée</kbd>
-          </p>
-        </div>
+        <QuizNextButton
+          onNext={onNext}
+          isLastQuestion={isLastQuestion}
+          safeArea
+        />
       )}
     </div>
   );

@@ -67,7 +67,7 @@ const qNomRegion: Question = {
 
 describe('DevinerNomDeptCarte', () => {
   // Lazy import to respect the hoisted mock
-  let DevinerNomDeptCarte: typeof import('../components/quiz/types-questions/QuestionDevinerNomDeptCarte').default;
+  let DevinerNomDeptCarte: typeof import('../components/quiz/types-questions/QuestionDevinerNomCarte').default;
 
   beforeEach(async () => {
     geoStubRef.value = {
@@ -75,7 +75,7 @@ describe('DevinerNomDeptCarte', () => {
       regions: { type: 'FeatureCollection', features: [] },
       loading: false,
     };
-    DevinerNomDeptCarte = (await import('../components/quiz/types-questions/QuestionDevinerNomDeptCarte')).default;
+    DevinerNomDeptCarte = (await import('../components/quiz/types-questions/QuestionDevinerNomCarte')).default;
   });
 
   it('affiche la consigne "Quel est ce département ?"', () => {
@@ -152,7 +152,7 @@ describe('DevinerNomDeptCarte', () => {
 // ── DevinerNomRegionCarte ─────────────────────────────────────────────────────
 
 describe('DevinerNomRegionCarte', () => {
-  let DevinerNomRegionCarte: typeof import('../components/quiz/types-questions/QuestionDevinerNomRegionCarte').default;
+  let DevinerNomRegionCarte: typeof import('../components/quiz/types-questions/QuestionDevinerNomCarte').default;
 
   beforeEach(async () => {
     geoStubRef.value = {
@@ -160,7 +160,7 @@ describe('DevinerNomRegionCarte', () => {
       regions: { type: 'FeatureCollection', features: [] },
       loading: false,
     };
-    DevinerNomRegionCarte = (await import('../components/quiz/types-questions/QuestionDevinerNomRegionCarte')).default;
+    DevinerNomRegionCarte = (await import('../components/quiz/types-questions/QuestionDevinerNomCarte')).default;
   });
 
   it('affiche la consigne "Quelle est cette région ?"', () => {

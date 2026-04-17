@@ -1,6 +1,9 @@
 import { NavLink } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
 
+const activeStyle = { color: '#2563eb' };
+const inactiveStyle = { color: 'var(--text-secondary)' };
+
 const links = [
   {
     to: '/quiz',
@@ -15,7 +18,7 @@ const links = [
   },
   {
     to: '/carte',
-    label: 'Carte',
+    label: 'Exploration',
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
         <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
@@ -26,7 +29,7 @@ const links = [
   },
   {
     to: '/tableau',
-    label: 'Tableau',
+    label: 'Données',
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
         <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -57,35 +60,39 @@ export default function Nav() {
         className="flex items-center justify-between px-6 py-3 border-b"
         style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border)' }}
       >
-        <div className="flex gap-4">
-          {links.map(({ to, label }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className="pb-1 font-medium transition-colors"
-              style={({ isActive }) =>
-                isActive
-                  ? { color: '#2563eb', borderBottom: '2px solid #2563eb' }
-                  : { color: 'var(--text-secondary)' }
-              }
-            >
-              {label}
-            </NavLink>
-          ))}
+        <div className="flex items-center gap-6">
+          <span className="font-semibold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+            Départements FR
+          </span>
+          <div className="flex gap-1">
+            {links.map(({ to, label, icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                className="hover-surface flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium transition-colors"
+                style={({ isActive }) =>
+                  isActive
+                    ? { ...activeStyle, backgroundColor: 'var(--bg-hover)' }
+                    : inactiveStyle
+                }
+              >
+                {icon}
+                {label}
+              </NavLink>
+            ))}
+          </div>
         </div>
         <ThemeToggle />
       </nav>
 
       {/* Bottom bar — mobile uniquement (lg:hidden) */}
-      <nav aria-label="Navigation mobile" aria-hidden="true" className="lg:hidden fixed bottom-0 inset-x-0 z-40 flex border-t" style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <nav aria-label="Navigation mobile" className="lg:hidden fixed bottom-0 inset-x-0 z-40 flex border-t" style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {links.map(({ to, label, icon }) => (
           <NavLink
             key={to}
             to={to}
             className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium transition-colors"
-            style={({ isActive }) =>
-              isActive ? { color: '#2563eb' } : { color: 'var(--text-secondary)' }
-            }
+            style={({ isActive }) => isActive ? activeStyle : inactiveStyle}
           >
             {icon}
             {label}

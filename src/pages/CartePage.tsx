@@ -1,9 +1,11 @@
 import { useState, useMemo } from 'react';
 import { useGeoData } from '../hooks/useGeoData';
 import CarteFrance from '../components/carte/CarteFrance';
-import { DEPARTEMENTS } from '../data/departements';
-import { REGIONS } from '../data/regions';
 import FLEUVES_DEPTS from '../data/fleuvesDepts.json';
+import { DEPT_MAP, REGION_MAP } from '../data/maps';
+import { useSearch } from '../hooks/useSearch';
+import type { SearchResult } from '../hooks/useSearch';
+import SearchBar from '../components/carte/SearchBar';
 import type { Feature } from 'geojson';
 
 const FLEUVE_SCALERANK_THRESHOLD = 11;
@@ -13,27 +15,6 @@ interface SelectedTerritory {
   code: string;
   type: 'departement' | 'region' | 'prefecture';
 }
-
-function buildDeptMap(): Map<string, { nom: string; regionCode: string; prefecture: string; isPrefectureRegionale?: boolean }> {
-  const map = new Map<string, { nom: string; regionCode: string; prefecture: string; isPrefectureRegionale?: boolean }>();
-  for (const d of DEPARTEMENTS) {
-    map.set(d.code, { nom: d.nom, regionCode: d.regionCode, prefecture: d.prefecture, isPrefectureRegionale: d.isPrefectureRegionale });
-  }
-  return map;
-}
-
-function buildRegionMap(): Map<string, { nom: string; prefectureRegionale: string }> {
-  const map = new Map<string, { nom: string; prefectureRegionale: string }>();
-  for (const r of REGIONS) {
-    map.set(r.code, { nom: r.nom, prefectureRegionale: r.prefectureRegionale });
-  }
-  return map;
-}
-
-const DEPT_MAP = buildDeptMap();
-const REGION_MAP = buildRegionMap();
-
-const DROPDOWN_BLUR_DELAY_MS = 150;
 
 // ---------------------------------------------------------------------------
 // Panneau vide
@@ -200,47 +181,6 @@ function InfoPanel({
 // Recherche
 // ---------------------------------------------------------------------------
 
-interface SearchResult {
-  code: string;
-  nom: string;
-  type: 'departement' | 'region' | 'prefecture' | 'fleuve';
-  subtitle: string;
-}
-
-function useSearch(query: string): SearchResult[] {
-  return useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (q.length < 1) return [];
-
-    const results: SearchResult[] = [];
-
-    for (const d of DEPARTEMENTS) {
-      if (d.nom.toLowerCase().includes(q) || d.code.toLowerCase().startsWith(q)) {
-        const regionNom = REGION_MAP.get(d.regionCode)?.nom ?? '';
-        results.push({ code: d.code, nom: d.nom, type: 'departement', subtitle: regionNom });
-      }
-      if (d.prefecture.toLowerCase().includes(q)) {
-        const regionNom = REGION_MAP.get(d.regionCode)?.nom ?? '';
-        results.push({ code: d.code, nom: d.prefecture, type: 'prefecture', subtitle: `${d.nom} · ${regionNom}` });
-      }
-    }
-
-    for (const r of REGIONS) {
-      if (r.nom.toLowerCase().includes(q) || r.code.toLowerCase().startsWith(q)) {
-        results.push({ code: r.code, nom: r.nom, type: 'region', subtitle: 'Région' });
-      }
-    }
-
-    for (const name of Object.keys(FLEUVES_DEPTS_TYPED)) {
-      if (name.toLowerCase().includes(q)) {
-        results.push({ code: name, nom: name, type: 'fleuve', subtitle: 'Cours d\'eau' });
-      }
-    }
-
-    return results.slice(0, 8);
-  }, [query]);
-}
-
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
@@ -250,8 +190,7 @@ export default function CartePage() {
   const [selectedTerritory, setSelectedTerritory] = useState<SelectedTerritory | null>(null);
   const [selectedFleuve, setSelectedFleuve] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [focusCode, setFocusCode] = useState<string | undefined>(undefined);
-  const [focusType, setFocusType] = useState<'departement' | 'region' | undefined>(undefined);
+  const [focusTarget, setFocusTarget] = useState<{ code: string; type: 'departement' | 'region'; seq: number } | undefined>(undefined);
   const [showResults, setShowResults] = useState(false);
   const [showPrefectures, setShowPrefectures] = useState(false);
   const [showFleuves, setShowFleuves] = useState(false);
@@ -291,8 +230,8 @@ export default function CartePage() {
       setShowFleuves(true);
     } else {
       setSelectedTerritory({ code: result.code, type: result.type });
-      setFocusCode(result.code);
-      setFocusType(result.type === 'prefecture' ? 'departement' : result.type);
+      const focusType = result.type === 'prefecture' ? 'departement' : result.type;
+      setFocusTarget(prev => ({ code: result.code, type: focusType, seq: (prev?.seq ?? 0) + 1 }));
       if (result.type === 'prefecture') setShowPrefectures(true);
     }
     setSearchQuery('');
@@ -326,73 +265,20 @@ export default function CartePage() {
     regions: regions.features as Feature[],
   };
 
-  const searchBar = (
-    <div className="relative">
-      <svg
-        className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={2}
-      >
-        <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.197 5.197a7.5 7.5 0 0 0 10.606 10.606Z" />
-      </svg>
-      <input
-        type="text"
-        placeholder="Rechercher un territoire, une préfecture…"
-        value={searchQuery}
-        onChange={(e) => { setSearchQuery(e.target.value); setShowResults(true); }}
-        onFocus={() => setShowResults(true)}
-        onBlur={() => setTimeout(() => setShowResults(false), DROPDOWN_BLUR_DELAY_MS)}
-        className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-      />
-      {searchQuery && (
-        <button
-          type="button"
-          onClick={() => { setSearchQuery(''); setShowResults(false); }}
-          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-        >
-          ✕
-        </button>
-      )}
-    </div>
-  );
-
-  const searchDropdown = showResults && searchResults.length > 0 && (
-    <ul className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-20 overflow-hidden">
-      {searchResults.map((r) => (
-        <li key={`${r.type}-${r.code}`}>
-          <button
-            type="button"
-            onMouseDown={() => handleSearchSelect(r)}
-            className="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 flex items-center gap-2"
-          >
-            <span
-              className={`inline-block w-2.5 h-2.5 shrink-0 border ${
-                r.type === 'region'
-                  ? 'rounded-sm bg-green-100 border-green-500'
-                  : r.type === 'prefecture'
-                  ? 'rounded-full bg-amber-100 border-amber-500'
-                  : r.type === 'fleuve'
-                  ? 'rounded-sm bg-blue-100 border-blue-700'
-                  : 'rounded-sm bg-blue-100 border-blue-500'
-              }`}
-            />
-            <span className="font-medium text-gray-800 truncate">{r.nom}</span>
-            <span className="text-gray-400 text-xs shrink-0">{r.type === 'fleuve' ? 'cours d\'eau' : r.code}</span>
-          </button>
-        </li>
-      ))}
-    </ul>
-  );
+  const searchBarProps = {
+    query: searchQuery,
+    onQueryChange: setSearchQuery,
+    results: searchResults,
+    showResults,
+    onShowResults: setShowResults,
+    onSelect: handleSearchSelect,
+  };
 
   return (
     <main className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden" style={{ height: '100%' }}>
       {/* Barre de recherche mobile */}
-      <div className="lg:hidden shrink-0 px-3 py-2 border-b border-gray-200 bg-white relative">
-        {searchBar}
-        {searchDropdown}
+      <div className="lg:hidden shrink-0 px-3 py-2 border-b border-gray-200 bg-white">
+        <SearchBar {...searchBarProps} />
       </div>
 
       {/* Map */}
@@ -407,8 +293,9 @@ export default function CartePage() {
           onFleuveClick={handleFleuveClick}
           selectedFleuveName={selectedFleuve ?? undefined}
           traversedDeptCodes={traversedDeptCodes}
-          focusCode={focusCode}
-          focusType={focusType}
+          focusCode={focusTarget?.code}
+          focusType={focusTarget?.type}
+          focusSeq={focusTarget?.seq}
           showPrefectures={showPrefectures}
           onShowPrefecturesChange={setShowPrefectures}
           showFleuves={showFleuves}
@@ -418,9 +305,8 @@ export default function CartePage() {
 
       {/* Info sidebar */}
       <aside className="lg:w-64 xl:w-72 border-t lg:border-t-0 lg:border-l border-gray-200 bg-gray-50 flex flex-col shrink-0 overflow-y-auto max-h-[40vh] lg:max-h-none">
-        <div className="hidden lg:block p-3 border-b border-gray-200 relative">
-          {searchBar}
-          {searchDropdown}
+        <div className="hidden lg:block p-3 border-b border-gray-200">
+          <SearchBar {...searchBarProps} />
         </div>
         <div className="p-4 flex-1">
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">

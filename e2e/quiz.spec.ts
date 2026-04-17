@@ -121,7 +121,7 @@ test.describe('Quiz – parcours complet', () => {
     await expect(page.getByText(/Question\s+1\s*\//)).toBeVisible({ timeout: 8_000 });
 
     // Tente de naviguer vers une autre page
-    await page.getByRole('link', { name: /tableau/i }).click();
+    await page.getByRole('link', { name: /données/i }).click();
 
     // Un dialogue de confirmation doit s'afficher
     await expect(
@@ -133,7 +133,7 @@ test.describe('Quiz – parcours complet', () => {
     await page.getByRole('button', { name: /commencer|démarrer|lancer/i }).click();
     await expect(page.getByText(/Question\s+1\s*\//)).toBeVisible({ timeout: 8_000 });
 
-    await page.getByRole('link', { name: /tableau/i }).click();
+    await page.getByRole('link', { name: /données/i }).click();
 
     // Clique sur "Quitter"
     const quitBtn = page.getByRole('button', { name: /quitter/i });
