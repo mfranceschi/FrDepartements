@@ -15,7 +15,9 @@
       "Bash(npx playwright:*)",
       "Bash(npx tsx:*)",
       "Bash(git add:*)",
+      "Bash(git status:*)",
       "Bash(git push:*)",
+      "Bash(git diff:*)",
       "Bash(git log:*)",
       "WebSearch",
       "WebFetch(domain:github.com)",
@@ -32,7 +34,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd \"c:/Users/mfran/Desktop/MahSandbox/FrDepartements\" && npm run lint && npm run build && npm test || exit 2",
+            "command": "cd \"c:/Users/MartinF/src/FrDepartements\" && npm run lint && npm run build && npm test || exit 2",
             "timeout": 180,
             "statusMessage": "Vérification pipeline (lint + build + tests)...",
             "asyncRewake": true
