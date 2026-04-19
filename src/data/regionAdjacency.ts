@@ -4,7 +4,7 @@
  */
 export const REGION_ADJACENCY: Readonly<Record<string, readonly string[]>> = {
   '11': ['28', '32', '44', '27', '24'],              // Île-de-France
-  '24': ['11', '28', '52', '53', '75', '84', '27'],  // Centre-Val de Loire
+  '24': ['11', '28', '52', '75', '84', '27'],         // Centre-Val de Loire
   '27': ['11', '44', '84', '24'],                    // Bourgogne-Franche-Comté
   '28': ['11', '32', '53', '52', '24'],              // Normandie
   '32': ['11', '28', '44'],                          // Hauts-de-France

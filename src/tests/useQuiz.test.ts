@@ -270,4 +270,48 @@ describe('useQuiz – restartWithErrors après session terminée', () => {
     expect(result.current.session.finished).toBe(false);
     expect(result.current.session.currentIndex).toBe(0);
   });
+
+  it('restartWithErrors ne reproduit que les questions mal répondues', () => {
+    const config: QuizConfig = { sujet: 'depts-numeros', difficulty: 'facile', sessionLength: 10 };
+    const { result } = renderHook(() => useQuiz(config));
+    const total = result.current.session.questions.length;
+
+    // Répondre juste à la 1ère, faux à toutes les autres
+    const firstTarget = result.current.session.questions[0].targetCode;
+    act(() => { result.current.submitAnswer(firstTarget); });
+    act(() => { result.current.nextQuestion(); });
+    for (let i = 1; i < total; i++) {
+      act(() => { result.current.submitAnswer('__FAUX__'); });
+      act(() => { result.current.nextQuestion(); });
+    }
+
+    act(() => { result.current.restartWithErrors(); });
+    expect(result.current.session.questions.length).toBe(total - 1);
+  });
+
+  it('restartWithErrors active le mode révision (isReview = true)', () => {
+    const config: QuizConfig = { sujet: 'depts-numeros', difficulty: 'facile', sessionLength: 10 };
+    const { result } = renderHook(() => useQuiz(config));
+    const total = result.current.session.questions.length;
+
+    for (let i = 0; i < total; i++) {
+      act(() => { result.current.submitAnswer('__FAUX__'); });
+      act(() => { result.current.nextQuestion(); });
+    }
+
+    act(() => { result.current.restartWithErrors(); });
+    expect(result.current.session.isReview).toBe(true);
+  });
+
+  it('restart remet answerHistory à zéro', () => {
+    const config: QuizConfig = { sujet: 'depts-numeros', difficulty: 'facile', sessionLength: 10 };
+    const { result } = renderHook(() => useQuiz(config));
+
+    act(() => { result.current.submitAnswer('__FAUX__'); });
+    act(() => { result.current.nextQuestion(); });
+    expect(result.current.session.answerHistory.length).toBeGreaterThan(0);
+
+    act(() => { result.current.restart(); });
+    expect(result.current.session.answerHistory).toHaveLength(0);
+  });
 });

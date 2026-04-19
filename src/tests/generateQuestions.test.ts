@@ -100,6 +100,17 @@ describe('generateQuestions – fonction pure', () => {
     });
   });
 
+  it('répartition carte/QCM avec nombre impair : carte prend ceil(n/2)', () => {
+    for (const sessionLength of [25, 10] as const) {
+      const config: QuizConfig = { sujet: 'depts-carte', difficulty: 'facile', sessionLength };
+      const questions = generateQuestions(config);
+      const carte = questions.filter((q) => q.mode === 'TrouverDeptCarte').length;
+      const qcm   = questions.filter((q) => q.mode === 'DevinerNomDeptCarte').length;
+      expect(carte).toBe(Math.ceil(sessionLength / 2));
+      expect(qcm).toBe(sessionLength - Math.ceil(sessionLength / 2));
+    }
+  });
+
   it('difficile : les distracteurs de DevinerCodeDept sont numériquement proches du code cible', () => {
     const config: QuizConfig = { sujet: 'depts-numeros', difficulty: 'difficile', sessionLength: 'tout' };
     const questions = generateQuestions(config);
