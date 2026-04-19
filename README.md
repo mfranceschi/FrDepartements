@@ -8,6 +8,10 @@ Application web progressive (PWA) pour explorer et apprendre les 96 département
 - Visualisation SVG de la France avec D3.js
 - Zoom et panoramique
 - Survol / clic sur un département ou une région pour afficher ses informations
+- Préfectures affichées et cliquables
+- Overlay fleuves avec mise en évidence au survol ; clic sur un fleuve sélectionne les départements traversés
+- Barre de recherche pour naviguer vers un département, une région ou un fleuve
+- Bascule mode clair / sombre
 
 ### Quiz
 Cinq sujets d'entraînement configurables :
@@ -42,7 +46,7 @@ Liste complète des départements organisée par région, avec codes et noms.
 ## Démarrage rapide
 
 ```bash
-# Prérequis : Node.js 20+
+# Prérequis : Node.js 24+
 npm install
 npm run dev
 # → http://localhost:5173
@@ -66,23 +70,25 @@ npm run dev
 ```
 src/
 ├── components/
-│   ├── carte/          # Carte SVG (couches depts, régions, préfectures)
+│   ├── carte/          # CarteFrance, couches depts/régions/préfectures/fleuves, SearchBar
 │   ├── quiz/           # Shell quiz + 8 composants types de questions
-│   └── tableau/        # Tableau et accordéon par région
+│   ├── tableau/        # Tableau et accordéon par région
+│   ├── Nav.tsx
+│   └── ThemeToggle.tsx
 ├── pages/              # CartePage, QuizPage, TableauPage
-├── hooks/              # useQuiz (logique de session), useGeoData
-├── data/               # Données statiques (départements, régions)
+├── hooks/              # useQuiz, useGeoData, useFleuveData, useTheme, useSearch…
+├── data/               # Données statiques (départements, régions, fleuvesDepts.json)
 ├── quiz/               # Types, generateQuestions, buildChoices
 └── tests/              # Tests unitaires Vitest
 e2e/                    # Tests E2E Playwright
-public/                 # GeoJSON France + assets statiques
+public/                 # GeoJSON France, fleuves.json + assets statiques
 ```
 
 ## PWA
 
 L'application est installable sur tous les appareils. Le service worker Workbox met en cache :
 - Tous les assets JS/CSS/HTML au moment du build
-- Les fichiers GeoJSON (stratégie Cache-First, durée 30 jours)
+- Les fichiers GeoJSON et `fleuves.json` (stratégie Cache-First, durée 30 jours)
 
 La mise à jour se fait automatiquement (`autoUpdate`).
 

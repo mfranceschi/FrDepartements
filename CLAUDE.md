@@ -16,6 +16,7 @@ npm run test:e2e:ui  # Playwright interactive UI mode
 ```
 
 Run a single unit test file:
+
 ```bash
 npx vitest run src/tests/someFile.test.ts
 ```
@@ -24,13 +25,13 @@ npx vitest run src/tests/someFile.test.ts
 
 This is a React + TypeScript PWA for learning French administrative divisions (departments and regions). It has three features accessible via a 3-tab nav:
 
-1. **Carte** — Interactive D3.js SVG map with zoom/pan, department/region layers
+1. **Carte** — Interactive D3.js SVG map with zoom/pan, department/region/prefecture/river layers, SearchBar, dark mode toggle
 2. **Quiz** — Configurable training sessions with 5 subjects and 8 question modes: map-clicking challenges and MCQ variants
 3. **Tableau** — Accordion data table of all departments grouped by region
 
 ### Data flow
 
-Static data lives in `src/data/` (96 metropolitan departments, 13 regions, adjacency graph). GeoJSON geometry is loaded lazily via `useGeoData` hook from `src/geo/`.
+Static data lives in `src/data/` (96 metropolitan departments, 13 regions, adjacency graph, `fleuvesDepts.json` river-department associations). GeoJSON geometry is loaded lazily via `useGeoData` and `useFleuveData` hooks (both in `src/hooks/`). River GeoJSON (`fleuves.json`) is served from `/public/`.
 
 Quiz sessions are orchestrated by `useQuiz` (hook in `src/hooks/`) which calls `generateQuestions` (`src/quiz/`) to build a full session upfront. The 5 subjects (`regions-carte`, `depts-carte`, `depts-numeros`, `depts-prefectures`, `regions-prefectures`) each map to 1–2 `QuizMode` values. For subjects mixing carte and QCM modes (`regions-carte`, `depts-carte`), questions are balanced 50/50 (carte gets the rounding-up half). `buildChoices` implements difficulty-aware distractor selection — "difficile" picks wrong answers from the same region (only applies to carte and numeros subjects; prefecture subjects have no difficulty setting).
 
