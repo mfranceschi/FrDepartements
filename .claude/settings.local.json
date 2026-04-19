@@ -25,7 +25,8 @@
       "Bash(gh run list *)",
       "Bash(gh run watch *)",
       "Bash(gh run view *)",
-      "Bash(node scripts/compute-fleuves-depts.mjs)"
+      "Bash(node scripts/compute-fleuves-depts.mjs)",
+      "Bash(git commit -m ' *)"
     ]
   },
   "hooks": {

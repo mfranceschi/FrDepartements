@@ -37,6 +37,24 @@ Après tes éventuelles modifications, présente un récapitulatif concis de ce 
 
 ## Étape 2 — Pipeline CI locale
 
+### 2.0 — Décision : faut-il exécuter la CI ?
+
+Avant de lancer quoi que ce soit, détermine si des fichiers de **code exécutable** ont été modifiés. Sont considérés comme code exécutable :
+
+- Fichiers `*.ts` ou `*.tsx` dans `src/`
+- Fichiers de configuration : `vite.config.*`, `tsconfig*.json`, `eslint.config.*`, `vitest.config.*`
+- Fichiers `*.css` dans `src/`
+
+Ne sont **pas** du code exécutable (CI inutile) :
+
+- Fichiers `*.md`
+- Données statiques : `src/data/*.json`, `public/**`
+- Assets : images, fonts, icônes
+
+**Si aucun fichier exécutable n'est modifié** : annonce-le explicitement ("Aucun code exécutable modifié — CI locale ignorée") et passe directement à l'étape 3.
+
+**Si au moins un fichier exécutable est modifié** : continue avec les étapes 2a–2d ci-dessous.
+
 Lance chaque commande **dans l'ordre**. Si une étape échoue, tente un correctif et relance avant de passer à la suivante. Si tu ne peux pas corriger avec confiance, arrête et explique la situation à l'utilisateur.
 
 ### 2a. Lint
