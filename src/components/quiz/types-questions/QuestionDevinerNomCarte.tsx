@@ -1,4 +1,4 @@
-import type { QuestionProps } from '../../../quiz/types';
+import type { QuestionProps, QcmQuestion } from '../../../quiz/types';
 import CarteQuestionLayout from '../CarteQuestionLayout';
 import QuizNextButton from '../QuizNextButton';
 import QcmChoices from '../QcmChoices';
@@ -11,6 +11,7 @@ export default function QuestionDevinerNomCarte({
   onNext,
   isLastQuestion,
 }: QuestionProps) {
+  const { choices } = question as QcmQuestion;
   const isRegion = question.mode === 'DevinerNomRegionCarte';
   const layer = isRegion ? 'regions' : 'departements' as const;
   const entityType = isRegion ? 'region' : 'departement' as const;
@@ -30,7 +31,7 @@ export default function QuestionDevinerNomCarte({
     >
       <p className="text-center text-lg">{label}</p>
       <QcmChoices
-        choices={question.choices ?? []}
+        choices={choices}
         answerState={answerState}
         selectedCode={selectedCode}
         onAnswer={onAnswer}

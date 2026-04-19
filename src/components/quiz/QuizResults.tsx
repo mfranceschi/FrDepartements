@@ -1,5 +1,5 @@
 import type { SessionState, AnswerRecord } from '../../quiz/types';
-import { MODE_LABELS } from '../../quiz/types';
+import { MODE_LABELS, isQcmQuestion } from '../../quiz/types';
 import { scoreColor } from '../../utils/scoreTheme';
 
 interface QuizResultsProps {
@@ -24,13 +24,13 @@ function getStars(ratio: number): number {
 }
 
 function getAnsweredLabel(record: AnswerRecord): string | null {
-  if (!record.question.choices) return null;
-  return record.question.choices.find(c => c.code === record.answeredCode)?.label ?? null;
+  if (!isQcmQuestion(record.question)) return null;
+  return record.question.choices.find((c) => c.code === record.answeredCode)?.label ?? null;
 }
 
 function getCorrectLabel(record: AnswerRecord): string | null {
-  if (!record.question.choices) return null;
-  return record.question.choices.find(c => c.correct)?.label ?? null;
+  if (!isQcmQuestion(record.question)) return null;
+  return record.question.choices.find((c) => c.correct)?.label ?? null;
 }
 
 export default function QuizResults({ session, onRestart, onReviewErrors }: QuizResultsProps) {

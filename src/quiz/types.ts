@@ -15,6 +15,9 @@ export type QuizMode =
   | 'DevinerPrefectureDept'
   | 'DevinerPrefectureRegion';
 
+export type CarteMode = 'TrouverDeptCarte' | 'TrouverRegionCarte';
+export type QcmMode = Exclude<QuizMode, CarteMode>;
+
 export type Difficulty = 'facile' | 'difficile';
 export type SessionLength = 10 | 25 | 50 | 'tout';
 
@@ -24,19 +27,32 @@ export interface QuizConfig {
   sessionLength: SessionLength;
 }
 
-export interface Question {
-  id: string;
-  mode: QuizMode;
-  targetCode: string;
-  targetNom: string;
-  targetRegionCode?: string;
-  choices?: Choice[];
-}
-
 export interface Choice {
   code: string;
   label: string;
   correct: boolean;
+}
+
+interface QuestionBase {
+  id: string;
+  targetCode: string;
+  targetNom: string;
+  targetRegionCode?: string;
+}
+
+export interface CarteQuestion extends QuestionBase {
+  mode: CarteMode;
+}
+
+export interface QcmQuestion extends QuestionBase {
+  mode: QcmMode;
+  choices: Choice[];
+}
+
+export type Question = CarteQuestion | QcmQuestion;
+
+export function isQcmQuestion(q: Question): q is QcmQuestion {
+  return 'choices' in q;
 }
 
 export type AnswerState = 'pending' | 'correct' | 'wrong';

@@ -12,13 +12,13 @@ function makeFinishedSession(score: number, total: number): SessionState {
       mode: 'DevinerNomDept' as const,
       correct: true,
       answeredCode: String(i).padStart(2, '0'),
-      question: { id: `q${i}`, mode: 'DevinerNomDept' as const, targetCode: String(i).padStart(2, '0'), targetNom: `Dept${i}` },
+      question: { id: `q${i}`, mode: 'DevinerNomDept' as const, targetCode: String(i).padStart(2, '0'), targetNom: `Dept${i}`, choices: [] },
     })),
     ...Array.from({ length: wrongCount }, (_, i) => ({
       mode: 'DevinerNomDept' as const,
       correct: false,
       answeredCode: '00',
-      question: { id: `qw${i}`, mode: 'DevinerNomDept' as const, targetCode: String(i + 50).padStart(2, '0'), targetNom: `Dept${i + 50}` },
+      question: { id: `qw${i}`, mode: 'DevinerNomDept' as const, targetCode: String(i + 50).padStart(2, '0'), targetNom: `Dept${i + 50}`, choices: [] },
     })),
   ];
 
@@ -28,6 +28,7 @@ function makeFinishedSession(score: number, total: number): SessionState {
       mode: 'DevinerNomDept' as const,
       targetCode: String(i).padStart(2, '0'),
       targetNom: `Dept${i}`,
+      choices: [],
     })),
     currentIndex: 0,
     score,
@@ -48,20 +49,20 @@ function makeSessionWithStreak(streak: number, brokenBy?: 'wrong'): SessionState
           mode: 'DevinerNomDept' as const,
           correct: true,
           answeredCode: String(i).padStart(2, '0'),
-          question: { id: `q${i}`, mode: 'DevinerNomDept' as const, targetCode: String(i).padStart(2, '0'), targetNom: `Dept${i}` },
+          question: { id: `q${i}`, mode: 'DevinerNomDept' as const, targetCode: String(i).padStart(2, '0'), targetNom: `Dept${i}`, choices: [] },
         })),
         {
           mode: 'DevinerNomDept' as const,
           correct: false,
           answeredCode: '00',
-          question: { id: 'qw', mode: 'DevinerNomDept' as const, targetCode: '99', targetNom: 'DeptW' },
+          question: { id: 'qw', mode: 'DevinerNomDept' as const, targetCode: '99', targetNom: 'DeptW', choices: [] },
         },
       ]
     : Array.from({ length: streak }, (_, i) => ({
         mode: 'DevinerNomDept' as const,
         correct: true,
         answeredCode: String(i).padStart(2, '0'),
-        question: { id: `q${i}`, mode: 'DevinerNomDept' as const, targetCode: String(i).padStart(2, '0'), targetNom: `Dept${i}` },
+        question: { id: `q${i}`, mode: 'DevinerNomDept' as const, targetCode: String(i).padStart(2, '0'), targetNom: `Dept${i}`, choices: [] },
       }));
 
   return {

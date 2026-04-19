@@ -1,4 +1,4 @@
-import type { QuestionProps } from '../../../quiz/types';
+import type { QuestionProps, QcmQuestion } from '../../../quiz/types';
 import QcmChoices from '../QcmChoices';
 
 export default function QuestionDevinerPrefecture({
@@ -7,8 +7,8 @@ export default function QuestionDevinerPrefecture({
   selectedCode,
   onAnswer,
 }: QuestionProps) {
+  const { choices } = question as QcmQuestion;
   const isRegion = question.mode === 'DevinerPrefectureRegion';
-  const choices = question.choices ?? [];
   const correctChoice = choices.find((c) => c.correct);
 
   return (

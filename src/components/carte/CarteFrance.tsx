@@ -1,25 +1,16 @@
-import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   geoConicConformal,
   geoPath,
-  zoom as d3zoom,
-  zoomIdentity,
-  select,
 } from 'd3';
-import type { ZoomBehavior, D3ZoomEvent } from 'd3';
 import type { Feature } from 'geojson';
 import CoucheRegions from './CoucheRegions';
 import CoucheDepts from './CoucheDepts';
 import CouchePrefectures from './CouchePrefectures';
 import CoucheFleuves from './CoucheFleuves';
-import { isValidCentroid } from './featureStyle';
 import { useFleuveData } from '../../hooks/useFleuveData';
 import { useTooltip } from '../../hooks/useTooltip';
-
-const FOCUS_SVG_W = 900;
-const FOCUS_SVG_H = 700;
-const FOCUS_SCALE = 4;
-const ZOOM_STEP = 1.5;
+import { useD3Zoom } from '../../hooks/useD3Zoom';
 
 export interface CarteFranceProps {
   features: {
@@ -55,7 +46,6 @@ const PROJECTION = geoConicConformal()
 
 const PATH_GEN = geoPath(PROJECTION);
 
-const DEFAULT_ZOOM = zoomIdentity;
 const NOOP_HOVER = () => {};
 
 export default function CarteFrance({
@@ -83,9 +73,6 @@ export default function CarteFrance({
 }: CarteFranceProps) {
   type Layer = 'departements' | 'regions';
   const [activeLayer, setActiveLayer] = useState<Layer>('departements');
-  // zoomK est le seul state lié au zoom : mis à jour uniquement quand k change,
-  // pas à chaque frame de pan. Le transform du <g> est appliqué en impératif.
-  const [zoomK, setZoomK] = useState(1);
   const [showLabels, setShowLabels] = useState(false);
   const [showPrefecturesInternal, setShowPrefecturesInternal] = useState(false);
   const showPrefectures = showPrefecturesProp ?? showPrefecturesInternal;
@@ -96,80 +83,15 @@ export default function CarteFrance({
 
   const { fleuves: fleuveFeatures } = useFleuveData(showFleuves);
 
-  const svgRef = useRef<SVGSVGElement>(null);
-  const gRef = useRef<SVGGElement>(null);
-  const lastKRef = useRef(1);
-  const zoomRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | undefined>(undefined);
+  const { svgRef, gRef, zoomK, handleZoomIn, handleZoomOut, handleZoomReset } = useD3Zoom({
+    pathGen: PATH_GEN,
+    features,
+    focusCode,
+    focusType,
+    focusSeq,
+  });
+
   const { tooltipRef, showTooltip, hideTooltip } = useTooltip();
-  const featuresRef = useRef(features);
-  featuresRef.current = features;
-
-  // Setup d3.zoom
-  useEffect(() => {
-    if (!svgRef.current) return;
-    const zoomBehavior = d3zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.5, 8])
-      .on('zoom', (event: D3ZoomEvent<SVGSVGElement, unknown>) => {
-        const { x, y, k } = event.transform;
-        // Mise à jour DOM directe : zéro re-render React pendant le pan
-        if (gRef.current) {
-          gRef.current.style.transform = `translate(${x}px,${y}px) scale(${k})`;
-        }
-        // Re-render React seulement quand le facteur de zoom change (pas le pan)
-        if (k !== lastKRef.current) {
-          lastKRef.current = k;
-          setZoomK(k);
-        }
-      });
-
-    zoomRef.current = zoomBehavior;
-    select(svgRef.current).call(zoomBehavior);
-    select(svgRef.current).call(zoomBehavior.transform, DEFAULT_ZOOM);
-
-    return () => {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      select(svgRef.current).on('.zoom', null);
-    };
-  }, []);
-
-  // Zoom programmatique vers un territoire (recherche sidebar).
-  // featuresRef est toujours à jour sans être une dépendance : l'effet ne se
-  // déclenche que sur un changement de focusCode / focusType.
-  useEffect(() => {
-    if (!focusCode || !svgRef.current || !zoomRef.current) return;
-
-    const pool = focusType === 'region' ? featuresRef.current.regions : featuresRef.current.departements;
-    const target = pool.find((f) => f.properties?.code === focusCode);
-    if (!target) return;
-
-    const centroid = PATH_GEN.centroid(target);
-    if (!centroid || !isValidCentroid(centroid)) return;
-
-    const tx = FOCUS_SVG_W / 2 - FOCUS_SCALE * centroid[0];
-    const ty = FOCUS_SVG_H / 2 - FOCUS_SCALE * centroid[1];
-    const newTransform = zoomIdentity.translate(tx, ty).scale(FOCUS_SCALE);
-
-    select(svgRef.current)
-      .transition()
-      .duration(500)
-      .call(zoomRef.current.transform, newTransform);
-  }, [focusCode, focusType, focusSeq]);
-
-  const handleZoomIn = useCallback(() => {
-    if (!svgRef.current || !zoomRef.current) return;
-    select(svgRef.current).transition().duration(250).call(zoomRef.current.scaleBy, ZOOM_STEP);
-  }, []);
-
-  const handleZoomOut = useCallback(() => {
-    if (!svgRef.current || !zoomRef.current) return;
-    select(svgRef.current).transition().duration(250).call(zoomRef.current.scaleBy, 1 / ZOOM_STEP);
-  }, []);
-
-  const handleZoomReset = useCallback(() => {
-    if (!svgRef.current || !zoomRef.current) return;
-    select(svgRef.current).transition().duration(300).call(zoomRef.current.transform, DEFAULT_ZOOM);
-  }, []);
-
 
   const handleDeptHover = useCallback((feature: Feature | null, x: number, y: number) => {
     if (!feature) { hideTooltip(); return; }

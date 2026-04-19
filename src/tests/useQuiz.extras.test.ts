@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useQuiz } from '../hooks/useQuiz';
-import type { QuizConfig } from '../quiz/types';
+import type { QuizConfig, QcmQuestion } from '../quiz/types';
 
 const CARTE_CONFIG: QuizConfig = { sujet: 'depts-carte', difficulty: 'facile', sessionLength: 10 };
 const QCM_CONFIG: QuizConfig = { sujet: 'depts-numeros', difficulty: 'facile', sessionLength: 10 };
@@ -155,11 +155,11 @@ describe('useQuiz – restartWithErrors', () => {
     const { result } = renderHook(() => useQuiz(QCM_CONFIG));
 
     act(() => { result.current.submitAnswer('__FAUX__'); }); // wrong
-    const origChoices = result.current.session.questions[0].choices!;
+    const origChoices = (result.current.session.questions[0] as QcmQuestion).choices;
 
     act(() => { result.current.restartWithErrors(); });
 
-    const retryChoices = result.current.session.questions[0].choices!;
+    const retryChoices = (result.current.session.questions[0] as QcmQuestion).choices;
     expect(retryChoices).toHaveLength(origChoices.length);
     // Les codes sont les mêmes (même choix, ordre potentiellement différent)
     expect(retryChoices.map((c) => c.code).sort()).toEqual(
@@ -171,11 +171,11 @@ describe('useQuiz – restartWithErrors', () => {
     const { result } = renderHook(() => useQuiz(QCM_CONFIG));
 
     act(() => { result.current.submitAnswer('__FAUX__'); }); // wrong
-    const origCorrectCode = result.current.session.questions[0].choices!.find((c) => c.correct)!.code;
+    const origCorrectCode = (result.current.session.questions[0] as QcmQuestion).choices.find((c) => c.correct)!.code;
 
     act(() => { result.current.restartWithErrors(); });
 
-    const retryChoices = result.current.session.questions[0].choices!;
+    const retryChoices = (result.current.session.questions[0] as QcmQuestion).choices;
     const correctChoices = retryChoices.filter((c) => c.correct);
     const wrongChoices   = retryChoices.filter((c) => !c.correct);
 

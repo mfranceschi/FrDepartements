@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import type { SessionState, QuizMode, QuestionProps } from '../../quiz/types';
+import { isQcmQuestion } from '../../quiz/types';
 import { QCM_MODES } from '../../quiz/generateQuestions';
 import QuestionTrouverCarte from './types-questions/QuestionTrouverCarte';
 import QuestionDevinerNomCarte from './types-questions/QuestionDevinerNomCarte';
@@ -64,9 +65,9 @@ export default function QuizShell({
         return;
       }
 
-      if (answerState === 'pending' && QCM_MODES.has(question.mode)) {
+      if (answerState === 'pending' && isQcmQuestion(question)) {
         const idx = parseInt(e.key, 10) - 1;
-        if (idx >= 0 && idx <= 3 && question.choices?.[idx]) {
+        if (idx >= 0 && idx <= 3 && question.choices[idx]) {
           e.preventDefault();
           onAnswer(question.choices[idx].code);
         }

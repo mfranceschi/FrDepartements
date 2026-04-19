@@ -33,11 +33,11 @@ This is a React + TypeScript PWA for learning French administrative divisions (d
 
 Static data lives in `src/data/` (96 metropolitan departments, 13 regions, adjacency graph, `fleuvesDepts.json` river-department associations). GeoJSON geometry is loaded lazily via `useGeoData` and `useFleuveData` hooks (both in `src/hooks/`). River GeoJSON (`fleuves.json`) is served from `/public/`.
 
-Quiz sessions are orchestrated by `useQuiz` (hook in `src/hooks/`) which calls `generateQuestions` (`src/quiz/`) to build a full session upfront. The 5 subjects (`regions-carte`, `depts-carte`, `depts-numeros`, `depts-prefectures`, `regions-prefectures`) each map to 1–2 `QuizMode` values. For subjects mixing carte and QCM modes (`regions-carte`, `depts-carte`), questions are balanced 50/50 (carte gets the rounding-up half). `buildChoices` implements difficulty-aware distractor selection — "difficile" picks wrong answers from the same region (only applies to carte and numeros subjects; prefecture subjects have no difficulty setting).
+Quiz sessions are orchestrated by `useQuiz` (hook in `src/hooks/`) which calls `generateQuestions` (`src/quiz/`) to build a full session upfront. The 5 subjects (`regions-carte`, `depts-carte`, `depts-numeros`, `depts-prefectures`, `regions-prefectures`) each map to 1–2 `QuizMode` values. For subjects mixing carte and QCM modes (`regions-carte`, `depts-carte`), questions are balanced 50/50 (carte gets the rounding-up half). `buildChoices` implements difficulty-aware distractor selection — "difficile" picks wrong answers from the same region for departments, from adjacent regions for regions, and from the same region for prefecture subjects too. All 5 subjects support the difficulty setting.
 
-`QuizShell` dispatches rendering to one of 8 question-type components in `src/components/quiz/types-questions/` based on `question.mode`.
+`QuizShell` dispatches rendering to one of 8 question-type components in `src/components/quiz/types-questions/` based on `question.mode`. `Question` is a discriminated union: `CarteQuestion` (no `choices`) and `QcmQuestion` (`choices: Choice[]` required). QCM components receive a `QcmQuestion` at runtime and cast via `question as QcmQuestion`.
 
-The D3 map (`CarteFrance.tsx`) uses `useEffect` for zoom behavior and `geoPath` rendering.
+D3 zoom behavior is extracted into the `useD3Zoom` hook (`src/hooks/useD3Zoom.ts`); `CarteFrance.tsx` owns only rendering. Info-panel sub-components (EmptyPanel, TerritoryPanel, FleuvePanel) live in `src/components/carte/InfoPanel.tsx`. River-department associations are typed and exported from `src/data/fleuvesDepts.ts`.
 
 ### Key constraints
 

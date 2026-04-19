@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { generateQuestions } from '../quiz/generateQuestions';
 import { DEPARTEMENTS } from '../data/departements';
-import type { QuizConfig } from '../quiz/types';
+import type { QuizConfig, QcmQuestion } from '../quiz/types';
 
 describe('generateQuestions – fonction pure', () => {
   it('retourne le bon nombre de questions', () => {
@@ -20,8 +20,9 @@ describe('generateQuestions – fonction pure', () => {
     const config: QuizConfig = { sujet: 'depts-numeros', difficulty: 'facile', sessionLength: 'tout' };
     const questions = generateQuestions(config);
     questions.forEach((q) => {
-      expect(q.choices).toHaveLength(4);
-      expect(q.choices!.filter((c) => c.correct)).toHaveLength(1);
+      const qcm = q as QcmQuestion;
+      expect(qcm.choices).toHaveLength(4);
+      expect(qcm.choices.filter((c) => c.correct)).toHaveLength(1);
     });
   });
 
@@ -29,9 +30,9 @@ describe('generateQuestions – fonction pure', () => {
     const config: QuizConfig = { sujet: 'depts-carte', difficulty: 'facile', sessionLength: 'tout' };
     const questions = generateQuestions(config);
     questions.filter((q) => q.mode === 'DevinerNomDeptCarte').forEach((q) => {
-      expect(q.choices).toBeDefined();
-      expect(q.choices!).toHaveLength(4);
-      expect(q.choices!.filter((c) => c.correct)).toHaveLength(1);
+      const qcm = q as QcmQuestion;
+      expect(qcm.choices).toHaveLength(4);
+      expect(qcm.choices.filter((c) => c.correct)).toHaveLength(1);
     });
   });
 
@@ -39,7 +40,7 @@ describe('generateQuestions – fonction pure', () => {
     const config: QuizConfig = { sujet: 'depts-numeros', difficulty: 'facile', sessionLength: 'tout' };
     const questions = generateQuestions(config);
     questions.filter((q) => q.mode === 'DevinerCodeDept').forEach((q) => {
-      q.choices!.forEach((c) => {
+      (q as QcmQuestion).choices.forEach((c) => {
         expect(c.label).toBe(c.code);
       });
     });
@@ -90,7 +91,7 @@ describe('generateQuestions – fonction pure', () => {
 
       // Only assert when there are enough same-region depts to fill all 3 distractor slots
       if (sameRegionCount >= 3) {
-        const wrongChoices = q.choices!.filter((c) => !c.correct);
+        const wrongChoices = (q as QcmQuestion).choices.filter((c) => !c.correct);
         wrongChoices.forEach((c) => {
           const distractor = DEPARTEMENTS.find((d) => d.code === c.code)!;
           expect(distractor.regionCode).toBe(targetDept.regionCode);
@@ -107,7 +108,7 @@ describe('generateQuestions – fonction pure', () => {
 
     questions.filter((q) => q.mode === 'DevinerCodeDept').forEach((q) => {
       const targetNum = toNum(q.targetCode);
-      const wrongChoices = q.choices!.filter((c) => !c.correct);
+      const wrongChoices = (q as QcmQuestion).choices.filter((c) => !c.correct);
       wrongChoices.forEach((c) => {
         const distractorNum = toNum(c.code);
         // Each distractor should be among the 6 numerically closest codes

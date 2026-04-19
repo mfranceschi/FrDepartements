@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { shuffle } from '../quiz/buildChoices';
 import { buildInitialSession } from '../quiz/generateQuestions';
 import type { QuizConfig, Question, SessionState, AnswerRecord } from '../quiz/types';
+import { isQcmQuestion } from '../quiz/types';
 
 /**
  * Hook principal gérant l'intégralité de l'état d'une session de quiz.
@@ -70,11 +71,13 @@ export function useQuiz(config: QuizConfig): {
     setSession((prev) => {
       const wrongQuestions = prev.answerHistory
         .filter((r) => !r.correct)
-        .map((r, idx): Question => ({
-          ...r.question,
-          id: `retry-${idx}-${r.question.targetCode}-${r.question.mode}`,
-          choices: r.question.choices ? shuffle([...r.question.choices]) : undefined,
-        }));
+        .map((r, idx): Question => {
+          const id = `retry-${idx}-${r.question.targetCode}-${r.question.mode}`;
+          if (isQcmQuestion(r.question)) {
+            return { ...r.question, id, choices: shuffle([...r.question.choices]) };
+          }
+          return { ...r.question, id };
+        });
 
       if (wrongQuestions.length === 0) return prev;
 

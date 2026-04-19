@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { DEPARTEMENTS } from '../data/departements';
 import { REGIONS } from '../data/regions';
 import { REGION_MAP } from '../data/maps';
-import FLEUVES_DEPTS from '../data/fleuvesDepts.json';
+import { FLEUVES_DEPTS } from '../data/fleuvesDepts';
 
 export interface SearchResult {
   code: string;
@@ -10,8 +10,6 @@ export interface SearchResult {
   type: 'departement' | 'region' | 'prefecture' | 'fleuve';
   subtitle: string;
 }
-
-const FLEUVES_DEPTS_TYPED = FLEUVES_DEPTS as Record<string, { depts: string[]; scalerank: number }>;
 
 export function useSearch(query: string): SearchResult[] {
   return useMemo(() => {
@@ -37,7 +35,7 @@ export function useSearch(query: string): SearchResult[] {
       }
     }
 
-    for (const name of Object.keys(FLEUVES_DEPTS_TYPED)) {
+    for (const name of Object.keys(FLEUVES_DEPTS)) {
       if (name.toLowerCase().includes(q)) {
         results.push({ code: name, nom: name, type: 'fleuve', subtitle: "Cours d'eau" });
       }

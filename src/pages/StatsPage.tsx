@@ -4,7 +4,8 @@ import { relativeTime } from '../storage/useQuizHistory';
 import { DEPARTEMENTS } from '../data/departements';
 import { REGIONS } from '../data/regions';
 import { DEPT_MAP, REGION_MAP } from '../data/maps';
-import { scoreColor, barColor } from '../utils/scoreTheme';
+import { scoreColor } from '../utils/scoreTheme';
+import SuccessBar from '../components/SuccessBar';
 import type { QuizSujet } from '../quiz/types';
 
 interface SujetMeta {
@@ -20,19 +21,6 @@ const SUJETS: SujetMeta[] = [
   { sujet: 'regions-carte',       label: 'Régions — Carte',       isDept: false },
   { sujet: 'regions-prefectures', label: 'Régions — Préfectures', isDept: false },
 ];
-
-function SuccessBar({ ok, fail }: { ok: number; fail: number }) {
-  const total = ok + fail;
-  const ratio = total > 0 ? ok / total : 0;
-  return (
-    <div className="w-20 h-1.5 rounded-full overflow-hidden shrink-0" style={{ backgroundColor: 'var(--border)' }}>
-      <div
-        className={`h-full rounded-full ${barColor(ratio)}`}
-        style={{ width: `${ratio * 100}%` }}
-      />
-    </div>
-  );
-}
 
 export default function StatsPage() {
   const { stats, clearStats } = useItemStats();

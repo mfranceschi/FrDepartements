@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useQuiz } from '../hooks/useQuiz';
-import type { QuizConfig } from '../quiz/types';
+import type { QuizConfig, QcmQuestion } from '../quiz/types';
 
 describe('useQuiz – état initial', () => {
   it('démarre à la première question en attente de réponse', () => {
@@ -100,17 +100,17 @@ describe('useQuiz – QCM (depts-numeros)', () => {
     const { result } = renderHook(() => useQuiz(config));
 
     result.current.session.questions.forEach((q) => {
-      expect(q.choices).toBeDefined();
-      expect(q.choices!.length).toBe(4);
-      expect(q.choices!.filter((c) => c.correct)).toHaveLength(1);
+      const qcm = q as QcmQuestion;
+      expect(qcm.choices).toHaveLength(4);
+      expect(qcm.choices.filter((c) => c.correct)).toHaveLength(1);
     });
   });
 
   it('la bonne réponse correspond au targetCode', () => {
     const config: QuizConfig = { sujet: 'depts-numeros', difficulty: 'facile', sessionLength: 10 };
     const { result } = renderHook(() => useQuiz(config));
-    const q = result.current.session.questions[0];
-    const correctChoice = q.choices!.find((c) => c.correct)!;
+    const q = result.current.session.questions[0] as QcmQuestion;
+    const correctChoice = q.choices.find((c) => c.correct)!;
 
     act(() => { result.current.submitAnswer(correctChoice.code); });
 
@@ -122,7 +122,7 @@ describe('useQuiz – QCM (depts-numeros)', () => {
     const { result } = renderHook(() => useQuiz(config));
 
     result.current.session.questions.forEach((q) => {
-      expect(q.choices!.length).toBe(4);
+      expect((q as QcmQuestion).choices.length).toBe(4);
     });
   });
 });
@@ -132,17 +132,17 @@ describe('useQuiz – QCM préfectures (depts-prefectures)', () => {
     const config: QuizConfig = { sujet: 'depts-prefectures', difficulty: 'facile', sessionLength: 10 };
     const { result } = renderHook(() => useQuiz(config));
     result.current.session.questions.forEach((q) => {
-      expect(q.choices).toBeDefined();
-      expect(q.choices!.length).toBe(4);
-      expect(q.choices!.filter((c) => c.correct)).toHaveLength(1);
+      const qcm = q as QcmQuestion;
+      expect(qcm.choices).toHaveLength(4);
+      expect(qcm.choices.filter((c) => c.correct)).toHaveLength(1);
     });
   });
 
   it('le choix correct valide la réponse', () => {
     const config: QuizConfig = { sujet: 'depts-prefectures', difficulty: 'facile', sessionLength: 10 };
     const { result } = renderHook(() => useQuiz(config));
-    const q = result.current.session.questions[0];
-    const correctChoice = q.choices!.find((c) => c.correct)!;
+    const q = result.current.session.questions[0] as QcmQuestion;
+    const correctChoice = q.choices.find((c) => c.correct)!;
     act(() => { result.current.submitAnswer(correctChoice.code); });
     expect(result.current.session.answerState).toBe('correct');
   });
@@ -155,9 +155,9 @@ describe('useQuiz – QCM régions (regions-carte)', () => {
     result.current.session.questions
       .filter((q) => q.mode === 'DevinerNomRegionCarte')
       .forEach((q) => {
-        expect(q.choices).toBeDefined();
-        expect(q.choices!.length).toBe(4);
-        expect(q.choices!.filter((c) => c.correct)).toHaveLength(1);
+        const qcm = q as QcmQuestion;
+        expect(qcm.choices).toHaveLength(4);
+        expect(qcm.choices.filter((c) => c.correct)).toHaveLength(1);
       });
   });
 });
@@ -233,7 +233,7 @@ describe('useQuiz – QCM (DevinerCodeDept)', () => {
     result.current.session.questions
       .filter((q) => q.mode === 'DevinerCodeDept')
       .forEach((q) => {
-        q.choices!.forEach((c) => {
+        (q as QcmQuestion).choices.forEach((c) => {
           expect(c.label).toBe(c.code);
         });
       });
@@ -247,9 +247,9 @@ describe('useQuiz – QCM (DevinerNomDeptCarte)', () => {
     result.current.session.questions
       .filter((q) => q.mode === 'DevinerNomDeptCarte')
       .forEach((q) => {
-        expect(q.choices).toBeDefined();
-        expect(q.choices!.length).toBe(4);
-        expect(q.choices!.filter((c) => c.correct)).toHaveLength(1);
+        const qcm = q as QcmQuestion;
+        expect(qcm.choices).toHaveLength(4);
+        expect(qcm.choices.filter((c) => c.correct)).toHaveLength(1);
       });
   });
 });

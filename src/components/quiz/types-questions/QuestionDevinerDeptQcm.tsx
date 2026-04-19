@@ -1,4 +1,4 @@
-import type { QuestionProps } from '../../../quiz/types';
+import type { QuestionProps, QcmQuestion } from '../../../quiz/types';
 import QcmChoices from '../QcmChoices';
 
 export default function QuestionDevinerDeptQcm({
@@ -7,6 +7,7 @@ export default function QuestionDevinerDeptQcm({
   selectedCode,
   onAnswer,
 }: QuestionProps) {
+  const { choices } = question as QcmQuestion;
   const isCode = question.mode === 'DevinerCodeDept';
 
   return (
@@ -18,7 +19,7 @@ export default function QuestionDevinerDeptQcm({
         }
       </p>
       <QcmChoices
-        choices={question.choices ?? []}
+        choices={choices}
         answerState={answerState}
         selectedCode={selectedCode}
         onAnswer={onAnswer}

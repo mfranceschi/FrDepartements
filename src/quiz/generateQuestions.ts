@@ -13,10 +13,8 @@ import {
   buildPrefRegionChoicesFacile,
   buildPrefRegionChoicesDifficile,
   type DeptChoice,
-  type PrefDeptChoice,
-  type PrefRegionChoice,
 } from './buildChoices';
-import type { QuizConfig, QuizSujet, Question, SessionState, QuizMode } from './types';
+import type { QuizConfig, QuizSujet, Question, SessionState, QuizMode, CarteMode, QcmMode, Choice } from './types';
 
 // Pre-computed once — these are static data that never change at runtime
 const ALL_DEPTS = DEPARTEMENTS.map((d) => ({
@@ -60,6 +58,53 @@ const SUJET_MODES: Record<QuizSujet, QuizMode[]> = {
   'regions-prefectures': ['DevinerPrefectureRegion'],
 };
 
+// Pool item for internal question generation — moved to module level so it's reusable
+type PoolItem = { mode: QuizMode; code: string; nom: string; regionCode?: string };
+
+/** Construit les choix QCM pour un item donné selon la config. */
+function buildQcmChoices(item: PoolItem, config: QuizConfig): Choice[] {
+  const { code, nom, regionCode = '', mode } = item;
+
+  switch (mode) {
+    case 'DevinerCodeDept': {
+      const dept: DeptChoice = { code, nom, regionCode };
+      return config.difficulty === 'facile'
+        ? buildCodeChoicesFacile(dept, ALL_DEPTS)
+        : buildCodeChoicesDifficile(dept, ALL_DEPTS);
+    }
+    case 'DevinerNomDept':
+    case 'DevinerNomDeptCarte': {
+      const dept: DeptChoice = { code, nom, regionCode };
+      return config.difficulty === 'facile'
+        ? buildDeptChoicesFacile(dept, ALL_DEPTS)
+        : buildDeptChoicesDifficile(dept, ALL_DEPTS);
+    }
+    case 'DevinerNomRegionCarte': {
+      const region = ALL_REGIONS.find((r) => r.code === code);
+      if (!region) return [];
+      return config.difficulty === 'facile'
+        ? buildRegionChoicesFacile(region, ALL_REGIONS)
+        : buildRegionChoicesDifficile(region, ALL_REGIONS);
+    }
+    case 'DevinerPrefectureDept': {
+      const dept = ALL_DEPTS.find((d) => d.code === code);
+      if (!dept) return [];
+      return config.difficulty === 'facile'
+        ? buildPrefDeptChoicesFacile(dept, ALL_DEPTS)
+        : buildPrefDeptChoicesDifficile(dept, ALL_DEPTS);
+    }
+    case 'DevinerPrefectureRegion': {
+      const region = ALL_REGIONS.find((r) => r.code === code);
+      if (!region) return [];
+      return config.difficulty === 'facile'
+        ? buildPrefRegionChoicesFacile(region, ALL_REGIONS)
+        : buildPrefRegionChoicesDifficile(region, ALL_REGIONS);
+    }
+    default:
+      return [];
+  }
+}
+
 /**
  * Génère la liste ordonnée de questions pour une session à partir de la
  * configuration utilisateur.
@@ -74,8 +119,6 @@ const SUJET_MODES: Record<QuizSujet, QuizMode[]> = {
 export function generateQuestions(config: QuizConfig): Question[] {
   const modes = SUJET_MODES[config.sujet];
 
-  type PoolItem = { mode: QuizMode; code: string; nom: string; regionCode?: string };
-
   const cartePool: PoolItem[] = [];
   const qcmPool: PoolItem[] = [];
 
@@ -87,21 +130,17 @@ export function generateQuestions(config: QuizConfig): Question[] {
       case 'TrouverRegionCarte':
         ALL_REGIONS.forEach((r) => cartePool.push({ mode, code: r.code, nom: r.nom }));
         break;
-      case 'DevinerNomRegionCarte':
-        ALL_REGIONS.forEach((r) => qcmPool.push({ mode, code: r.code, nom: r.nom }));
-        break;
       case 'DevinerNomDeptCarte':
-        ALL_DEPTS.forEach((d) => qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }));
-        break;
       case 'DevinerCodeDept':
       case 'DevinerNomDept':
         ALL_DEPTS.forEach((d) => qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }));
         break;
-      case 'DevinerPrefectureDept':
-        ALL_DEPTS.forEach((d) => qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }));
-        break;
+      case 'DevinerNomRegionCarte':
       case 'DevinerPrefectureRegion':
         ALL_REGIONS.forEach((r) => qcmPool.push({ mode, code: r.code, nom: r.nom }));
+        break;
+      case 'DevinerPrefectureDept':
+        ALL_DEPTS.forEach((d) => qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }));
         break;
     }
   }
@@ -135,78 +174,12 @@ export function generateQuestions(config: QuizConfig): Question[] {
     selected = dedup.slice(0, Math.min(count, dedup.length));
   }
 
-  const allDeptsPref: PrefDeptChoice[] = ALL_DEPTS;
-  const allRegionsPref: PrefRegionChoice[] = ALL_REGIONS;
-
   return selected.map((item, idx): Question => {
-    const base: Question = {
-      id: `q-${idx}-${item.code}-${item.mode}`,
-      mode: item.mode,
-      targetCode: item.code,
-      targetNom: item.nom,
-      targetRegionCode: item.regionCode,
-    };
-
-    switch (item.mode) {
-      case 'DevinerCodeDept': {
-        const deptItem: DeptChoice = { code: item.code, nom: item.nom, regionCode: item.regionCode ?? '' };
-        base.choices =
-          config.difficulty === 'facile'
-            ? buildCodeChoicesFacile(deptItem, ALL_DEPTS)
-            : buildCodeChoicesDifficile(deptItem, ALL_DEPTS);
-        break;
-      }
-      case 'DevinerNomDept': {
-        const deptItem: DeptChoice = { code: item.code, nom: item.nom, regionCode: item.regionCode ?? '' };
-        base.choices =
-          config.difficulty === 'facile'
-            ? buildDeptChoicesFacile(deptItem, ALL_DEPTS)
-            : buildDeptChoicesDifficile(deptItem, ALL_DEPTS);
-        break;
-      }
-      case 'DevinerNomRegionCarte': {
-        const correctRegion = ALL_REGIONS.find((r) => r.code === item.code);
-        if (correctRegion) {
-          base.choices =
-            config.difficulty === 'facile'
-              ? buildRegionChoicesFacile(correctRegion, ALL_REGIONS)
-              : buildRegionChoicesDifficile(correctRegion, ALL_REGIONS);
-        }
-        break;
-      }
-      case 'DevinerNomDeptCarte': {
-        const deptItem: DeptChoice = { code: item.code, nom: item.nom, regionCode: item.regionCode ?? '' };
-        base.choices =
-          config.difficulty === 'facile'
-            ? buildDeptChoicesFacile(deptItem, ALL_DEPTS)
-            : buildDeptChoicesDifficile(deptItem, ALL_DEPTS);
-        break;
-      }
-      case 'DevinerPrefectureDept': {
-        const deptItem = allDeptsPref.find((d) => d.code === item.code);
-        if (deptItem) {
-          base.choices =
-            config.difficulty === 'facile'
-              ? buildPrefDeptChoicesFacile(deptItem, allDeptsPref)
-              : buildPrefDeptChoicesDifficile(deptItem, allDeptsPref);
-        }
-        break;
-      }
-      case 'DevinerPrefectureRegion': {
-        const regionItem = allRegionsPref.find((r) => r.code === item.code);
-        if (regionItem) {
-          base.choices =
-            config.difficulty === 'facile'
-              ? buildPrefRegionChoicesFacile(regionItem, allRegionsPref)
-              : buildPrefRegionChoicesDifficile(regionItem, allRegionsPref);
-        }
-        break;
-      }
-      default:
-        break;
+    const base = { id: `q-${idx}-${item.code}-${item.mode}`, targetCode: item.code, targetNom: item.nom, targetRegionCode: item.regionCode };
+    if (CARTE_MODES.has(item.mode)) {
+      return { ...base, mode: item.mode as CarteMode };
     }
-
-    return base;
+    return { ...base, mode: item.mode as QcmMode, choices: buildQcmChoices(item, config) };
   });
 }
 
