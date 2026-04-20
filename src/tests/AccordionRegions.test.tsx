@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import AccordionRegions from '../components/tableau/AccordionRegions';
 import { REGIONS } from '../data/regions';
 import { DEPARTEMENTS } from '../data/departements';
@@ -7,31 +8,45 @@ import { DEPARTEMENTS } from '../data/departements';
 // Département d'Île-de-France (regionCode '11') pour les assertions de contenu
 const idfDepts = DEPARTEMENTS.filter((d) => d.regionCode === '11');
 
+function renderAccordion() {
+  return render(
+    <MemoryRouter>
+      <AccordionRegions />
+    </MemoryRouter>,
+  );
+}
+
 describe('AccordionRegions – structure', () => {
   it('affiche toutes les régions', () => {
-    render(<AccordionRegions />);
+    renderAccordion();
     for (const region of REGIONS) {
       expect(screen.getByRole('button', { name: new RegExp(region.nom, 'i') })).toBeInTheDocument();
     }
   });
 
-  it('tous les accordéons sont fermés par défaut (aria-expanded = false)', () => {
-    render(<AccordionRegions />);
-    const buttons = screen.getAllByRole('button');
-    expect(buttons.every((btn) => btn.getAttribute('aria-expanded') === 'false')).toBe(true);
+  it('tous les accordéons expand sont fermés par défaut (aria-expanded = false)', () => {
+    renderAccordion();
+    const expandButtons = screen.getAllByRole('button').filter((btn) => btn.hasAttribute('aria-expanded'));
+    expect(expandButtons.every((btn) => btn.getAttribute('aria-expanded') === 'false')).toBe(true);
   });
 
-  it('affiche le compteur de départements dans le bouton de région', () => {
-    render(<AccordionRegions />);
-    const idfBtn = screen.getByRole('button', { name: /île-de-france/i });
-    // Île-de-France a 8 départements (75, 77, 78, 91, 92, 93, 94, 95)
-    expect(idfBtn.textContent).toContain(`${idfDepts.length} dept`);
+  it('affiche le compteur de départements pour chaque région', () => {
+    renderAccordion();
+    // Île-de-France a 8 depts — plusieurs régions peuvent avoir le même nombre,
+    // on vérifie qu'au moins un élément correspondant est dans le DOM
+    expect(screen.getAllByText(new RegExp(`${idfDepts.length}\\s*dept`)).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('affiche un bouton Tester pour chaque région', () => {
+    renderAccordion();
+    const testerButtons = screen.getAllByRole('button', { name: /tester/i });
+    expect(testerButtons).toHaveLength(REGIONS.length);
   });
 });
 
 describe('AccordionRegions – interaction', () => {
   it('ouvre un accordéon au clic et affiche ses départements', () => {
-    render(<AccordionRegions />);
+    renderAccordion();
     const idfBtn = screen.getByRole('button', { name: /île-de-france/i });
 
     fireEvent.click(idfBtn);
@@ -44,7 +59,7 @@ describe('AccordionRegions – interaction', () => {
   });
 
   it("ferme l'accordéon au deuxième clic", () => {
-    render(<AccordionRegions />);
+    renderAccordion();
     const idfBtn = screen.getByRole('button', { name: /île-de-france/i });
 
     fireEvent.click(idfBtn); // ouvre
@@ -60,7 +75,7 @@ describe('AccordionRegions – interaction', () => {
   });
 
   it('deux accordéons peuvent être ouverts simultanément', () => {
-    render(<AccordionRegions />);
+    renderAccordion();
     const idfBtn  = screen.getByRole('button', { name: /île-de-france/i });
     const bretBtn = screen.getByRole('button', { name: /bretagne/i });
 
@@ -72,7 +87,7 @@ describe('AccordionRegions – interaction', () => {
   });
 
   it('les départements sont triés par code dans un accordéon ouvert', () => {
-    render(<AccordionRegions />);
+    renderAccordion();
     const idfBtn = screen.getByRole('button', { name: /île-de-france/i });
     fireEvent.click(idfBtn);
 

@@ -111,6 +111,40 @@ describe('generateQuestions – fonction pure', () => {
     }
   });
 
+  describe('filterCodes', () => {
+    it('restreint les questions aux codes fournis', () => {
+      const codes = ['14', '27', '50', '61', '76']; // Normandie
+      const config: QuizConfig = { sujet: 'depts-numeros', difficulty: 'facile', sessionLength: 'tout', filterCodes: codes };
+      const questions = generateQuestions(config);
+      expect(questions.length).toBe(codes.length);
+      questions.forEach((q) => expect(codes).toContain(q.targetCode));
+    });
+
+    it('sessionLength est respecté dans la limite de filterCodes', () => {
+      const codes = ['14', '27', '50', '61', '76'];
+      const config: QuizConfig = { sujet: 'depts-numeros', difficulty: 'facile', sessionLength: 10, filterCodes: codes };
+      const questions = generateQuestions(config);
+      expect(questions.length).toBe(5); // filterCodes a 5 items < sessionLength 10
+    });
+
+    it('filterCodes sur sujet mixte carte/QCM : seuls les codes filtrés apparaissent', () => {
+      const codes = ['14', '27', '50', '61', '76'];
+      const config: QuizConfig = { sujet: 'depts-carte', difficulty: 'facile', sessionLength: 'tout', filterCodes: codes };
+      const questions = generateQuestions(config);
+      questions.forEach((q) => expect(codes).toContain(q.targetCode));
+    });
+
+    it('les distracteurs QCM incluent des depts hors filterCodes', () => {
+      const codes = ['14', '27', '50', '61', '76'];
+      const config: QuizConfig = { sujet: 'depts-numeros', difficulty: 'facile', sessionLength: 'tout', filterCodes: codes };
+      const questions = generateQuestions(config);
+      const allDistractorCodes = questions.flatMap((q) =>
+        (q as QcmQuestion).choices.filter((c) => !c.correct).map((c) => c.code),
+      );
+      expect(allDistractorCodes.some((c) => !codes.includes(c))).toBe(true);
+    });
+  });
+
   it('difficile : les distracteurs de DevinerCodeDept sont numériquement proches du code cible', () => {
     const config: QuizConfig = { sujet: 'depts-numeros', difficulty: 'difficile', sessionLength: 'tout' };
     const questions = generateQuestions(config);

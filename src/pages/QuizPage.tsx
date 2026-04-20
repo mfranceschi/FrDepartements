@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useBlocker } from 'react-router-dom';
+import { useBlocker, useLocation } from 'react-router-dom';
 import { useQuiz } from '../hooks/useQuiz';
 import QuizConfig from '../components/quiz/QuizConfig';
 import QuizShell from '../components/quiz/QuizShell';
@@ -100,9 +100,27 @@ function NavigationBlockerModal({
 }
 
 export default function QuizPage() {
+  const location = useLocation();
+
   const [phase, setPhase] = useState<QuizPhase>('config');
   const [config, setConfig] = useState<QuizConfigType | null>(null);
   const [sessionFinished, setSessionFinished] = useState(false);
+
+  // Derived state : démarrer un quiz filtré quand on navigue depuis Tableau ou Stats.
+  // Pattern React recommandé (https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes)
+  // plutôt qu'un useEffect qui appelle setState.
+  const [prevLocation, setPrevLocation] = useState(location);
+  if (location !== prevLocation) {
+    setPrevLocation(location);
+    if (location.pathname === '/quiz') {
+      const filterConfig = (location.state as { filterConfig?: QuizConfigType } | null)?.filterConfig;
+      if (filterConfig) {
+        setConfig(filterConfig);
+        setSessionFinished(false);
+        setPhase('session');
+      }
+    }
+  }
 
   const isSessionActive = phase === 'session' && !sessionFinished;
 

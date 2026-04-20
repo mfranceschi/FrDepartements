@@ -19,6 +19,7 @@ interface UseD3ZoomOptions {
   focusCode?: string;
   focusType?: 'departement' | 'region';
   focusSeq?: number;
+  focusScale?: number;
 }
 
 export interface UseD3ZoomReturn {
@@ -36,6 +37,7 @@ export function useD3Zoom({
   focusCode,
   focusType,
   focusSeq,
+  focusScale,
 }: UseD3ZoomOptions): UseD3ZoomReturn {
   // zoomK est le seul state lié au zoom : mis à jour uniquement quand k change,
   // pas à chaque frame de pan. Le transform du <g> est appliqué en impératif.
@@ -89,15 +91,16 @@ export function useD3Zoom({
     const centroid = pathGen.centroid(target);
     if (!centroid || !isValidCentroid(centroid)) return;
 
-    const tx = FOCUS_SVG_W / 2 - FOCUS_SCALE * centroid[0];
-    const ty = FOCUS_SVG_H / 2 - FOCUS_SCALE * centroid[1];
-    const newTransform = zoomIdentity.translate(tx, ty).scale(FOCUS_SCALE);
+    const scale = focusScale ?? FOCUS_SCALE;
+    const tx = FOCUS_SVG_W / 2 - scale * centroid[0];
+    const ty = FOCUS_SVG_H / 2 - scale * centroid[1];
+    const newTransform = zoomIdentity.translate(tx, ty).scale(scale);
 
     select(svgRef.current)
       .transition()
       .duration(500)
       .call(zoomRef.current.transform, newTransform);
-  }, [focusCode, focusType, focusSeq, pathGen]);
+  }, [focusCode, focusType, focusSeq, focusScale, pathGen]);
 
   const handleZoomIn = useCallback(() => {
     if (!svgRef.current || !zoomRef.current) return;

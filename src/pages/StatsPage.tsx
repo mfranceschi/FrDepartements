@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useItemStats } from '../storage/useItemStats';
 import { relativeTime } from '../storage/useQuizHistory';
 import { DEPARTEMENTS } from '../data/departements';
@@ -6,7 +7,7 @@ import { REGIONS } from '../data/regions';
 import { DEPT_MAP, REGION_MAP } from '../data/maps';
 import { scoreColor } from '../utils/scoreTheme';
 import SuccessBar from '../components/SuccessBar';
-import type { QuizSujet } from '../quiz/types';
+import type { QuizSujet, QuizConfig } from '../quiz/types';
 
 interface SujetMeta {
   sujet: QuizSujet;
@@ -23,6 +24,7 @@ const SUJETS: SujetMeta[] = [
 ];
 
 export default function StatsPage() {
+  const navigate = useNavigate();
   const { stats, clearStats } = useItemStats();
   const [selectedSujet, setSelectedSujet] = useState<QuizSujet>('depts-carte');
   const [confirmClear, setConfirmClear] = useState(false);
@@ -46,6 +48,8 @@ export default function StatsPage() {
       });
     return { seenItems: seen, totalEntities: allEntities.length };
   }, [selectedSujet, stats, meta.isDept]);
+
+  const failItems = seenItems.filter(({ stat }) => stat.fail > 0);
 
   const globalOk   = seenItems.reduce((s, { stat }) => s + stat.ok, 0);
   const globalFail = seenItems.reduce((s, { stat }) => s + stat.fail, 0);
@@ -89,7 +93,7 @@ export default function StatsPage() {
         >
           <span>
             <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{seenItems.length}</span>
-            <span style={{ color: 'var(--text-secondary)' }}> / {totalEntities} vus</span>
+            <span style={{ color: 'var(--text-secondary)' }}> / {totalEntities} {meta.isDept ? 'depts vus' : 'régions vues'}</span>
           </span>
           {globalRatio !== null && globalPct !== null && (
             <span>
@@ -106,6 +110,26 @@ export default function StatsPage() {
             <span style={{ color: 'var(--text-muted)' }}>Aucune donnée — lancez un quiz pour commencer.</span>
           )}
         </div>
+
+        {/* Bouton retravailler les erreurs */}
+        {failItems.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              const filterConfig: QuizConfig = {
+                sujet: selectedSujet,
+                difficulty: 'facile',
+                sessionLength: 'tout',
+                filterCodes: failItems.map(({ entity }) => entity.code),
+              };
+              navigate('/quiz', { state: { filterConfig } });
+            }}
+            className="self-start px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+            style={{ backgroundColor: '#dc2626', color: '#fff' }}
+          >
+            Retravailler les {failItems.length} erreur{failItems.length > 1 ? 's' : ''} →
+          </button>
+        )}
 
         {/* Liste des items vus */}
         {seenItems.length > 0 && (

@@ -30,6 +30,7 @@ export interface CarteFranceProps {
   focusCode?: string;
   focusType?: 'departement' | 'region';
   focusSeq?: number;
+  focusScale?: number;
   showPrefectures?: boolean;
   onShowPrefecturesChange?: (v: boolean) => void;
   showFleuves?: boolean;
@@ -63,6 +64,7 @@ export default memo(function CarteFrance({
   focusCode,
   focusType,
   focusSeq,
+  focusScale,
   showPrefectures: showPrefecturesProp,
   onShowPrefecturesChange,
   showFleuves: showFleuvesProps,
@@ -89,6 +91,7 @@ export default memo(function CarteFrance({
     focusCode,
     focusType,
     focusSeq,
+    focusScale,
   });
 
   const { tooltipRef, showTooltip, hideTooltip } = useTooltip();

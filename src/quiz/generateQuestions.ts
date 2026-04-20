@@ -119,28 +119,32 @@ function buildQcmChoices(item: PoolItem, config: QuizConfig): Choice[] {
 export function generateQuestions(config: QuizConfig): Question[] {
   const modes = SUJET_MODES[config.sujet];
 
+  const filterSet = config.filterCodes ? new Set(config.filterCodes) : null;
+  const deptPool = filterSet ? ALL_DEPTS.filter(d => filterSet.has(d.code)) : ALL_DEPTS;
+  const regionPool = filterSet ? ALL_REGIONS.filter(r => filterSet.has(r.code)) : ALL_REGIONS;
+
   const cartePool: PoolItem[] = [];
   const qcmPool: PoolItem[] = [];
 
   for (const mode of modes) {
     switch (mode) {
       case 'TrouverDeptCarte':
-        ALL_DEPTS.forEach((d) => cartePool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }));
+        deptPool.forEach((d) => cartePool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }));
         break;
       case 'TrouverRegionCarte':
-        ALL_REGIONS.forEach((r) => cartePool.push({ mode, code: r.code, nom: r.nom }));
+        regionPool.forEach((r) => cartePool.push({ mode, code: r.code, nom: r.nom }));
         break;
       case 'DevinerNomDeptCarte':
       case 'DevinerCodeDept':
       case 'DevinerNomDept':
-        ALL_DEPTS.forEach((d) => qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }));
+        deptPool.forEach((d) => qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }));
         break;
       case 'DevinerNomRegionCarte':
       case 'DevinerPrefectureRegion':
-        ALL_REGIONS.forEach((r) => qcmPool.push({ mode, code: r.code, nom: r.nom }));
+        regionPool.forEach((r) => qcmPool.push({ mode, code: r.code, nom: r.nom }));
         break;
       case 'DevinerPrefectureDept':
-        ALL_DEPTS.forEach((d) => qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }));
+        deptPool.forEach((d) => qcmPool.push({ mode, code: d.code, nom: d.nom, regionCode: d.regionCode }));
         break;
     }
   }

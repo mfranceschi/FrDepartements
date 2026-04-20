@@ -25,6 +25,8 @@ export interface QuizConfig {
   sujet: QuizSujet;
   difficulty: Difficulty;
   sessionLength: SessionLength;
+  /** Restreint la session aux codes cibles listés (depts ou régions selon le sujet). */
+  filterCodes?: string[];
 }
 
 export interface Choice {

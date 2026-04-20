@@ -18,7 +18,7 @@ export default function CartePage() {
   const [selectedTerritory, setSelectedTerritory] = useState<SelectedTerritory | null>(null);
   const [selectedFleuve, setSelectedFleuve] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [focusTarget, setFocusTarget] = useState<{ code: string; type: 'departement' | 'region'; seq: number } | undefined>(undefined);
+  const [focusTarget, setFocusTarget] = useState<{ code: string; type: 'departement' | 'region'; seq: number; scale?: number } | undefined>(undefined);
   const [showResults, setShowResults] = useState(false);
   const [showPrefectures, setShowPrefectures] = useState(false);
   const [showFleuves, setShowFleuves] = useState(false);
@@ -63,6 +63,11 @@ export default function CartePage() {
     if (result.type === 'fleuve') {
       setSelectedFleuve(result.code);
       setShowFleuves(true);
+      const depts = FLEUVES_DEPTS[result.code]?.depts;
+      if (depts && depts.length > 0) {
+        const midCode = depts[Math.floor(depts.length / 2)];
+        setFocusTarget(prev => ({ code: midCode, type: 'departement', seq: (prev?.seq ?? 0) + 1, scale: 2 }));
+      }
     } else {
       setSelectedTerritory({ code: result.code, type: result.type });
       const focusType = result.type === 'prefecture' ? 'departement' : result.type;
@@ -126,6 +131,7 @@ export default function CartePage() {
           focusCode={focusTarget?.code}
           focusType={focusTarget?.type}
           focusSeq={focusTarget?.seq}
+          focusScale={focusTarget?.scale}
           showPrefectures={showPrefectures}
           onShowPrefecturesChange={setShowPrefectures}
           showFleuves={showFleuves}
