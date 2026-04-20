@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, memo } from 'react';
 import {
   geoConicConformal,
   geoPath,
@@ -48,7 +48,7 @@ const PATH_GEN = geoPath(PROJECTION);
 
 const NOOP_HOVER = () => {};
 
-export default function CarteFrance({
+export default memo(function CarteFrance({
   features,
   onFeatureClick,
   onPrefectureClick,
@@ -149,6 +149,14 @@ export default function CarteFrance({
   const effectiveShowDepts = quizMode ? quizLayer === 'departements' : activeLayer === 'departements';
   // Contours de régions superposés sur les départements colorés (mode carte uniquement)
   const effectiveShowRegionBorders = !quizMode && activeLayer === 'departements';
+
+  const clipPaths = useMemo(
+    () => features.regions.map((f, i) => {
+      const d = PATH_GEN(f);
+      return d ? <path key={i} d={d} /> : null;
+    }),
+    [features.regions],
+  );
 
   // Restreint la surbrillance à la bonne couche pour éviter les collisions de codes
   const highlightDeptCode = !highlightType || highlightType === 'departement' ? highlightCode : undefined;
@@ -266,10 +274,7 @@ export default function CarteFrance({
       >
         <defs>
           <clipPath id="clip-france">
-            {features.regions.map((f, i) => {
-              const d = PATH_GEN(f);
-              return d ? <path key={i} d={d} /> : null;
-            })}
+            {clipPaths}
           </clipPath>
         </defs>
         {/* ref impératif : le transform est mis à jour via setAttribute, sans re-render React */}
@@ -334,7 +339,7 @@ export default function CarteFrance({
           <CoucheDepts
             features={features.departements}
             pathGen={PATH_GEN}
-            visible={effectiveShowDepts}
+            visible={effectiveShowDepts && showLabels}
             quizMode={quizMode}
             highlightCode={highlightDeptCode}
             highlightVariant={highlightVariant}
@@ -357,4 +362,4 @@ export default function CarteFrance({
       )}
     </div>
   );
-}
+});

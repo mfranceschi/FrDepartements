@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useGeoData } from '../hooks/useGeoData';
 import CarteFrance from '../components/carte/CarteFrance';
 import { FLEUVES_DEPTS } from '../data/fleuvesDepts';
@@ -30,29 +30,36 @@ export default function CartePage() {
     [selectedFleuve],
   );
 
-  const handleFeatureClick = (code: string, type: 'departement' | 'region') => {
+  const features = useMemo(
+    () => departements && regions
+      ? { departements: departements.features as Feature[], regions: regions.features as Feature[] }
+      : null,
+    [departements, regions],
+  );
+
+  const handleFeatureClick = useCallback((code: string, type: 'departement' | 'region') => {
     setSelectedTerritory((prev) =>
       prev?.code === code && prev.type === type ? null : { code, type },
     );
     setSearchQuery('');
     setShowResults(false);
-  };
+  }, []);
 
-  const handlePrefectureClick = (deptCode: string) => {
+  const handlePrefectureClick = useCallback((deptCode: string) => {
     setSelectedTerritory((prev) =>
       prev?.code === deptCode && prev.type === 'prefecture' ? null : { code: deptCode, type: 'prefecture' },
     );
     setSearchQuery('');
     setShowResults(false);
-  };
+  }, []);
 
-  const handleFleuveClick = (name: string) => {
+  const handleFleuveClick = useCallback((name: string) => {
     setSelectedFleuve((prev) => (prev === name ? null : name));
     setSearchQuery('');
     setShowResults(false);
-  };
+  }, []);
 
-  const handleSearchSelect = (result: SearchResult) => {
+  const handleSearchSelect = useCallback((result: SearchResult) => {
     if (result.type === 'fleuve') {
       setSelectedFleuve(result.code);
       setShowFleuves(true);
@@ -64,7 +71,7 @@ export default function CartePage() {
     }
     setSearchQuery('');
     setShowResults(false);
-  };
+  }, []);
 
   if (loading) {
     return (
@@ -80,18 +87,13 @@ export default function CartePage() {
     );
   }
 
-  if (!departements || !regions) {
+  if (!departements || !regions || !features) {
     return (
       <main className="flex-1 flex items-center justify-center">
         <p className="text-red-500 text-sm">Erreur lors du chargement des données.</p>
       </main>
     );
   }
-
-  const features = {
-    departements: departements.features as Feature[],
-    regions: regions.features as Feature[],
-  };
 
   const searchBarProps = {
     query: searchQuery,
