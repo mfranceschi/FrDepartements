@@ -37,6 +37,7 @@ function makeFinishedSession(score: number, total: number): SessionState {
     finished: true,
     answerHistory,
     isReview: false,
+    markedQuestionIds: [],
   };
 }
 
@@ -85,6 +86,7 @@ function makeSessionWithStreak(streak: number, brokenBy?: 'wrong'): SessionState
     finished: false,
     answerHistory: history,
     isReview: false,
+    markedQuestionIds: [],
   };
 }
 
@@ -112,6 +114,7 @@ function makeActiveSession(mode: 'DevinerNomDept' | 'DevinerCodeDept' = 'Deviner
     finished: false,
     answerHistory: [],
     isReview: false,
+    markedQuestionIds: [],
   };
 }
 
@@ -125,7 +128,8 @@ describe('QuizShell – écran de fin', () => {
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
-        onReviewErrors={vi.fn()}
+        onReview={vi.fn()}
+        onMarkReview={vi.fn()}
       />,
     );
     expect(screen.getByText('8')).toBeInTheDocument();
@@ -140,7 +144,8 @@ describe('QuizShell – écran de fin', () => {
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
-        onReviewErrors={vi.fn()}
+        onReview={vi.fn()}
+        onMarkReview={vi.fn()}
       />,
     );
     expect(screen.getByText('Excellent !')).toBeInTheDocument();
@@ -153,7 +158,8 @@ describe('QuizShell – écran de fin', () => {
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
-        onReviewErrors={vi.fn()}
+        onReview={vi.fn()}
+        onMarkReview={vi.fn()}
       />,
     );
     expect(screen.getByText('Bien !')).toBeInTheDocument();
@@ -166,7 +172,8 @@ describe('QuizShell – écran de fin', () => {
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
-        onReviewErrors={vi.fn()}
+        onReview={vi.fn()}
+        onMarkReview={vi.fn()}
       />,
     );
     expect(screen.getByText('Continuez !')).toBeInTheDocument();
@@ -179,36 +186,39 @@ describe('QuizShell – écran de fin', () => {
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
-        onReviewErrors={vi.fn()}
+        onReview={vi.fn()}
+        onMarkReview={vi.fn()}
       />,
     );
     expect(screen.getByRole('button', { name: /Rejouer/i })).toBeInTheDocument();
   });
 
-  it('affiche "Revoir mes erreurs (N)" quand des erreurs existent', () => {
+  it('affiche "Réviser (N questions)" quand des erreurs existent', () => {
     render(
       <QuizShell
         session={makeFinishedSession(6, 10)}
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
-        onReviewErrors={vi.fn()}
+        onReview={vi.fn()}
+        onMarkReview={vi.fn()}
       />,
     );
-    expect(screen.getByRole('button', { name: /Revoir mes erreurs \(4\)/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Réviser \(4 questions\)/i })).toBeInTheDocument();
   });
 
-  it('n\'affiche pas "Revoir mes erreurs" si score parfait', () => {
+  it('n\'affiche pas "Réviser" si score parfait', () => {
     render(
       <QuizShell
         session={makeFinishedSession(10, 10)}
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
-        onReviewErrors={vi.fn()}
+        onReview={vi.fn()}
+        onMarkReview={vi.fn()}
       />,
     );
-    expect(screen.queryByText(/Revoir mes erreurs/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Réviser \(/i })).not.toBeInTheDocument();
   });
 
   it('appelle onRestart au clic sur "Rejouer"', () => {
@@ -219,26 +229,28 @@ describe('QuizShell – écran de fin', () => {
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={onRestart}
-        onReviewErrors={vi.fn()}
+        onReview={vi.fn()}
+        onMarkReview={vi.fn()}
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: /Rejouer/i }));
     expect(onRestart).toHaveBeenCalledOnce();
   });
 
-  it('appelle onReviewErrors au clic sur "Revoir mes erreurs"', () => {
-    const onReviewErrors = vi.fn();
+  it('appelle onReview au clic sur "Réviser"', () => {
+    const onReview = vi.fn();
     render(
       <QuizShell
         session={makeFinishedSession(8, 10)}
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
-        onReviewErrors={onReviewErrors}
+        onReview={onReview}
+        onMarkReview={vi.fn()}
       />,
     );
-    fireEvent.click(screen.getByRole('button', { name: /Revoir mes erreurs/i }));
-    expect(onReviewErrors).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole('button', { name: /Réviser \(2 questions\)/i }));
+    expect(onReview).toHaveBeenCalledOnce();
   });
 });
 
@@ -252,7 +264,8 @@ describe('QuizShell – badge streak', () => {
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
-        onReviewErrors={vi.fn()}
+        onReview={vi.fn()}
+        onMarkReview={vi.fn()}
       />,
     );
     expect(screen.queryByText(/🔥/)).not.toBeInTheDocument();
@@ -265,7 +278,8 @@ describe('QuizShell – badge streak', () => {
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
-        onReviewErrors={vi.fn()}
+        onReview={vi.fn()}
+        onMarkReview={vi.fn()}
       />,
     );
     expect(screen.getByText(/🔥 Combo ×3/)).toBeInTheDocument();
@@ -278,7 +292,8 @@ describe('QuizShell – badge streak', () => {
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
-        onReviewErrors={vi.fn()}
+        onReview={vi.fn()}
+        onMarkReview={vi.fn()}
       />,
     );
     expect(screen.getByText(/🔥 Combo ×5/)).toBeInTheDocument();
@@ -291,7 +306,8 @@ describe('QuizShell – badge streak', () => {
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
-        onReviewErrors={vi.fn()}
+        onReview={vi.fn()}
+        onMarkReview={vi.fn()}
       />,
     );
     expect(screen.queryByText(/🔥/)).not.toBeInTheDocument();
@@ -308,7 +324,8 @@ describe('QuizShell – barre de progression', () => {
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
-        onReviewErrors={vi.fn()}
+        onReview={vi.fn()}
+        onMarkReview={vi.fn()}
       />,
     );
     // Sessions ≤ 20 questions : points colorés (w-3 h-3 rounded-full)
@@ -337,6 +354,7 @@ describe('QuizShell – barre de progression', () => {
       finished: false,
       answerHistory: [],
       isReview: false,
+      markedQuestionIds: [],
     };
     const { container } = render(
       <QuizShell
@@ -344,7 +362,8 @@ describe('QuizShell – barre de progression', () => {
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
-        onReviewErrors={vi.fn()}
+        onReview={vi.fn()}
+        onMarkReview={vi.fn()}
       />,
     );
     const bar = container.querySelector('.h-1\\.5');
@@ -358,7 +377,8 @@ describe('QuizShell – barre de progression', () => {
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
-        onReviewErrors={vi.fn()}
+        onReview={vi.fn()}
+        onMarkReview={vi.fn()}
       />,
     );
     const gradientEl = container.querySelector('[style*="linear-gradient"]');
@@ -372,7 +392,8 @@ describe('QuizShell – barre de progression', () => {
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
-        onReviewErrors={vi.fn()}
+        onReview={vi.fn()}
+        onMarkReview={vi.fn()}
       />,
     );
     // Le masque gris doit avoir width: 0%
@@ -391,7 +412,8 @@ describe('QuizShell – session en cours', () => {
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
-        onReviewErrors={vi.fn()}
+        onReview={vi.fn()}
+        onMarkReview={vi.fn()}
       />,
     );
     expect(screen.getByText(/Question 1 \/ 1/i)).toBeInTheDocument();
@@ -405,7 +427,8 @@ describe('QuizShell – session en cours', () => {
         onAnswer={vi.fn()}
         onNext={vi.fn()}
         onRestart={vi.fn()}
-        onReviewErrors={vi.fn()}
+        onReview={vi.fn()}
+        onMarkReview={vi.fn()}
       />,
     );
     expect(screen.getByRole('button', { name: /Voir le résultat/i })).toBeInTheDocument();
@@ -419,7 +442,8 @@ describe('QuizShell – session en cours', () => {
         onAnswer={onAnswer}
         onNext={vi.fn()}
         onRestart={vi.fn()}
-        onReviewErrors={vi.fn()}
+        onReview={vi.fn()}
+        onMarkReview={vi.fn()}
       />,
     );
     fireEvent.click(screen.getByText('Finistère'));

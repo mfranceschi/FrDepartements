@@ -5,11 +5,11 @@ import { scoreColor } from '../../utils/scoreTheme';
 interface QuizResultsProps {
   session: SessionState;
   onRestart: () => void;
-  onReviewErrors: () => void;
+  onReview: () => void;
 }
 
-function getResultMessage(score: number, total: number, isReview: boolean): string {
-  if (isReview && score === total) return 'Toutes vos erreurs sont corrigées !';
+function getResultMessage(score: number, total: number, allReviewed: boolean): string {
+  if (allReviewed) return 'Toutes les questions révisées !';
   const ratio = total > 0 ? score / total : 0;
   if (ratio === 1) return 'Parfait !';
   if (ratio >= 0.85) return 'Excellent !';
@@ -33,18 +33,19 @@ function getCorrectLabel(record: AnswerRecord): string | null {
   return record.question.choices.find((c) => c.correct)?.label ?? null;
 }
 
-export default function QuizResults({ session, onRestart, onReviewErrors }: QuizResultsProps) {
-  const { questions, score, answerHistory, isReview } = session;
+export default function QuizResults({ session, onRestart, onReview }: QuizResultsProps) {
+  const { questions, score, answerHistory, isReview, markedQuestionIds } = session;
   const total = questions.length;
   const ratio = total > 0 ? score / total : 0;
   const pct = Math.round(ratio * 100);
   const isPerfect = ratio === 1;
-  const message = getResultMessage(score, total, isReview);
-  const stars = getStars(ratio);
-
   const wrongRecords = answerHistory.filter((r) => !r.correct);
   const wrongCount = wrongRecords.length;
-  const allCorrected = isReview && wrongCount === 0;
+  const markedCount = markedQuestionIds.length;
+  const reviewCount = wrongCount + markedCount;
+  const allReviewed = isReview && wrongCount === 0;
+  const message = getResultMessage(score, total, allReviewed);
+  const stars = getStars(ratio);
 
   return (
     <div className="flex flex-col items-center gap-6 py-12 px-6">
@@ -66,7 +67,7 @@ export default function QuizResults({ session, onRestart, onReviewErrors }: Quiz
         ))}
       </div>
 
-      <h2 className={`text-3xl font-bold ${isPerfect || allCorrected ? 'text-green-600' : 'text-gray-800'}`}>
+      <h2 className={`text-3xl font-bold ${isPerfect || allReviewed ? 'text-green-600' : 'text-gray-800'}`}>
         {isPerfect && !isReview ? '🎉 ' : ''}{message}
       </h2>
 
@@ -119,20 +120,20 @@ export default function QuizResults({ session, onRestart, onReviewErrors }: Quiz
       )}
 
       <div className="flex flex-col items-center gap-3 mt-2">
-        {wrongCount > 0 && (
+        {reviewCount > 0 && (
           <button
             type="button"
-            onClick={onReviewErrors}
-            className="px-8 py-3 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors"
+            onClick={onReview}
+            className="px-8 py-3 bg-amber-500 text-white font-semibold rounded-lg hover:bg-amber-600 transition-colors"
           >
-            Revoir mes erreurs ({wrongCount})
+            🔖 Réviser ({reviewCount} question{reviewCount > 1 ? 's' : ''})
           </button>
         )}
         <button
           type="button"
           onClick={onRestart}
           className={`px-8 py-3 font-semibold rounded-lg transition-colors ${
-            wrongCount > 0
+            reviewCount > 0
               ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               : 'bg-blue-600 text-white hover:bg-blue-700'
           }`}

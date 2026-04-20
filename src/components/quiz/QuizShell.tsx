@@ -26,7 +26,8 @@ interface QuizShellProps {
   onAnswer: (code: string) => void;
   onNext: () => void;
   onRestart: () => void;
-  onReviewErrors: () => void;
+  onReview: () => void;
+  onMarkReview: () => void;
 }
 
 export default function QuizShell({
@@ -34,9 +35,10 @@ export default function QuizShell({
   onAnswer,
   onNext,
   onRestart,
-  onReviewErrors,
+  onReview,
+  onMarkReview,
 }: QuizShellProps) {
-  const { questions, currentIndex, score, answerState, selectedCode, finished, answerHistory, isReview } = session;
+  const { questions, currentIndex, score, answerState, selectedCode, finished, answerHistory, isReview, markedQuestionIds } = session;
   const total = questions.length;
   const answered = answerState !== 'pending';
   const answeredCount = currentIndex + (answered ? 1 : 0);
@@ -79,13 +81,21 @@ export default function QuizShell({
   }, [questions, currentIndex, answered, answerState, onAnswer, onNext]);
 
   if (finished) {
-    return <QuizResults session={session} onRestart={onRestart} onReviewErrors={onReviewErrors} />;
+    return (
+      <QuizResults
+        session={session}
+        onRestart={onRestart}
+        onReview={onReview}
+      />
+    );
   }
 
   const question = questions[currentIndex];
   const isLastQuestion = currentIndex === total - 1;
   const isQcm = QCM_MODES.has(question.mode);
   const isCarteQuestion = question.mode.endsWith('Carte');
+  const isMarked = markedQuestionIds.includes(question.id);
+  const showMarkButton = answerState === 'correct';
   const QuestionComponent = QUESTION_COMPONENTS[question.mode];
 
   const showDots = total <= 20;
@@ -169,6 +179,8 @@ export default function QuizShell({
           onAnswer={onAnswer}
           onNext={isCarteQuestion ? onNext : undefined}
           isLastQuestion={isLastQuestion}
+          onMarkReview={showMarkButton ? onMarkReview : undefined}
+          isMarked={isMarked}
         />
       </div>
 
@@ -177,6 +189,8 @@ export default function QuizShell({
           onNext={onNext}
           isLastQuestion={isLastQuestion}
           safeArea
+          onMarkReview={showMarkButton ? onMarkReview : undefined}
+          isMarked={isMarked}
         />
       )}
     </div>

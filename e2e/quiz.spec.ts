@@ -238,15 +238,15 @@ test.describe('Quiz entier – score et évaluations cohérents', () => {
       page.getByText(`${expectedPct} % de bonnes réponses`),
     ).toBeVisible();
 
-    // ── 7. Bouton « Revoir mes erreurs » cohérent avec le comptage ──────────
+    // ── 7. Bouton « Réviser » cohérent avec le comptage ──────────────────────
     if (trackedWrong > 0) {
       await expect(
-        page.getByRole('button', { name: `Revoir mes erreurs (${trackedWrong})` }),
+        page.getByRole('button', { name: new RegExp(`Réviser \\(${trackedWrong} question`) }),
       ).toBeVisible();
     } else {
       // Score parfait : le bouton n'existe pas
       await expect(
-        page.getByRole('button', { name: /revoir mes erreurs/i }),
+        page.getByRole('button', { name: /Réviser \(/ }),
       ).not.toBeVisible();
     }
 

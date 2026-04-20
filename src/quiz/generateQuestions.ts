@@ -197,5 +197,6 @@ export function buildInitialSession(config: QuizConfig): SessionState {
     finished: false,
     answerHistory: [],
     isReview: false,
+    markedQuestionIds: [],
   };
 }

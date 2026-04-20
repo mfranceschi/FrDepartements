@@ -16,7 +16,7 @@ interface QuizSessionProps {
 }
 
 function QuizSession({ config, onRestart, onFinished }: QuizSessionProps) {
-  const { session, submitAnswer, nextQuestion, restartWithErrors } = useQuiz(config);
+  const { session, submitAnswer, nextQuestion, restartWithReview, toggleMarkCurrentForReview } = useQuiz(config);
   const [, addSession] = useQuizHistory();
   const { recordAnswers } = useItemStats();
   const savedRef = useRef(false);
@@ -47,8 +47,8 @@ function QuizSession({ config, onRestart, onFinished }: QuizSessionProps) {
     onRestart();
   };
 
-  const handleReviewErrors = () => {
-    restartWithErrors();
+  const handleReview = () => {
+    restartWithReview();
     onFinished(false);
   };
 
@@ -58,7 +58,8 @@ function QuizSession({ config, onRestart, onFinished }: QuizSessionProps) {
       onAnswer={submitAnswer}
       onNext={nextQuestion}
       onRestart={handleRestart}
-      onReviewErrors={handleReviewErrors}
+      onReview={handleReview}
+      onMarkReview={toggleMarkCurrentForReview}
     />
   );
 }

@@ -35,6 +35,7 @@ function makeSession(overrides: Partial<SessionState> = {}): SessionState {
     finished: true,
     answerHistory: [],
     isReview: false,
+    markedQuestionIds: [],
     ...overrides,
   };
 }
@@ -54,36 +55,36 @@ function makeRecord(correct: boolean, question?: Question): AnswerRecord {
 describe('QuizResults — message selon le score', () => {
   it('affiche "Parfait !" à 100%', () => {
     const session = makeSession({ score: 10, questions: Array(10).fill(makeQcmQuestion('75', 'Paris')) });
-    render(<QuizResults session={session} onRestart={vi.fn()} onReviewErrors={vi.fn()} />);
+    render(<QuizResults session={session} onRestart={vi.fn()} onReview={vi.fn()} />);
     expect(screen.getByText(/Parfait/)).toBeInTheDocument();
   });
 
   it('affiche "Excellent !" entre 85% et 99%', () => {
     const qs = Array(10).fill(makeQcmQuestion('75', 'Paris'));
     const session = makeSession({ score: 9, questions: qs });
-    render(<QuizResults session={session} onRestart={vi.fn()} onReviewErrors={vi.fn()} />);
+    render(<QuizResults session={session} onRestart={vi.fn()} onReview={vi.fn()} />);
     expect(screen.getByText(/Excellent/)).toBeInTheDocument();
   });
 
   it('affiche "Bien !" entre 60% et 84%', () => {
     const qs = Array(10).fill(makeQcmQuestion('75', 'Paris'));
     const session = makeSession({ score: 7, questions: qs });
-    render(<QuizResults session={session} onRestart={vi.fn()} onReviewErrors={vi.fn()} />);
+    render(<QuizResults session={session} onRestart={vi.fn()} onReview={vi.fn()} />);
     expect(screen.getByText(/Bien/)).toBeInTheDocument();
   });
 
   it('affiche "Continuez !" en dessous de 60%', () => {
     const qs = Array(10).fill(makeQcmQuestion('75', 'Paris'));
     const session = makeSession({ score: 5, questions: qs });
-    render(<QuizResults session={session} onRestart={vi.fn()} onReviewErrors={vi.fn()} />);
+    render(<QuizResults session={session} onRestart={vi.fn()} onReview={vi.fn()} />);
     expect(screen.getByText(/Continuez/)).toBeInTheDocument();
   });
 
-  it('affiche "Toutes vos erreurs sont corrigées !" en mode révision score parfait', () => {
+  it('affiche "Toutes les questions révisées !" en mode révision score parfait', () => {
     const qs = Array(5).fill(makeQcmQuestion('75', 'Paris'));
     const session = makeSession({ score: 5, questions: qs, isReview: true });
-    render(<QuizResults session={session} onRestart={vi.fn()} onReviewErrors={vi.fn()} />);
-    expect(screen.getByText(/Toutes vos erreurs sont corrigées/)).toBeInTheDocument();
+    render(<QuizResults session={session} onRestart={vi.fn()} onReview={vi.fn()} />);
+    expect(screen.getByText(/Toutes les questions révisées/)).toBeInTheDocument();
   });
 });
 
@@ -92,19 +93,19 @@ describe('QuizResults — message selon le score', () => {
 describe('QuizResults — étoiles', () => {
   it('aria-label indique 3 étoiles à ≥85%', () => {
     const qs = Array(10).fill(makeQcmQuestion('75', 'Paris'));
-    render(<QuizResults session={makeSession({ score: 9, questions: qs })} onRestart={vi.fn()} onReviewErrors={vi.fn()} />);
+    render(<QuizResults session={makeSession({ score: 9, questions: qs })} onRestart={vi.fn()} onReview={vi.fn()} />);
     expect(screen.getByLabelText(/3 étoile/)).toBeInTheDocument();
   });
 
   it('aria-label indique 2 étoiles à ≥60%', () => {
     const qs = Array(10).fill(makeQcmQuestion('75', 'Paris'));
-    render(<QuizResults session={makeSession({ score: 6, questions: qs })} onRestart={vi.fn()} onReviewErrors={vi.fn()} />);
+    render(<QuizResults session={makeSession({ score: 6, questions: qs })} onRestart={vi.fn()} onReview={vi.fn()} />);
     expect(screen.getByLabelText(/2 étoile/)).toBeInTheDocument();
   });
 
   it('aria-label indique 1 étoile en dessous de 60%', () => {
     const qs = Array(10).fill(makeQcmQuestion('75', 'Paris'));
-    render(<QuizResults session={makeSession({ score: 5, questions: qs })} onRestart={vi.fn()} onReviewErrors={vi.fn()} />);
+    render(<QuizResults session={makeSession({ score: 5, questions: qs })} onRestart={vi.fn()} onReview={vi.fn()} />);
     expect(screen.getByLabelText(/1 étoile/)).toBeInTheDocument();
   });
 });
@@ -114,13 +115,13 @@ describe('QuizResults — étoiles', () => {
 describe('QuizResults — pourcentage affiché', () => {
   it('affiche le bon pourcentage (arrondi)', () => {
     const qs = Array(3).fill(makeQcmQuestion('75', 'Paris'));
-    render(<QuizResults session={makeSession({ score: 2, questions: qs })} onRestart={vi.fn()} onReviewErrors={vi.fn()} />);
+    render(<QuizResults session={makeSession({ score: 2, questions: qs })} onRestart={vi.fn()} onReview={vi.fn()} />);
     expect(screen.getByText(/67 % de bonnes réponses/)).toBeInTheDocument();
   });
 
   it('affiche 0 % pour score nul', () => {
     const qs = Array(5).fill(makeQcmQuestion('75', 'Paris'));
-    render(<QuizResults session={makeSession({ score: 0, questions: qs })} onRestart={vi.fn()} onReviewErrors={vi.fn()} />);
+    render(<QuizResults session={makeSession({ score: 0, questions: qs })} onRestart={vi.fn()} onReview={vi.fn()} />);
     expect(screen.getByText(/0 % de bonnes réponses/)).toBeInTheDocument();
   });
 });
@@ -131,7 +132,7 @@ describe('QuizResults — section erreurs', () => {
   it('n\'affiche pas la section erreurs si score parfait', () => {
     const qs = [makeQcmQuestion('75', 'Paris')];
     const session = makeSession({ score: 1, questions: qs, answerHistory: [makeRecord(true)] });
-    render(<QuizResults session={session} onRestart={vi.fn()} onReviewErrors={vi.fn()} />);
+    render(<QuizResults session={session} onRestart={vi.fn()} onReview={vi.fn()} />);
     expect(screen.queryByText(/erreur/)).not.toBeInTheDocument();
   });
 
@@ -142,38 +143,38 @@ describe('QuizResults — section erreurs', () => {
       questions: qs,
       answerHistory: [makeRecord(false, qs[0]), makeRecord(false, qs[1])],
     });
-    render(<QuizResults session={session} onRestart={vi.fn()} onReviewErrors={vi.fn()} />);
+    render(<QuizResults session={session} onRestart={vi.fn()} onReview={vi.fn()} />);
     expect(screen.getByText(/2 erreurs — voir le détail/)).toBeInTheDocument();
   });
 
-  it('le bouton "Revoir mes erreurs" est absent si score parfait', () => {
+  it('le bouton "Réviser" est absent si score parfait et aucune question marquée', () => {
     const qs = [makeQcmQuestion('75', 'Paris')];
     const session = makeSession({ score: 1, questions: qs, answerHistory: [] });
-    render(<QuizResults session={session} onRestart={vi.fn()} onReviewErrors={vi.fn()} />);
-    expect(screen.queryByText(/Revoir mes erreurs/)).not.toBeInTheDocument();
+    render(<QuizResults session={session} onRestart={vi.fn()} onReview={vi.fn()} />);
+    expect(screen.queryByText(/Réviser \(/)).not.toBeInTheDocument();
   });
 
-  it('le bouton "Revoir mes erreurs" est présent si au moins 1 erreur', () => {
+  it('le bouton "Réviser" est présent si au moins 1 erreur', () => {
     const qs = [makeQcmQuestion('75', 'Paris')];
     const session = makeSession({ score: 0, questions: qs, answerHistory: [makeRecord(false)] });
-    render(<QuizResults session={session} onRestart={vi.fn()} onReviewErrors={vi.fn()} />);
-    expect(screen.getByText(/Revoir mes erreurs/)).toBeInTheDocument();
+    render(<QuizResults session={session} onRestart={vi.fn()} onReview={vi.fn()} />);
+    expect(screen.getByText(/Réviser \(1 question\)/)).toBeInTheDocument();
   });
 
-  it('appelle onReviewErrors au clic', () => {
-    const onReviewErrors = vi.fn();
+  it('appelle onReview au clic sur "Réviser"', () => {
+    const onReview = vi.fn();
     const qs = [makeQcmQuestion('75', 'Paris')];
     const session = makeSession({ score: 0, questions: qs, answerHistory: [makeRecord(false)] });
-    render(<QuizResults session={session} onRestart={vi.fn()} onReviewErrors={onReviewErrors} />);
-    fireEvent.click(screen.getByText(/Revoir mes erreurs/));
-    expect(onReviewErrors).toHaveBeenCalledOnce();
+    render(<QuizResults session={session} onRestart={vi.fn()} onReview={onReview} />);
+    fireEvent.click(screen.getByText(/Réviser \(1 question\)/));
+    expect(onReview).toHaveBeenCalledOnce();
   });
 
   it('les erreurs carte n\'affichent pas de bonne réponse texte', () => {
     const carteQ = makeCarteQuestion('75', 'Paris');
     const record: AnswerRecord = { mode: 'TrouverDeptCarte', correct: false, answeredCode: 'XX', question: carteQ };
     const session = makeSession({ score: 0, questions: [carteQ], answerHistory: [record] });
-    render(<QuizResults session={session} onRestart={vi.fn()} onReviewErrors={vi.fn()} />);
+    render(<QuizResults session={session} onRestart={vi.fn()} onReview={vi.fn()} />);
     expect(screen.queryByText(/Bonne réponse :/)).not.toBeInTheDocument();
   });
 });
@@ -183,7 +184,7 @@ describe('QuizResults — section erreurs', () => {
 describe('QuizResults — bouton Rejouer', () => {
   it('appelle onRestart au clic', () => {
     const onRestart = vi.fn();
-    render(<QuizResults session={makeSession()} onRestart={onRestart} onReviewErrors={vi.fn()} />);
+    render(<QuizResults session={makeSession()} onRestart={onRestart} onReview={vi.fn()} />);
     fireEvent.click(screen.getByText('Rejouer'));
     expect(onRestart).toHaveBeenCalledOnce();
   });

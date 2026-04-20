@@ -254,8 +254,8 @@ describe('useQuiz – QCM (DevinerNomDeptCarte)', () => {
   });
 });
 
-describe('useQuiz – restartWithErrors après session terminée', () => {
-  it('finished repasse à false après restartWithErrors', () => {
+describe('useQuiz – restartWithReview après session terminée', () => {
+  it('finished repasse à false après restartWithReview', () => {
     const config: QuizConfig = { sujet: 'depts-carte', difficulty: 'facile', sessionLength: 10 };
     const { result } = renderHook(() => useQuiz(config));
     const total = result.current.session.questions.length;
@@ -266,12 +266,12 @@ describe('useQuiz – restartWithErrors après session terminée', () => {
     }
     expect(result.current.session.finished).toBe(true);
 
-    act(() => { result.current.restartWithErrors(); });
+    act(() => { result.current.restartWithReview(); });
     expect(result.current.session.finished).toBe(false);
     expect(result.current.session.currentIndex).toBe(0);
   });
 
-  it('restartWithErrors ne reproduit que les questions mal répondues', () => {
+  it('restartWithReview inclut les questions mal répondues', () => {
     const config: QuizConfig = { sujet: 'depts-numeros', difficulty: 'facile', sessionLength: 10 };
     const { result } = renderHook(() => useQuiz(config));
     const total = result.current.session.questions.length;
@@ -285,11 +285,11 @@ describe('useQuiz – restartWithErrors après session terminée', () => {
       act(() => { result.current.nextQuestion(); });
     }
 
-    act(() => { result.current.restartWithErrors(); });
+    act(() => { result.current.restartWithReview(); });
     expect(result.current.session.questions.length).toBe(total - 1);
   });
 
-  it('restartWithErrors active le mode révision (isReview = true)', () => {
+  it('restartWithReview active le mode révision (isReview = true)', () => {
     const config: QuizConfig = { sujet: 'depts-numeros', difficulty: 'facile', sessionLength: 10 };
     const { result } = renderHook(() => useQuiz(config));
     const total = result.current.session.questions.length;
@@ -299,7 +299,7 @@ describe('useQuiz – restartWithErrors après session terminée', () => {
       act(() => { result.current.nextQuestion(); });
     }
 
-    act(() => { result.current.restartWithErrors(); });
+    act(() => { result.current.restartWithReview(); });
     expect(result.current.session.isReview).toBe(true);
   });
 

@@ -83,6 +83,8 @@ export interface QuestionProps {
   onAnswer: (code: string) => void;
   onNext?: () => void;
   isLastQuestion?: boolean;
+  onMarkReview?: () => void;
+  isMarked?: boolean;
 }
 
 export interface SessionState {
@@ -94,4 +96,5 @@ export interface SessionState {
   finished: boolean;
   answerHistory: AnswerRecord[];
   isReview: boolean;
+  markedQuestionIds: string[];
 }

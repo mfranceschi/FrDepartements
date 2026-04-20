@@ -10,6 +10,8 @@ export default function QuestionTrouverCarte({
   onAnswer,
   onNext,
   isLastQuestion,
+  onMarkReview,
+  isMarked,
 }: QuestionProps) {
   const isRegion = question.mode === 'TrouverRegionCarte';
   const layer = isRegion ? 'regions' : 'departements' as const;
@@ -36,7 +38,12 @@ export default function QuestionTrouverCarte({
       </p>
       <QuizAnswerFeedback answerState={answerState} />
       {answerState !== 'pending' && onNext && (
-        <QuizNextButton onNext={onNext} isLastQuestion={isLastQuestion} />
+        <QuizNextButton
+          onNext={onNext}
+          isLastQuestion={isLastQuestion}
+          onMarkReview={onMarkReview}
+          isMarked={isMarked}
+        />
       )}
     </CarteQuestionLayout>
   );

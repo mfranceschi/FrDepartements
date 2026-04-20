@@ -10,6 +10,8 @@ export default function QuestionDevinerNomCarte({
   onAnswer,
   onNext,
   isLastQuestion,
+  onMarkReview,
+  isMarked,
 }: QuestionProps) {
   const { choices } = question as QcmQuestion;
   const isRegion = question.mode === 'DevinerNomRegionCarte';
@@ -38,7 +40,12 @@ export default function QuestionDevinerNomCarte({
         wrongAnswerLabel={wrongAnswerLabel}
       />
       {answerState !== 'pending' && onNext && (
-        <QuizNextButton onNext={onNext} isLastQuestion={isLastQuestion} />
+        <QuizNextButton
+          onNext={onNext}
+          isLastQuestion={isLastQuestion}
+          onMarkReview={onMarkReview}
+          isMarked={isMarked}
+        />
       )}
     </CarteQuestionLayout>
   );

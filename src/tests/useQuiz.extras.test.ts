@@ -104,9 +104,9 @@ describe('useQuiz – modes par sujet', () => {
   });
 });
 
-// ── restartWithErrors ─────────────────────────────────────────────────────────
+// ── restartWithReview ─────────────────────────────────────────────────────────
 
-describe('useQuiz – restartWithErrors', () => {
+describe('useQuiz – restartWithReview', () => {
   it('crée une session contenant uniquement les questions ratées', () => {
     const { result } = renderHook(() => useQuiz(CARTE_CONFIG));
     const codes = result.current.session.questions.map((q) => q.targetCode);
@@ -119,7 +119,7 @@ describe('useQuiz – restartWithErrors', () => {
     act(() => { result.current.submitAnswer('__FAUX__'); });
     // answerHistory = [correct, wrong, wrong] ; on ne termine pas la session
 
-    act(() => { result.current.restartWithErrors(); });
+    act(() => { result.current.restartWithReview(); });
 
     expect(result.current.session.questions).toHaveLength(2);
     const retryCodes = result.current.session.questions.map((q) => q.targetCode);
@@ -131,7 +131,7 @@ describe('useQuiz – restartWithErrors', () => {
   it('remet score, index et answerHistory à zéro', () => {
     const { result } = renderHook(() => useQuiz(CARTE_CONFIG));
     act(() => { result.current.submitAnswer('__FAUX__'); });
-    act(() => { result.current.restartWithErrors(); });
+    act(() => { result.current.restartWithReview(); });
 
     expect(result.current.session.score).toBe(0);
     expect(result.current.session.currentIndex).toBe(0);
@@ -145,7 +145,7 @@ describe('useQuiz – restartWithErrors', () => {
     const originalQuestions = result.current.session.questions;
 
     act(() => { result.current.submitAnswer(q0Code); }); // correct
-    act(() => { result.current.restartWithErrors(); }); // rien à rejouer
+    act(() => { result.current.restartWithReview(); }); // rien à rejouer
 
     // La session reste inchangée
     expect(result.current.session.questions).toBe(originalQuestions);
@@ -157,7 +157,7 @@ describe('useQuiz – restartWithErrors', () => {
     act(() => { result.current.submitAnswer('__FAUX__'); }); // wrong
     const origChoices = (result.current.session.questions[0] as QcmQuestion).choices;
 
-    act(() => { result.current.restartWithErrors(); });
+    act(() => { result.current.restartWithReview(); });
 
     const retryChoices = (result.current.session.questions[0] as QcmQuestion).choices;
     expect(retryChoices).toHaveLength(origChoices.length);
@@ -167,13 +167,13 @@ describe('useQuiz – restartWithErrors', () => {
     );
   });
 
-  it('les flags correct/incorrect sont préservés après le mélange de restartWithErrors', () => {
+  it('les flags correct/incorrect sont préservés après le mélange de restartWithReview', () => {
     const { result } = renderHook(() => useQuiz(QCM_CONFIG));
 
     act(() => { result.current.submitAnswer('__FAUX__'); }); // wrong
     const origCorrectCode = (result.current.session.questions[0] as QcmQuestion).choices.find((c) => c.correct)!.code;
 
-    act(() => { result.current.restartWithErrors(); });
+    act(() => { result.current.restartWithReview(); });
 
     const retryChoices = (result.current.session.questions[0] as QcmQuestion).choices;
     const correctChoices = retryChoices.filter((c) => c.correct);

@@ -4,27 +4,13 @@ import { buildInitialSession } from '../quiz/generateQuestions';
 import type { QuizConfig, Question, SessionState, AnswerRecord } from '../quiz/types';
 import { isQcmQuestion } from '../quiz/types';
 
-/**
- * Hook principal gérant l'intégralité de l'état d'une session de quiz.
- *
- * @param config  Configuration choisie par l'utilisateur (modes, difficulté, longueur).
- *
- * @returns
- * - `session`           État courant de la session (questions, score, index, etc.)
- * - `submitAnswer`      Enregistre la réponse de l'utilisateur pour la question courante.
- *                       Sans effet si la question est déjà répondue ou la session terminée.
- * - `nextQuestion`      Avance à la question suivante (ou marque la session comme terminée).
- *                       Sans effet si aucune réponse n'a encore été soumise.
- * - `restart`           Génère une nouvelle session complète avec la même configuration.
- * - `restartWithErrors` Repart uniquement sur les questions mal répondues (mode révision),
- *                       les choix étant re-mélangés. Sans effet s'il n'y a pas d'erreurs.
- */
 export function useQuiz(config: QuizConfig): {
   session: SessionState;
   submitAnswer: (code: string) => void;
   nextQuestion: () => void;
   restart: () => void;
-  restartWithErrors: () => void;
+  restartWithReview: () => void;
+  toggleMarkCurrentForReview: () => void;
 } {
   const [session, setSession] = useState<SessionState>(() => buildInitialSession(config));
 
@@ -67,7 +53,21 @@ export function useQuiz(config: QuizConfig): {
     setSession(newSession);
   }, [config]);
 
-  const restartWithErrors = useCallback(() => {
+  const toggleMarkCurrentForReview = useCallback(() => {
+    setSession((prev) => {
+      if (prev.answerState === 'pending' || prev.finished) return prev;
+      const id = prev.questions[prev.currentIndex].id;
+      const already = prev.markedQuestionIds.includes(id);
+      return {
+        ...prev,
+        markedQuestionIds: already
+          ? prev.markedQuestionIds.filter((x) => x !== id)
+          : [...prev.markedQuestionIds, id],
+      };
+    });
+  }, []);
+
+  const restartWithReview = useCallback(() => {
     setSession((prev) => {
       const wrongQuestions = prev.answerHistory
         .filter((r) => !r.correct)
@@ -79,10 +79,21 @@ export function useQuiz(config: QuizConfig): {
           return { ...r.question, id };
         });
 
-      if (wrongQuestions.length === 0) return prev;
+      const markedQuestions = prev.questions
+        .filter((q) => prev.markedQuestionIds.includes(q.id))
+        .map((q, idx): Question => {
+          const id = `marked-${idx}-${q.targetCode}-${q.mode}`;
+          if (isQcmQuestion(q)) {
+            return { ...q, id, choices: shuffle([...q.choices]) };
+          }
+          return { ...q, id };
+        });
+
+      const reviewQuestions = [...wrongQuestions, ...markedQuestions];
+      if (reviewQuestions.length === 0) return prev;
 
       return {
-        questions: shuffle(wrongQuestions),
+        questions: shuffle(reviewQuestions),
         currentIndex: 0,
         score: 0,
         answerState: 'pending',
@@ -90,9 +101,10 @@ export function useQuiz(config: QuizConfig): {
         finished: false,
         answerHistory: [],
         isReview: true,
+        markedQuestionIds: [],
       };
     });
   }, []);
 
-  return { session, submitAnswer, nextQuestion, restart, restartWithErrors };
+  return { session, submitAnswer, nextQuestion, restart, restartWithReview, toggleMarkCurrentForReview };
 }
