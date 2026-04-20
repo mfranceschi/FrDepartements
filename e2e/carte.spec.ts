@@ -1,30 +1,38 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 /**
  * Tests E2E de la page Carte.
  * Couvre : chargement, recherche, sélecteur de couche, zoom.
  */
 test.describe('Carte interactive', () => {
-  test.beforeEach(async ({ page }) => {
+  test.describe.configure({ mode: 'serial' });
+
+  let page: Page;
+
+  test.beforeAll(async ({ browser }) => {
+    page = await browser.newPage();
     await page.goto('/carte');
-    // Attend que la carte SVG principale soit rendue (GeoJSON chargé, spinner disparu)
-    // svg.block = CarteFrance SVG, pas le spinner de chargement
+    // Premier chargement : attend le GeoJSON (lourd). Les tests suivants bénéficient
+    // du cache HTTP de ce contexte partagé.
     await expect(page.locator('svg.block')).toBeVisible({ timeout: 15_000 });
   });
 
-  test('affiche la carte SVG avec les départements', async ({ page }) => {
-    // Le groupe de couche des départements doit contenir des paths
+  test.afterAll(async () => {
+    await page.close();
+  });
+
+  test('affiche la carte SVG avec les départements', async () => {
     await expect(page.locator('.couche-depts path').first()).toBeVisible({ timeout: 10_000 });
   });
 
-  test('affiche les boutons de zoom', async ({ page }) => {
+  test('affiche les boutons de zoom', async () => {
     // exact:true évite que "Dézoomer" soit aussi matché par la recherche partielle "Zoomer"
     await expect(page.getByTitle('Zoomer', { exact: true })).toBeVisible();
     await expect(page.getByTitle('Dézoomer', { exact: true })).toBeVisible();
     await expect(page.getByTitle('Réinitialiser le zoom', { exact: true })).toBeVisible();
   });
 
-  test('peut zoomer via le bouton +', async ({ page }) => {
+  test('peut zoomer via le bouton +', async () => {
     const zoomInBtn = page.getByTitle('Zoomer', { exact: true });
     await zoomInBtn.click();
     await zoomInBtn.click();
@@ -32,18 +40,18 @@ test.describe('Carte interactive', () => {
     await expect(page.locator('svg.block')).toBeVisible();
   });
 
-  test('affiche le sélecteur de couche Départements / Régions', async ({ page }) => {
+  test('affiche le sélecteur de couche Départements / Régions', async () => {
     await expect(page.getByRole('button', { name: /départements/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /régions/i })).toBeVisible();
   });
 
-  test('bascule vers la couche Régions', async ({ page }) => {
+  test('bascule vers la couche Régions', async () => {
     await page.getByRole('button', { name: /régions/i }).click();
     // La couche régions doit apparaître
     await expect(page.locator('.couche-regions path').first()).toBeVisible({ timeout: 5_000 });
   });
 
-  test('la barre de recherche filtre les résultats', async ({ page }) => {
+  test('la barre de recherche filtre les résultats', async () => {
     // Sur desktop, c'est l'input de la sidebar (hidden lg:block) qui est visible
     const searchInput = page.getByPlaceholder(/rechercher|search/i).filter({ visible: true });
     await expect(searchInput).toBeVisible();
@@ -53,7 +61,7 @@ test.describe('Carte interactive', () => {
     await expect(page.getByText(/paris/i).filter({ visible: true }).first()).toBeVisible({ timeout: 3_000 });
   });
 
-  test('cliquer sur un résultat de recherche met à jour la sidebar', async ({ page }) => {
+  test('cliquer sur un résultat de recherche met à jour la sidebar', async () => {
     const searchInput = page.getByPlaceholder(/rechercher|search/i).filter({ visible: true });
     await searchInput.fill('Finistère');
 
@@ -65,7 +73,12 @@ test.describe('Carte interactive', () => {
     await expect(page.getByRole('heading', { name: /finistère/i })).toBeVisible();
   });
 
-  test('cliquer directement sur un path SVG de la couche depts met à jour la sidebar', async ({ page }) => {
+  test('cliquer directement sur un path SVG de la couche depts met à jour la sidebar', async () => {
+    // Reload pour retrouver un état propre (sidebar vide, couche depts active).
+    // Rapide car le GeoJSON est déjà dans le cache HTTP du contexte partagé.
+    await page.goto('/carte');
+    await expect(page.locator('svg.block')).toBeVisible({ timeout: 8_000 });
+
     // Vérifie que le message par défaut est présent avant le clic
     await expect(
       page.getByText(/cliquez sur un département/i),
@@ -81,11 +94,11 @@ test.describe('Carte interactive', () => {
     ).toBeVisible({ timeout: 5_000 });
   });
 
-  test('affiche le checkbox "Cours d\'eau" dans la toolbar', async ({ page }) => {
+  test('affiche le checkbox "Cours d\'eau" dans la toolbar', async () => {
     await expect(page.getByLabel(/cours d'eau/i)).toBeVisible();
   });
 
-  test('cliquer sur un path SVG de la couche régions met à jour la sidebar', async ({ page }) => {
+  test('cliquer sur un path SVG de la couche régions met à jour la sidebar', async () => {
     // Bascule vers la couche régions
     await page.getByRole('button', { name: /régions/i }).click();
     await expect(page.locator('.couche-regions path').first()).toBeVisible({ timeout: 5_000 });
@@ -102,24 +115,32 @@ test.describe('Carte interactive', () => {
 
 // Describe séparé : le hook charge le vrai fleuves.json depuis public/ (lent en Playwright,
 // ~20s à cause du stream CDP) — test.slow() triple le timeout à 90s.
+// Les deux tests partagent la même page (serial) : fleuves.json n'est chargé qu'une seule fois.
 test.describe('Carte interactive – couche fleuves', () => {
-  test.beforeEach(async ({ page }) => {
+  test.describe.configure({ mode: 'serial' });
+
+  let page: Page;
+
+  test.beforeAll(async ({ browser }) => {
+    page = await browser.newPage();
     await page.goto('/carte');
     await expect(page.locator('svg.block')).toBeVisible({ timeout: 15_000 });
   });
 
-  test('cocher "Cours d\'eau" charge et affiche les paths de fleuves', async ({ page }) => {
+  test.afterAll(async () => {
+    await page.close();
+  });
+
+  test('cocher "Cours d\'eau" charge et affiche les paths de fleuves', async () => {
     test.slow();
     await page.getByLabel(/cours d'eau/i).check();
     await expect(page.locator('.couche-fleuves path').first()).toBeVisible({ timeout: 50_000 });
   });
 
-  test('survoler un fleuve affiche un tooltip avec son nom', async ({ page }) => {
-    test.slow();
-    await page.getByLabel(/cours d'eau/i).check();
-
+  test('survoler un fleuve affiche un tooltip avec son nom', async () => {
+    // Les fleuves sont déjà chargés par le test précédent (contexte partagé).
     const hitPath = page.locator('.couche-fleuves path[stroke="transparent"]').first();
-    await expect(hitPath).toBeAttached({ timeout: 50_000 });
+    await expect(hitPath).toBeAttached({ timeout: 5_000 });
 
     await hitPath.hover({ force: true });
 

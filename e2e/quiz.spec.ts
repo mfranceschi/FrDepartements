@@ -155,24 +155,21 @@ test.describe('Quiz – parcours complet', () => {
  * - Enregistrement du résultat (correct / incorrect) pour chaque question
  * - Vérification finale que **le score affiché est cohérent** avec les réponses
  *   données : pourcentage = Math.round(corrects / total × 100)
- * - Vérification que les **catégories** dans le récapitulatif correspondent
- *   aux types de questions rencontrés
- * - Vérification que le bouton « Revoir mes erreurs (N) » reflète exactement
+ * - Vérification que le bouton « Réviser (N) » reflète exactement
  *   le nombre d'erreurs comptabilisé pendant le quiz
  */
 test.describe('Quiz entier – score et évaluations cohérents', () => {
-  // Timeout généreux : délai "Mémorisez…" (1.5 s) × jusqu'à 5 questions carte
-  // + chargement GeoJSON + délais réseau CI
+  // Timeout généreux : 10 interactions Playwright + chargement GeoJSON initial + délais réseau CI
   test.setTimeout(90_000);
 
   test('complète 10 questions et vérifie la cohérence du score final', async ({ page }) => {
     await page.goto('/quiz');
 
     // ── 1. Configuration ────────────────────────────────────────────────────
-    // Sujet par défaut (depts-carte), on sélectionne 10 questions
-    await page.getByRole('button', { name: '10' }).click();
+    // Sujet par défaut (depts-carte), on sélectionne 5 questions
+    await page.getByRole('button', { name: '10', exact: true }).click();
     // Vérification visuelle : le bouton 10 doit être actif (fond bleu)
-    await expect(page.getByRole('button', { name: '10' })).toHaveClass(/bg-blue-600/);
+    await expect(page.getByRole('button', { name: '10', exact: true })).toHaveClass(/bg-blue-600/);
 
     await page.getByRole('button', { name: 'Commencer' }).click();
 
@@ -203,12 +200,9 @@ test.describe('Quiz entier – score et évaluations cohérents', () => {
         page.locator('span.text-2xl.tabular-nums'),
       ).toContainText(String(liveScore), { timeout: 3_000 });
 
-      // Avancer vers la question suivante.
-      // Pour les questions carte, le bouton reste désactivé ("Mémorisez…")
-      // pendant 1.5 s — toBeEnabled() attend automatiquement qu'il redevienne cliquable.
       const btnLabel = q === 10 ? 'Voir le résultat' : 'Question suivante';
       const nextBtn = page.getByRole('button', { name: btnLabel });
-      await expect(nextBtn).toBeEnabled({ timeout: 5_000 });
+      await expect(nextBtn).toBeVisible({ timeout: 5_000 });
       await nextBtn.click();
     }
 
