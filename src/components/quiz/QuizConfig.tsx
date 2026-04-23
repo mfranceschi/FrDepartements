@@ -6,6 +6,7 @@ import type { SessionResult } from '../../storage/useQuizHistory';
 import { ZONES, ZONES_BY_CODE } from '../../data/zones';
 import type { ZoneCode } from '../../data/zones';
 import { DEPARTEMENTS } from '../../data/departements';
+import { REGIONS } from '../../data/regions';
 
 interface QuizConfigProps {
   onStart: (config: QuizConfig) => void;
@@ -70,6 +71,11 @@ const SUJETS_BY_KEY: Record<QuizSujet, SujetOption> = Object.fromEntries(
 
 const SESSION_LENGTHS: SessionLength[] = [10, 25, 50, 'tout'];
 
+const DIFFICULTY_DESCRIPTIONS: Record<Difficulty, string> = {
+  facile:    'Mauvaises réponses géographiquement éloignées',
+  difficile: 'Mauvaises réponses géographiquement proches',
+};
+
 export default function QuizConfig({ onStart }: QuizConfigProps) {
   const [config, updateConfig] = useQuizConfig();
   const { sujet, difficulty, sessionLength, adaptative, zoneCode } = config;
@@ -97,6 +103,26 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
     const zoneRegions = new Set(zone.regionCodes);
     return DEPARTEMENTS.filter((d) => zoneRegions.has(d.regionCode)).map((d) => d.code);
   }, [selectedOption.hasZone, zoneCode]);
+
+  // Taille du pool selon la zone sélectionnée (ou la totalité si pas de zone)
+  const availableCount = useMemo(() => {
+    if (filterCodes !== undefined) return filterCodes.length;
+    if (selectedOption.hasZone) return DEPARTEMENTS.length;
+    return REGIONS.length;
+  }, [filterCodes, selectedOption.hasZone]);
+
+  // Nombre réel de questions qui seront générées
+  const effectiveCount = useMemo(() => {
+    if (!selectedOption.hasSessionLength) return availableCount;
+    if (sessionLength === 'tout') return availableCount;
+    return Math.min(sessionLength, availableCount);
+  }, [selectedOption.hasSessionLength, sessionLength, availableCount]);
+
+  const zoneCapExceeded =
+    selectedOption.hasZone &&
+    zoneCode !== 'tout' &&
+    sessionLength !== 'tout' &&
+    (sessionLength as number) > availableCount;
 
   const handleStart = () => {
     onStart({
@@ -161,22 +187,25 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
       {selectedOption.hasDifficulty && (
         <section className="mb-6">
           <h2 className="text-base font-medium mb-3">Niveau de difficulté</h2>
-          <div className="flex gap-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:gap-8">
             {(['facile', 'difficile'] as Difficulty[]).map((d) => (
-              <label key={d} className="flex items-center gap-2 cursor-pointer select-none">
+              <label key={d} className="flex items-start gap-2 cursor-pointer select-none">
                 <input
                   type="radio"
                   name="difficulty"
                   value={d}
+                  aria-label={d}
                   checked={difficulty === d}
                   onChange={() => setDifficulty(d)}
-                  className="accent-blue-600"
+                  className="accent-blue-600 mt-0.5"
                 />
-                <span className="text-sm capitalize">{d}</span>
+                <div>
+                  <p className="text-sm capitalize">{d}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{DIFFICULTY_DESCRIPTIONS[d]}</p>
+                </div>
               </label>
             ))}
           </div>
-          <p className="text-xs text-gray-500 mt-2">Difficile : les mauvaises réponses sont géographiquement proches de la bonne</p>
         </section>
       )}
 
@@ -208,7 +237,7 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
 
       {/* Nombre de questions — masqué pour les sujets régions (toujours "tout") */}
       {selectedOption.hasSessionLength && (
-        <section className="mb-8">
+        <section className="mb-6">
           <h2 className="text-base font-medium mb-3">Nombre de questions</h2>
           <div className="flex gap-3">
             {SESSION_LENGTHS.map((len) => (
@@ -226,11 +255,16 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
               </button>
             ))}
           </div>
+          {zoneCapExceeded && (
+            <p className="text-xs text-amber-600 mt-2">
+              Cette zone contient {availableCount} départements — la session sera limitée à {availableCount} questions.
+            </p>
+          )}
         </section>
       )}
 
       {/* Mode adaptatif */}
-      <section className="mb-8">
+      <section className="mb-6">
         <label className="flex items-start gap-3 cursor-pointer select-none">
           <input
             type="checkbox"
@@ -245,14 +279,22 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
         </label>
       </section>
 
-      {/* Bouton Commencer */}
-      <button
-        type="button"
-        onClick={handleStart}
-        className="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
-      >
-        Commencer
-      </button>
+      {/* Résumé + bouton Commencer */}
+      <div className="mt-8">
+        <p className="text-sm text-gray-400 text-center mb-3">
+          {effectiveCount} question{effectiveCount !== 1 ? 's' : ''}
+          {selectedOption.hasDifficulty && ` · ${difficulty}`}
+          {selectedOption.hasZone && zoneCode !== 'tout' && ` · ${ZONES_BY_CODE[zoneCode].label}`}
+          {adaptative && ' · points faibles en priorité'}
+        </p>
+        <button
+          type="button"
+          onClick={handleStart}
+          className="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Commencer
+        </button>
+      </div>
     </div>
   );
 }

@@ -59,6 +59,11 @@ export default function CartePage() {
     setShowResults(false);
   }, []);
 
+  const handleInfoDeptClick = useCallback((code: string) => {
+    setSelectedTerritory({ code, type: 'departement' });
+    setFocusTarget((prev) => ({ code, type: 'departement', seq: (prev?.seq ?? 0) + 1 }));
+  }, []);
+
   const handleSearchSelect = useCallback((result: SearchResult) => {
     if (result.type === 'fleuve') {
       setSelectedFleuve(result.code);
@@ -148,7 +153,7 @@ export default function CartePage() {
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
             Informations
           </h3>
-          <InfoPanel selectedTerritory={selectedTerritory} selectedFleuve={selectedFleuve} />
+          <InfoPanel selectedTerritory={selectedTerritory} selectedFleuve={selectedFleuve} onDeptClick={handleInfoDeptClick} />
         </div>
       </aside>
     </main>

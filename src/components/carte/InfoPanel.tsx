@@ -119,7 +119,7 @@ function TerritoryPanel({ selected }: { selected: SelectedTerritory }) {
   );
 }
 
-function FleuvePanel({ name }: { name: string }) {
+function FleuvePanel({ name, onDeptClick }: { name: string; onDeptClick?: (code: string) => void }) {
   const entry = FLEUVES_DEPTS[name];
   const showDepts = entry && entry.scalerank <= FLEUVE_SCALERANK_THRESHOLD;
   return (
@@ -136,9 +136,22 @@ function FleuvePanel({ name }: { name: string }) {
             {entry.depts.map((code) => {
               const dept = DEPT_MAP.get(code);
               return (
-                <li key={code} className="text-sm flex items-center gap-1.5">
-                  <span className="font-mono text-xs text-gray-400 w-5 shrink-0">{code}</span>
-                  <span className="text-gray-700">{dept?.nom ?? code}</span>
+                <li key={code}>
+                  {onDeptClick ? (
+                    <button
+                      type="button"
+                      onClick={() => onDeptClick(code)}
+                      className="text-sm flex items-center gap-1.5 w-full text-left rounded px-1 -mx-1 hover:bg-blue-50 transition-colors group"
+                    >
+                      <span className="font-mono text-xs text-gray-400 w-5 shrink-0 group-hover:text-blue-500">{code}</span>
+                      <span className="text-gray-700 group-hover:text-blue-700">{dept?.nom ?? code}</span>
+                    </button>
+                  ) : (
+                    <span className="text-sm flex items-center gap-1.5">
+                      <span className="font-mono text-xs text-gray-400 w-5 shrink-0">{code}</span>
+                      <span className="text-gray-700">{dept?.nom ?? code}</span>
+                    </span>
+                  )}
                 </li>
               );
             })}
@@ -152,14 +165,15 @@ function FleuvePanel({ name }: { name: string }) {
 export interface InfoPanelProps {
   selectedTerritory: SelectedTerritory | null;
   selectedFleuve: string | null;
+  onDeptClick?: (code: string) => void;
 }
 
-export default function InfoPanel({ selectedTerritory, selectedFleuve }: InfoPanelProps) {
+export default function InfoPanel({ selectedTerritory, selectedFleuve, onDeptClick }: InfoPanelProps) {
   if (!selectedTerritory && !selectedFleuve) return <EmptyPanel />;
 
   return (
     <div className="space-y-4">
-      {selectedFleuve && <FleuvePanel name={selectedFleuve} />}
+      {selectedFleuve && <FleuvePanel name={selectedFleuve} onDeptClick={onDeptClick} />}
       {selectedFleuve && selectedTerritory && (
         <hr className="border-gray-200" />
       )}

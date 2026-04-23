@@ -57,14 +57,13 @@ export default memo(function CoucheRegions({
     [features, pathGen],
   );
 
-  if (!visible) return null;
-
-  return (
-    <g className="couche-regions">
-      {paths.map(({ feature, d, code, nom }) => {
-        if (!d) return null;
-
-        if (borderOnly) {
+  // Contours seuls : pas de transition, null quand invisible
+  if (borderOnly) {
+    if (!visible) return null;
+    return (
+      <g className="couche-regions">
+        {paths.map(({ d, code }) => {
+          if (!d) return null;
           return (
             <path
               key={code ?? d}
@@ -75,20 +74,33 @@ export default memo(function CoucheRegions({
               style={{ pointerEvents: 'none' }}
             />
           );
-        }
+        })}
+      </g>
+    );
+  }
+
+  return (
+    <g
+      className="couche-regions"
+      style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 200ms ease' }}
+    >
+      {paths.map(({ feature, d, code, nom }) => {
+        if (!d) return null;
 
         const isHighlighted = code !== undefined && code === highlightCode;
         const isWrong = code !== undefined && code === wrongCode;
         const isHovered = code !== undefined && code === hoveredCode;
         const isQuizHighlighted = quizMode && isHighlighted;
 
-        const fill = isHighlighted
-          ? 'white'
-          : isWrong ? 'white'
-          : (!quizMode && isHovered) ? 'white'
-          : '#e8f4e8';
-        const stroke = resolveStroke(isQuizHighlighted, isWrong, highlightVariant, BASE_STROKE);
-        const strokeWidth = (isQuizHighlighted || isWrong) ? STROKE_WIDTH_ACTIVE : 1;
+        // Hover exprimé via un ring (stroke), fill inchangé — distinct du blanc de la sélection
+        const hoverRing = isHovered && !quizMode && !isHighlighted && !isWrong;
+        const fill = isHighlighted ? 'white' : isWrong ? 'white' : '#e8f4e8';
+        const stroke = hoverRing
+          ? '#15803d'
+          : resolveStroke(isQuizHighlighted, isWrong, highlightVariant, BASE_STROKE);
+        const strokeWidth = hoverRing
+          ? 2
+          : (isQuizHighlighted || isWrong) ? STROKE_WIDTH_ACTIVE : 1;
 
         return (
           <path
@@ -98,7 +110,7 @@ export default memo(function CoucheRegions({
             fill={fill}
             stroke={stroke}
             strokeWidth={strokeWidth}
-            style={{ cursor: onClick ? 'pointer' : 'default' }}
+            style={{ cursor: onClick ? 'pointer' : 'default', transition: 'fill 120ms ease, stroke 120ms ease' }}
             onMouseEnter={(e) => {
               setHoveredCode(code ?? null);
               if (!quizMode) onHover(feature, e.clientX, e.clientY);
@@ -109,7 +121,7 @@ export default memo(function CoucheRegions({
           />
         );
       })}
-      {!borderOnly && !quizMode && showLabels && paths.map(({ code, nom, centroid, minDim }) => {
+      {!quizMode && showLabels && visible && paths.map(({ code, nom, centroid, minDim }) => {
         if ((minDim * zoomK) < SEUIL_LABEL_REGION) return null;
         if (!isValidCentroid(centroid)) return null;
         const [cx, cy] = centroid;

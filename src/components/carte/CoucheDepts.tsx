@@ -62,10 +62,19 @@ export default memo(function CoucheDepts({
     [features, pathGen],
   );
 
-  if (!visible) return null;
+  // L'instance labels-only sort en null quand invisible — pas de transition nécessaire.
+  // L'instance fills reste dans le DOM avec opacity pour la transition de couche.
+  if (!showFills && !visible) return null;
 
   return (
-    <g className="couche-depts">
+    <g
+      className="couche-depts"
+      style={
+        showFills
+          ? { opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 200ms ease' }
+          : undefined
+      }
+    >
       {showFills && paths.map(({ feature, d, code, nom }) => {
         if (!d) return null;
         const isHighlighted = code !== undefined && code === highlightCode;
@@ -74,9 +83,16 @@ export default memo(function CoucheDepts({
         const isTraversed = !isHighlighted && !isWrong && !isHovered && code !== undefined && (traversedCodes?.includes(code) ?? false);
         const baseFill = code ? (colorMap.get(code) ?? '#dbeafe') : '#dbeafe';
         const isQuizHighlighted = quizMode && isHighlighted;
-        const fill = (isHighlighted || isWrong || isHovered) ? 'white' : isTraversed ? '#bfdbfe' : baseFill;
-        const stroke = resolveStroke(isQuizHighlighted, isWrong, highlightVariant, isTraversed ? '#3b82f6' : '#475569');
-        const strokeWidth = (isQuizHighlighted || isWrong) ? STROKE_WIDTH_ACTIVE : isTraversed ? 1 : 0.5;
+
+        // Hover exprimé via un ring (stroke), fill inchangé — distinct du blanc de la sélection
+        const hoverRing = isHovered && !quizMode && !isHighlighted && !isWrong;
+        const fill = (isHighlighted || isWrong) ? 'white' : isTraversed ? '#bfdbfe' : baseFill;
+        const stroke = hoverRing
+          ? '#2563eb'
+          : resolveStroke(isQuizHighlighted, isWrong, highlightVariant, isTraversed ? '#3b82f6' : '#475569');
+        const strokeWidth = hoverRing
+          ? 2
+          : (isQuizHighlighted || isWrong) ? STROKE_WIDTH_ACTIVE : isTraversed ? 1 : 0.5;
 
         return (
           <path
@@ -86,7 +102,7 @@ export default memo(function CoucheDepts({
             fill={fill}
             stroke={stroke}
             strokeWidth={strokeWidth}
-            style={{ cursor: onClick ? 'pointer' : 'default' }}
+            style={{ cursor: onClick ? 'pointer' : 'default', transition: 'fill 120ms ease, stroke 120ms ease' }}
             onMouseEnter={(e) => {
               setHoveredCode(code ?? null);
               if (!quizMode) onHover(feature, e.clientX, e.clientY);
@@ -97,7 +113,7 @@ export default memo(function CoucheDepts({
           />
         );
       })}
-      {!quizMode && showLabels && paths.map(({ code, nom, centroid, minDim }) => {
+      {!quizMode && showLabels && visible && paths.map(({ code, nom, centroid, minDim }) => {
         const effective = minDim * zoomK;
         if (effective < SEUIL_CODE) return null;
         const showName = effective >= SEUIL_NOM;

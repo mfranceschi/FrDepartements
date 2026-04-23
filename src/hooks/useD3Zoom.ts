@@ -11,6 +11,9 @@ const FOCUS_SVG_H = 700;
 const FOCUS_SCALE = 4;
 const ZOOM_STEP = 1.5;
 
+export const ZOOM_MIN = 0.5;
+export const ZOOM_MAX = 8;
+
 const DEFAULT_ZOOM = zoomIdentity;
 
 interface UseD3ZoomOptions {
@@ -54,7 +57,7 @@ export function useD3Zoom({
   useEffect(() => {
     if (!svgRef.current) return;
     const zoomBehavior = d3zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.5, 8])
+      .scaleExtent([ZOOM_MIN, ZOOM_MAX])
       .on('zoom', (event: D3ZoomEvent<SVGSVGElement, unknown>) => {
         const { x, y, k } = event.transform;
         // Mise à jour DOM directe : zéro re-render React pendant le pan

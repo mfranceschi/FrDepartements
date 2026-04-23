@@ -14,9 +14,15 @@ export function useTooltip(): UseTooltipReturn {
     const el = tooltipRef.current;
     if (!el) return;
     el.textContent = text;
-    el.style.left = `${x + 12}px`;
-    el.style.top = `${y - 30}px`;
     el.style.display = 'block';
+    // Lire la taille après display:block pour contraindre au viewport
+    const { width, height } = el.getBoundingClientRect();
+    const left = Math.min(x + 12, window.innerWidth - width - 8);
+    const top = Math.max(y - 30, 8);
+    // Évite aussi de dépasser en bas
+    const clampedTop = Math.min(top, window.innerHeight - height - 8);
+    el.style.left = `${left}px`;
+    el.style.top = `${clampedTop}px`;
   }, []);
 
   const hideTooltip = useCallback(() => {

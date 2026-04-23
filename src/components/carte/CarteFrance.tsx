@@ -10,7 +10,7 @@ import CouchePrefectures from './CouchePrefectures';
 import CoucheFleuves from './CoucheFleuves';
 import { useFleuveData } from '../../hooks/useFleuveData';
 import { useTooltip } from '../../hooks/useTooltip';
-import { useD3Zoom } from '../../hooks/useD3Zoom';
+import { useD3Zoom, ZOOM_MIN, ZOOM_MAX } from '../../hooks/useD3Zoom';
 
 export interface CarteFranceProps {
   features: {
@@ -168,13 +168,20 @@ export default memo(function CarteFrance({
   const wrongRegionCode = !wrongType || wrongType === 'region' ? wrongCode : undefined;
 
   // Contrôles de zoom — partagés entre toolbar (non-quiz) et overlay absolu (quiz)
+  const atMin = zoomK <= ZOOM_MIN;
+  const atMax = zoomK >= ZOOM_MAX;
+
   const zoomControls = useMemo(() => (
     <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
       <button
         type="button"
         onClick={handleZoomIn}
         title="Zoomer"
-        className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:shadow-sm text-base font-bold transition-colors"
+        disabled={atMax}
+        className={[
+          'w-7 h-7 flex items-center justify-center rounded-md text-base font-bold transition-colors',
+          atMax ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-white hover:shadow-sm',
+        ].join(' ')}
       >
         +
       </button>
@@ -182,7 +189,11 @@ export default memo(function CarteFrance({
         type="button"
         onClick={handleZoomOut}
         title="Dézoomer"
-        className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:shadow-sm text-base font-bold transition-colors"
+        disabled={atMin}
+        className={[
+          'w-7 h-7 flex items-center justify-center rounded-md text-base font-bold transition-colors',
+          atMin ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-white hover:shadow-sm',
+        ].join(' ')}
       >
         −
       </button>
@@ -198,7 +209,7 @@ export default memo(function CarteFrance({
         ↺
       </button>
     </div>
-  ), [handleZoomIn, handleZoomOut, handleZoomReset, zoomK]);
+  ), [handleZoomIn, handleZoomOut, handleZoomReset, zoomK, atMin, atMax]);
 
   return (
     <div className="relative w-full h-full flex flex-col" style={{ minHeight: '480px' }}>
