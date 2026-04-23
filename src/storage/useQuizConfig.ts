@@ -20,11 +20,13 @@ const DEFAULT: StoredQuizConfig = {
 };
 
 export function useQuizConfig() {
-  const [config, setConfig] = useLocalStorage<StoredQuizConfig>('frdepts.quizConfig', DEFAULT);
+  const [rawConfig, setConfig] = useLocalStorage<StoredQuizConfig>('frdepts.quizConfig', DEFAULT);
+  // Merge with DEFAULT so that fields added after the first save (schema evolution) always have a value.
+  const config: StoredQuizConfig = { ...DEFAULT, ...rawConfig };
 
   const update = useCallback(
     (partial: Partial<StoredQuizConfig>) => {
-      setConfig(prev => ({ ...prev, ...partial }));
+      setConfig(prev => ({ ...DEFAULT, ...prev, ...partial }));
     },
     [setConfig],
   );

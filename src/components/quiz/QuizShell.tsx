@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { SessionState, QuizMode, QuestionProps } from '../../quiz/types';
 import { isQcmQuestion } from '../../quiz/types';
 import { QCM_MODES } from '../../quiz/generateQuestions';
@@ -28,6 +28,7 @@ interface QuizShellProps {
   onRestart: () => void;
   onReview: () => void;
   onMarkReview: () => void;
+  onReset: () => void;
 }
 
 export default function QuizShell({
@@ -37,12 +38,15 @@ export default function QuizShell({
   onRestart,
   onReview,
   onMarkReview,
+  onReset,
 }: QuizShellProps) {
   const { questions, currentIndex, score, answerState, selectedCode, finished, answerHistory, isReview, markedQuestionIds } = session;
   const total = questions.length;
   const answered = answerState !== 'pending';
   const answeredCount = currentIndex + (answered ? 1 : 0);
   const liveRatio = answeredCount > 0 ? score / answeredCount : 1;
+
+  const [confirmReset, setConfirmReset] = useState(false);
 
   const streak = useMemo(() => {
     let count = 0;
@@ -146,6 +150,34 @@ export default function QuizShell({
               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-300">
                 Révision
               </span>
+            )}
+            {confirmReset ? (
+              <span className="flex items-center gap-1.5">
+                <span className="text-xs text-gray-500">Recommencer&nbsp;?</span>
+                <button
+                  type="button"
+                  onClick={() => { setConfirmReset(false); onReset(); }}
+                  className="text-xs px-2 py-0.5 rounded bg-red-100 text-red-600 hover:bg-red-200 font-medium transition-colors"
+                >
+                  Oui
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmReset(false)}
+                  className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 font-medium transition-colors"
+                >
+                  Annuler
+                </button>
+              </span>
+            ) : (
+              <button
+                type="button"
+                title="Recommencer"
+                onClick={() => setConfirmReset(true)}
+                className="text-gray-400 hover:text-gray-600 p-0.5 rounded transition-colors leading-none"
+              >
+                ↺
+              </button>
             )}
           </div>
           <div className="flex items-center gap-2">
