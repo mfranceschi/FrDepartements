@@ -3,6 +3,9 @@ import type { QuizConfig, QuizSujet, Difficulty, SessionLength } from '../../qui
 import { useQuizConfig } from '../../storage/useQuizConfig';
 import { useQuizHistory, relativeTime } from '../../storage/useQuizHistory';
 import type { SessionResult } from '../../storage/useQuizHistory';
+import { ZONES, ZONES_BY_CODE } from '../../data/zones';
+import type { ZoneCode } from '../../data/zones';
+import { DEPARTEMENTS } from '../../data/departements';
 
 interface QuizConfigProps {
   onStart: (config: QuizConfig) => void;
@@ -14,6 +17,7 @@ interface SujetOption {
   description: string;
   hasDifficulty: boolean;
   hasSessionLength: boolean;
+  hasZone: boolean;
 }
 
 const SUJETS: SujetOption[] = [
@@ -23,6 +27,7 @@ const SUJETS: SujetOption[] = [
     description: 'Retrouver les régions sur la carte de France',
     hasDifficulty: true,
     hasSessionLength: false,
+    hasZone: false,
   },
   {
     sujet: 'depts-carte',
@@ -30,6 +35,7 @@ const SUJETS: SujetOption[] = [
     description: 'Retrouver les départements sur la carte de France',
     hasDifficulty: true,
     hasSessionLength: true,
+    hasZone: true,
   },
   {
     sujet: 'depts-numeros',
@@ -37,6 +43,7 @@ const SUJETS: SujetOption[] = [
     description: 'Associer les départements à leur numéro',
     hasDifficulty: true,
     hasSessionLength: true,
+    hasZone: true,
   },
   {
     sujet: 'depts-prefectures',
@@ -44,6 +51,7 @@ const SUJETS: SujetOption[] = [
     description: 'Retrouver la préfecture de chaque département',
     hasDifficulty: true,
     hasSessionLength: true,
+    hasZone: true,
   },
   {
     sujet: 'regions-prefectures',
@@ -51,6 +59,7 @@ const SUJETS: SujetOption[] = [
     description: 'Retrouver la préfecture de chaque région',
     hasDifficulty: true,
     hasSessionLength: false,
+    hasZone: false,
   },
 ];
 
@@ -63,12 +72,13 @@ const SESSION_LENGTHS: SessionLength[] = [10, 25, 50, 'tout'];
 
 export default function QuizConfig({ onStart }: QuizConfigProps) {
   const [config, updateConfig] = useQuizConfig();
-  const { sujet, difficulty, sessionLength, adaptative } = config;
+  const { sujet, difficulty, sessionLength, adaptative, zoneCode } = config;
 
   const setSujet = (s: QuizSujet) => updateConfig({ sujet: s });
   const setDifficulty = (d: Difficulty) => updateConfig({ difficulty: d });
   const setSessionLength = (l: SessionLength) => updateConfig({ sessionLength: l });
   const setAdaptative = (v: boolean) => updateConfig({ adaptative: v });
+  const setZoneCode = (z: ZoneCode) => updateConfig({ zoneCode: z });
 
   const [sessions] = useQuizHistory();
   const lastSessionBySujet = useMemo(() => {
@@ -81,12 +91,20 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
 
   const selectedOption = SUJETS_BY_KEY[sujet];
 
+  const filterCodes = useMemo(() => {
+    if (!selectedOption.hasZone || zoneCode === 'tout') return undefined;
+    const zone = ZONES_BY_CODE[zoneCode];
+    const zoneRegions = new Set(zone.regionCodes);
+    return DEPARTEMENTS.filter((d) => zoneRegions.has(d.regionCode)).map((d) => d.code);
+  }, [selectedOption.hasZone, zoneCode]);
+
   const handleStart = () => {
     onStart({
       sujet,
       difficulty,
       sessionLength: selectedOption.hasSessionLength ? sessionLength : 'tout',
       adaptative,
+      filterCodes,
     });
   };
 
@@ -159,6 +177,32 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
             ))}
           </div>
           <p className="text-xs text-gray-500 mt-2">Difficile : les mauvaises réponses sont géographiquement proches de la bonne</p>
+        </section>
+      )}
+
+      {/* Zone géographique — sujets depts uniquement */}
+      {selectedOption.hasZone && (
+        <section className="mb-6">
+          <h2 className="text-base font-medium mb-3">Zone géographique</h2>
+          <div className="flex flex-wrap gap-2">
+            {ZONES.map((zone) => (
+              <button
+                key={zone.code}
+                type="button"
+                onClick={() => setZoneCode(zone.code)}
+                className={`px-4 py-2 rounded text-sm font-medium border transition-colors ${
+                  zoneCode === zone.code
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
+                }`}
+              >
+                {zone.label}
+              </button>
+            ))}
+          </div>
+          {zoneCode !== 'tout' && (
+            <p className="text-xs text-gray-500 mt-2">{ZONES_BY_CODE[zoneCode].description}</p>
+          )}
         </section>
       )}
 

@@ -1,3 +1,5 @@
+import type { ZoneCode } from '../data/zones';
+
 export type QuizSujet =
   | 'regions-carte'
   | 'depts-carte'
@@ -27,6 +29,8 @@ export interface QuizConfig {
   sessionLength: SessionLength;
   /** Restreint la session aux codes cibles listés (depts ou régions selon le sujet). */
   filterCodes?: string[];
+  /** Zone géographique sélectionnée dans la config (sujets depts uniquement). */
+  zoneCode?: ZoneCode;
   /** Favorise les items souvent ratés lors de la sélection des questions. */
   adaptative?: boolean;
 }
