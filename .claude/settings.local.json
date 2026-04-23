@@ -26,7 +26,7 @@
       "Bash(gh run watch *)",
       "Bash(gh run view *)",
       "Bash(node scripts/compute-fleuves-depts.mjs)",
-      "Bash(git commit -m ' *)",
+      "Bash(git commit -m *)",
       "Bash(npm ls *)"
     ]
   },
