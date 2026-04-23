@@ -1,6 +1,6 @@
 import { memo, useMemo, useState } from 'react';
 import type { Feature } from 'geojson';
-import { type D3PathGen, resolveStroke, STROKE_WIDTH_ACTIVE } from './featureStyle';
+import { type D3PathGen, isValidCentroid, resolveStroke, STROKE_WIDTH_ACTIVE } from './featureStyle';
 
 interface CoucheRegionsProps {
   features: Feature[];
@@ -14,7 +14,11 @@ interface CoucheRegionsProps {
   wrongCode?: string;
   onHover: (feature: Feature | null, x: number, y: number) => void;
   onClick?: (code: string) => void;
+  showLabels?: boolean;
+  zoomK?: number;
 }
+
+const SEUIL_LABEL_REGION = 50;
 
 const BASE_STROKE = '#6aaa6a';
 
@@ -29,19 +33,25 @@ export default memo(function CoucheRegions({
   wrongCode,
   onHover,
   onClick,
+  showLabels = false,
+  zoomK = 1,
 }: CoucheRegionsProps) {
   const [hoveredCode, setHoveredCode] = useState<string | null>(null);
 
-  // Calcul des paths une seule fois (ou quand features/pathGen changent)
   const paths = useMemo(
     () => features.map((f) => {
       const rawCode = f.properties?.code;
       const rawNom = f.properties?.nom;
+      const centroid = pathGen.centroid(f);
+      const [[x0, y0], [x1, y1]] = pathGen.bounds(f);
+      const minDim = Math.min(x1 - x0, y1 - y0);
       return {
         feature: f,
         d: pathGen(f),
         code: typeof rawCode === 'string' ? rawCode : undefined,
         nom: typeof rawNom === 'string' ? rawNom : undefined,
+        centroid,
+        minDim,
       };
     }),
     [features, pathGen],
@@ -97,6 +107,29 @@ export default memo(function CoucheRegions({
             onMouseLeave={() => { setHoveredCode(null); onHover(null, 0, 0); }}
             onClick={() => { if (onClick && code) onClick(code); }}
           />
+        );
+      })}
+      {!borderOnly && !quizMode && showLabels && paths.map(({ code, nom, centroid, minDim }) => {
+        if ((minDim * zoomK) < SEUIL_LABEL_REGION) return null;
+        if (!isValidCentroid(centroid)) return null;
+        const [cx, cy] = centroid;
+        const fs = 14 / zoomK;
+        return (
+          <text key={`label-${code}`} textAnchor="middle" style={{ userSelect: 'none', pointerEvents: 'none' }}>
+            <tspan
+              x={cx}
+              y={cy}
+              dominantBaseline="middle"
+              fontSize={fs}
+              fontWeight="bold"
+              fill="#1e3a5f"
+              stroke="white"
+              strokeWidth={fs * 0.25}
+              paintOrder="stroke"
+            >
+              {nom}
+            </tspan>
+          </text>
         );
       })}
     </g>

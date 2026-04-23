@@ -224,28 +224,24 @@ export default memo(function CarteFrance({
             ))}
           </div>
 
-          {activeLayer === 'departements' && (
-            <>
-              <label className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer select-none transition-colors bg-gray-100 hover:bg-gray-200 text-gray-700">
-                <input
-                  type="checkbox"
-                  checked={showLabels}
-                  onChange={() => setShowLabels((v) => !v)}
-                  className="w-4 h-4 accent-blue-600 cursor-pointer"
-                />
-                Noms
-              </label>
-              <label className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer select-none transition-colors bg-gray-100 hover:bg-gray-200 text-gray-700">
-                <input
-                  type="checkbox"
-                  checked={showPrefectures}
-                  onChange={() => setShowPrefectures(!showPrefectures)}
-                  className="w-4 h-4 accent-blue-600 cursor-pointer"
-                />
-                Préfectures
-              </label>
-            </>
-          )}
+          <label className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer select-none transition-colors bg-gray-100 hover:bg-gray-200 text-gray-700">
+            <input
+              type="checkbox"
+              checked={showLabels}
+              onChange={() => setShowLabels((v) => !v)}
+              className="w-4 h-4 accent-blue-600 cursor-pointer"
+            />
+            Noms
+          </label>
+          <label className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer select-none transition-colors bg-gray-100 hover:bg-gray-200 text-gray-700">
+            <input
+              type="checkbox"
+              checked={showPrefectures}
+              onChange={() => setShowPrefectures(!showPrefectures)}
+              className="w-4 h-4 accent-blue-600 cursor-pointer"
+            />
+            Préfectures
+          </label>
 
           <label className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer select-none transition-colors bg-gray-100 hover:bg-gray-200 text-gray-700">
             <input
@@ -294,6 +290,8 @@ export default memo(function CarteFrance({
             wrongCode={wrongRegionCode}
             onHover={handleRegionHover}
             onClick={onFeatureClick ? handleRegionClick : undefined}
+            showLabels={showLabels}
+            zoomK={zoomK}
           />
           {/* Remplissages des départements — sans labels pour qu'ils restent au-dessus des contours */}
           <CoucheDepts
