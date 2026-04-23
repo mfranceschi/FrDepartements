@@ -3,8 +3,9 @@ import { shuffle } from '../quiz/buildChoices';
 import { buildInitialSession } from '../quiz/generateQuestions';
 import type { QuizConfig, Question, SessionState, AnswerRecord } from '../quiz/types';
 import { isQcmQuestion } from '../quiz/types';
+import type { ItemStatsStore } from '../storage/useItemStats';
 
-export function useQuiz(config: QuizConfig): {
+export function useQuiz(config: QuizConfig, itemStats?: ItemStatsStore): {
   session: SessionState;
   submitAnswer: (code: string) => void;
   nextQuestion: () => void;
@@ -12,7 +13,7 @@ export function useQuiz(config: QuizConfig): {
   restartWithReview: () => void;
   toggleMarkCurrentForReview: () => void;
 } {
-  const [session, setSession] = useState<SessionState>(() => buildInitialSession(config));
+  const [session, setSession] = useState<SessionState>(() => buildInitialSession(config, itemStats));
 
   const submitAnswer = useCallback((code: string) => {
     setSession((prev) => {
@@ -49,9 +50,8 @@ export function useQuiz(config: QuizConfig): {
   }, []);
 
   const restart = useCallback(() => {
-    const newSession = buildInitialSession(config);
-    setSession(newSession);
-  }, [config]);
+    setSession(buildInitialSession(config, itemStats));
+  }, [config, itemStats]);
 
   const toggleMarkCurrentForReview = useCallback(() => {
     setSession((prev) => {

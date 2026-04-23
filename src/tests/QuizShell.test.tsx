@@ -1,7 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import QuizShell from '../components/quiz/QuizShell';
 import type { SessionState } from '../quiz/types';
+
+function renderShell(element: React.ReactElement) {
+  return render(<MemoryRouter>{element}</MemoryRouter>);
+}
 
 
 // Session terminée avec score parfait (10/10)
@@ -122,7 +127,7 @@ function makeActiveSession(mode: 'DevinerNomDept' | 'DevinerCodeDept' = 'Deviner
 
 describe('QuizShell – écran de fin', () => {
   it('affiche le score final et le pourcentage', () => {
-    render(
+    renderShell(
       <QuizShell
         session={makeFinishedSession(8, 10)}
         onAnswer={vi.fn()}
@@ -138,7 +143,7 @@ describe('QuizShell – écran de fin', () => {
   });
 
   it('affiche "Excellent !" pour un score ≥ 85 %', () => {
-    render(
+    renderShell(
       <QuizShell
         session={makeFinishedSession(9, 10)}
         onAnswer={vi.fn()}
@@ -152,7 +157,7 @@ describe('QuizShell – écran de fin', () => {
   });
 
   it('affiche "Bien !" pour un score entre 60 % et 84 %', () => {
-    render(
+    renderShell(
       <QuizShell
         session={makeFinishedSession(7, 10)}
         onAnswer={vi.fn()}
@@ -166,7 +171,7 @@ describe('QuizShell – écran de fin', () => {
   });
 
   it('affiche "Continuez !" pour un score < 60 %', () => {
-    render(
+    renderShell(
       <QuizShell
         session={makeFinishedSession(3, 10)}
         onAnswer={vi.fn()}
@@ -180,7 +185,7 @@ describe('QuizShell – écran de fin', () => {
   });
 
   it('affiche "Rejouer" dans tous les cas', () => {
-    render(
+    renderShell(
       <QuizShell
         session={makeFinishedSession(5, 10)}
         onAnswer={vi.fn()}
@@ -194,7 +199,7 @@ describe('QuizShell – écran de fin', () => {
   });
 
   it('affiche "Réviser (N questions)" quand des erreurs existent', () => {
-    render(
+    renderShell(
       <QuizShell
         session={makeFinishedSession(6, 10)}
         onAnswer={vi.fn()}
@@ -208,7 +213,7 @@ describe('QuizShell – écran de fin', () => {
   });
 
   it('n\'affiche pas "Réviser" si score parfait', () => {
-    render(
+    renderShell(
       <QuizShell
         session={makeFinishedSession(10, 10)}
         onAnswer={vi.fn()}
@@ -223,7 +228,7 @@ describe('QuizShell – écran de fin', () => {
 
   it('appelle onRestart au clic sur "Rejouer"', () => {
     const onRestart = vi.fn();
-    render(
+    renderShell(
       <QuizShell
         session={makeFinishedSession(10, 10)}
         onAnswer={vi.fn()}
@@ -239,7 +244,7 @@ describe('QuizShell – écran de fin', () => {
 
   it('appelle onReview au clic sur "Réviser"', () => {
     const onReview = vi.fn();
-    render(
+    renderShell(
       <QuizShell
         session={makeFinishedSession(8, 10)}
         onAnswer={vi.fn()}
@@ -258,7 +263,7 @@ describe('QuizShell – écran de fin', () => {
 
 describe('QuizShell – badge streak', () => {
   it("n'affiche pas de badge pour un streak < 3", () => {
-    render(
+    renderShell(
       <QuizShell
         session={makeSessionWithStreak(2)}
         onAnswer={vi.fn()}
@@ -272,7 +277,7 @@ describe('QuizShell – badge streak', () => {
   });
 
   it('affiche le badge "🔥 Combo ×3" pour un streak de 3', () => {
-    render(
+    renderShell(
       <QuizShell
         session={makeSessionWithStreak(3)}
         onAnswer={vi.fn()}
@@ -286,7 +291,7 @@ describe('QuizShell – badge streak', () => {
   });
 
   it('affiche le bon compteur pour un streak de 5', () => {
-    render(
+    renderShell(
       <QuizShell
         session={makeSessionWithStreak(5)}
         onAnswer={vi.fn()}
@@ -300,7 +305,7 @@ describe('QuizShell – badge streak', () => {
   });
 
   it("n'affiche pas de badge quand le streak est cassé par une mauvaise réponse", () => {
-    render(
+    renderShell(
       <QuizShell
         session={makeSessionWithStreak(3, 'wrong')}
         onAnswer={vi.fn()}
@@ -318,7 +323,7 @@ describe('QuizShell – badge streak', () => {
 
 describe('QuizShell – barre de progression', () => {
   it('affiche des points de progression pour une session ≤ 20 questions', () => {
-    const { container } = render(
+    const { container } = renderShell(
       <QuizShell
         session={makeActiveSession()}
         onAnswer={vi.fn()}
@@ -356,7 +361,7 @@ describe('QuizShell – barre de progression', () => {
       isReview: false,
       markedQuestionIds: [],
     };
-    const { container } = render(
+    const { container } = renderShell(
       <QuizShell
         session={longSession}
         onAnswer={vi.fn()}
@@ -371,7 +376,7 @@ describe('QuizShell – barre de progression', () => {
   });
 
   it('la barre de résultats utilise un dégradé rouge→vert', () => {
-    const { container } = render(
+    const { container } = renderShell(
       <QuizShell
         session={makeFinishedSession(7, 10)}
         onAnswer={vi.fn()}
@@ -386,7 +391,7 @@ describe('QuizShell – barre de progression', () => {
   });
 
   it('le masque gris couvre 0 % pour un score parfait (100 %)', () => {
-    const { container } = render(
+    const { container } = renderShell(
       <QuizShell
         session={makeFinishedSession(10, 10)}
         onAnswer={vi.fn()}
@@ -406,7 +411,7 @@ describe('QuizShell – barre de progression', () => {
 
 describe('QuizShell – session en cours', () => {
   it('affiche le compteur de questions', () => {
-    render(
+    renderShell(
       <QuizShell
         session={makeActiveSession()}
         onAnswer={vi.fn()}
@@ -421,7 +426,7 @@ describe('QuizShell – session en cours', () => {
 
   it('affiche le bouton "Question suivante" après réponse', () => {
     const session = { ...makeActiveSession(), answerState: 'correct' as const, selectedCode: '29' };
-    render(
+    renderShell(
       <QuizShell
         session={session}
         onAnswer={vi.fn()}
@@ -436,7 +441,7 @@ describe('QuizShell – session en cours', () => {
 
   it('appelle onAnswer quand on clique sur un choix QCM', () => {
     const onAnswer = vi.fn();
-    render(
+    renderShell(
       <QuizShell
         session={makeActiveSession()}
         onAnswer={onAnswer}

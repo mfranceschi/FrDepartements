@@ -15,6 +15,7 @@ import {
   type DeptChoice,
 } from './buildChoices';
 import type { QuizConfig, QuizSujet, Question, SessionState, QuizMode, CarteMode, QcmMode, Choice } from './types';
+import type { ItemStatsStore } from '../storage/useItemStats';
 
 // Pre-computed once — these are static data that never change at runtime
 const ALL_DEPTS = DEPARTEMENTS.map((d) => ({
@@ -105,6 +106,37 @@ function buildQcmChoices(item: PoolItem, config: QuizConfig): Choice[] {
   }
 }
 
+function itemWeight(code: string, sujetStats: Record<string, { ok: number; fail: number }> | undefined): number {
+  if (!sujetStats) return 1;
+  const stat = sujetStats[code];
+  if (!stat) return 1;
+  const total = stat.ok + stat.fail;
+  if (total === 0) return 1;
+  const rate = stat.ok / total;
+  if (rate < 0.5) return 3;
+  if (rate < 0.8) return 1.5;
+  return 0.5;
+}
+
+function weightedSample<T>(items: T[], n: number, getWeight: (item: T) => number): T[] {
+  if (n >= items.length) return shuffle(items);
+  const pool = [...items];
+  const result: T[] = [];
+  while (result.length < n && pool.length > 0) {
+    const weights = pool.map(getWeight);
+    const total = weights.reduce((a, b) => a + b, 0);
+    let rand = Math.random() * total;
+    let idx = pool.length - 1;
+    for (let i = 0; i < weights.length; i++) {
+      rand -= weights[i];
+      if (rand <= 0) { idx = i; break; }
+    }
+    result.push(pool[idx]);
+    pool.splice(idx, 1);
+  }
+  return result;
+}
+
 /**
  * Génère la liste ordonnée de questions pour une session à partir de la
  * configuration utilisateur.
@@ -116,12 +148,19 @@ function buildQcmChoices(item: PoolItem, config: QuizConfig): Choice[] {
  * **Choix multiples** : les questions QCM incluent leurs `choices` pré-construits
  * ici afin que le rendu n'ait aucune logique de génération à exécuter.
  */
-export function generateQuestions(config: QuizConfig): Question[] {
+export function generateQuestions(config: QuizConfig, itemStats?: ItemStatsStore): Question[] {
   const modes = SUJET_MODES[config.sujet];
 
   const filterSet = config.filterCodes ? new Set(config.filterCodes) : null;
   const deptPool = filterSet ? ALL_DEPTS.filter(d => filterSet.has(d.code)) : ALL_DEPTS;
   const regionPool = filterSet ? ALL_REGIONS.filter(r => filterSet.has(r.code)) : ALL_REGIONS;
+
+  const sujetStats = itemStats?.[config.sujet];
+  const getWeight = config.adaptative
+    ? (item: PoolItem) => itemWeight(item.code, sujetStats)
+    : () => 1;
+  const selectFrom = (pool: PoolItem[], n: number): PoolItem[] =>
+    config.adaptative ? weightedSample(pool, n, getWeight) : shuffle(pool).slice(0, n);
 
   const cartePool: PoolItem[] = [];
   const qcmPool: PoolItem[] = [];
@@ -160,22 +199,22 @@ export function generateQuestions(config: QuizConfig): Question[] {
     } else {
       const count = config.sessionLength;
       const half = Math.ceil(count / 2);
-      const carteDedup = deduplicateByCode(shuffle(cartePool));
-      const qcmDedup = deduplicateByCode(shuffle(qcmPool));
-      const carteSelected = carteDedup.slice(0, Math.min(half, carteDedup.length));
+      const carteDedup = deduplicateByCode(cartePool);
+      const qcmDedup = deduplicateByCode(qcmPool);
+      const carteSelected = selectFrom(carteDedup, Math.min(half, carteDedup.length));
       const carteSelectedCodes = new Set(carteSelected.map((i) => i.code));
       const qcmFiltered = qcmDedup.filter((i) => !carteSelectedCodes.has(i.code));
-      const qcmSelected = qcmFiltered.slice(0, Math.min(count - carteSelected.length, qcmFiltered.length));
+      const qcmSelected = selectFrom(qcmFiltered, Math.min(count - carteSelected.length, qcmFiltered.length));
       selected = shuffle([...carteSelected, ...qcmSelected]);
     }
   } else if (hasCarteMode) {
-    const dedup = deduplicateByCode(shuffle(cartePool));
+    const dedup = deduplicateByCode(cartePool);
     const count = config.sessionLength === 'tout' ? dedup.length : config.sessionLength;
-    selected = dedup.slice(0, Math.min(count, dedup.length));
+    selected = selectFrom(dedup, Math.min(count, dedup.length));
   } else {
-    const dedup = deduplicateByCode(shuffle(qcmPool));
+    const dedup = deduplicateByCode(qcmPool);
     const count = config.sessionLength === 'tout' ? dedup.length : config.sessionLength;
-    selected = dedup.slice(0, Math.min(count, dedup.length));
+    selected = selectFrom(dedup, Math.min(count, dedup.length));
   }
 
   return selected.map((item, idx): Question => {
@@ -191,9 +230,9 @@ export function generateQuestions(config: QuizConfig): Question[] {
  * Construit l'état initial d'une session à partir de la configuration.
  * Appelé au démarrage et lors d'un redémarrage complet (`restart`).
  */
-export function buildInitialSession(config: QuizConfig): SessionState {
+export function buildInitialSession(config: QuizConfig, itemStats?: ItemStatsStore): SessionState {
   return {
-    questions: generateQuestions(config),
+    questions: generateQuestions(config, itemStats),
     currentIndex: 0,
     score: 0,
     answerState: 'pending',

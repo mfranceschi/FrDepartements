@@ -40,10 +40,10 @@ describe('QuizConfig – affichage difficulté conditionnel', () => {
     expect(screen.getByText(/Niveau de difficulté/i)).toBeInTheDocument();
   });
 
-  it('n\'affiche pas la difficulté pour regions-carte', () => {
+  it('affiche la difficulté pour regions-carte', () => {
     render(<QuizConfig onStart={vi.fn()} />);
     fireEvent.click(screen.getByRole('radio', { name: /Régions — Carte/i }));
-    expect(screen.queryByText(/Niveau de difficulté/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Niveau de difficulté/i)).toBeInTheDocument();
   });
 
   it('affiche la difficulté pour depts-prefectures', () => {

@@ -6,12 +6,14 @@ export interface StoredQuizConfig {
   sujet: QuizSujet;
   difficulty: Difficulty;
   sessionLength: SessionLength;
+  adaptative: boolean;
 }
 
 const DEFAULT: StoredQuizConfig = {
   sujet: 'depts-carte',
   difficulty: 'facile',
   sessionLength: 25,
+  adaptative: false,
 };
 
 export function useQuizConfig() {

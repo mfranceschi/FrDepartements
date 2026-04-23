@@ -21,7 +21,7 @@ const SUJETS: SujetOption[] = [
     sujet: 'regions-carte',
     label: 'Régions — Carte',
     description: 'Retrouver les régions sur la carte de France',
-    hasDifficulty: false,
+    hasDifficulty: true,
     hasSessionLength: false,
   },
   {
@@ -63,11 +63,12 @@ const SESSION_LENGTHS: SessionLength[] = [10, 25, 50, 'tout'];
 
 export default function QuizConfig({ onStart }: QuizConfigProps) {
   const [config, updateConfig] = useQuizConfig();
-  const { sujet, difficulty, sessionLength } = config;
+  const { sujet, difficulty, sessionLength, adaptative } = config;
 
   const setSujet = (s: QuizSujet) => updateConfig({ sujet: s });
   const setDifficulty = (d: Difficulty) => updateConfig({ difficulty: d });
   const setSessionLength = (l: SessionLength) => updateConfig({ sessionLength: l });
+  const setAdaptative = (v: boolean) => updateConfig({ adaptative: v });
 
   const [sessions] = useQuizHistory();
   const lastSessionBySujet = useMemo(() => {
@@ -85,6 +86,7 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
       sujet,
       difficulty,
       sessionLength: selectedOption.hasSessionLength ? sessionLength : 'tout',
+      adaptative,
     });
   };
 
@@ -156,7 +158,7 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
               </label>
             ))}
           </div>
-          <p className="text-xs text-gray-500 mt-2">S'applique aux choix proposés dans les QCM</p>
+          <p className="text-xs text-gray-500 mt-2">Difficile : les mauvaises réponses sont géographiquement proches de la bonne</p>
         </section>
       )}
 
@@ -182,6 +184,22 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
           </div>
         </section>
       )}
+
+      {/* Mode adaptatif */}
+      <section className="mb-8">
+        <label className="flex items-start gap-3 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={adaptative}
+            onChange={(e) => setAdaptative(e.target.checked)}
+            className="mt-0.5 accent-blue-600 w-4 h-4 shrink-0"
+          />
+          <div>
+            <p className="text-sm font-medium text-gray-800">Priorité à mes points faibles</p>
+            <p className="text-xs text-gray-500 mt-0.5">Les éléments souvent ratés reviennent plus fréquemment</p>
+          </div>
+        </label>
+      </section>
 
       {/* Bouton Commencer */}
       <button

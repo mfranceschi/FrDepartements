@@ -66,7 +66,7 @@ export default memo(function CoucheDepts({
 
   return (
     <g className="couche-depts">
-      {showFills && paths.map(({ feature, d, code }) => {
+      {showFills && paths.map(({ feature, d, code, nom }) => {
         if (!d) return null;
         const isHighlighted = code !== undefined && code === highlightCode;
         const isWrong = code !== undefined && code === wrongCode;
@@ -82,6 +82,7 @@ export default memo(function CoucheDepts({
           <path
             key={code ?? d}
             d={d}
+            aria-label={nom ?? code}
             fill={fill}
             stroke={stroke}
             strokeWidth={strokeWidth}

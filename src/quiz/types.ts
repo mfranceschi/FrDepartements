@@ -27,6 +27,8 @@ export interface QuizConfig {
   sessionLength: SessionLength;
   /** Restreint la session aux codes cibles listés (depts ou régions selon le sujet). */
   filterCodes?: string[];
+  /** Favorise les items souvent ratés lors de la sélection des questions. */
+  adaptative?: boolean;
 }
 
 export interface Choice {

@@ -16,9 +16,9 @@ interface QuizSessionProps {
 }
 
 function QuizSession({ config, onRestart, onFinished }: QuizSessionProps) {
-  const { session, submitAnswer, nextQuestion, restartWithReview, toggleMarkCurrentForReview } = useQuiz(config);
+  const { stats, recordAnswers } = useItemStats();
+  const { session, submitAnswer, nextQuestion, restartWithReview, toggleMarkCurrentForReview } = useQuiz(config, config.adaptative ? stats : undefined);
   const [, addSession] = useQuizHistory();
-  const { recordAnswers } = useItemStats();
   const savedRef = useRef(false);
 
   // Remonte l'état "terminé" vers QuizPage pour le blocker

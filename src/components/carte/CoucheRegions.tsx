@@ -36,7 +36,13 @@ export default memo(function CoucheRegions({
   const paths = useMemo(
     () => features.map((f) => {
       const rawCode = f.properties?.code;
-      return { feature: f, d: pathGen(f), code: typeof rawCode === 'string' ? rawCode : undefined };
+      const rawNom = f.properties?.nom;
+      return {
+        feature: f,
+        d: pathGen(f),
+        code: typeof rawCode === 'string' ? rawCode : undefined,
+        nom: typeof rawNom === 'string' ? rawNom : undefined,
+      };
     }),
     [features, pathGen],
   );
@@ -45,7 +51,7 @@ export default memo(function CoucheRegions({
 
   return (
     <g className="couche-regions">
-      {paths.map(({ feature, d, code }) => {
+      {paths.map(({ feature, d, code, nom }) => {
         if (!d) return null;
 
         if (borderOnly) {
@@ -78,6 +84,7 @@ export default memo(function CoucheRegions({
           <path
             key={code ?? d}
             d={d}
+            aria-label={nom ?? code}
             fill={fill}
             stroke={stroke}
             strokeWidth={strokeWidth}

@@ -1,6 +1,8 @@
+import { useNavigate } from 'react-router-dom';
 import type { SessionState, AnswerRecord } from '../../quiz/types';
 import { MODE_LABELS, isQcmQuestion } from '../../quiz/types';
 import { scoreColor } from '../../utils/scoreTheme';
+import { DEPT_MAP, REGION_MAP } from '../../data/maps';
 
 interface QuizResultsProps {
   session: SessionState;
@@ -24,8 +26,16 @@ function getStars(ratio: number): number {
 }
 
 function getAnsweredLabel(record: AnswerRecord): string | null {
-  if (!isQcmQuestion(record.question)) return null;
-  return record.question.choices.find((c) => c.code === record.answeredCode)?.label ?? null;
+  if (isQcmQuestion(record.question)) {
+    return record.question.choices.find((c) => c.code === record.answeredCode)?.label ?? null;
+  }
+  if (record.mode === 'TrouverDeptCarte') {
+    return DEPT_MAP.get(record.answeredCode)?.nom ?? record.answeredCode;
+  }
+  if (record.mode === 'TrouverRegionCarte') {
+    return REGION_MAP.get(record.answeredCode)?.nom ?? record.answeredCode;
+  }
+  return null;
 }
 
 function getCorrectLabel(record: AnswerRecord): string | null {
@@ -34,6 +44,7 @@ function getCorrectLabel(record: AnswerRecord): string | null {
 }
 
 export default function QuizResults({ session, onRestart, onReview }: QuizResultsProps) {
+  const navigate = useNavigate();
   const { questions, score, answerHistory, isReview, markedQuestionIds } = session;
   const total = questions.length;
   const ratio = total > 0 ? score / total : 0;
@@ -103,13 +114,21 @@ export default function QuizResults({ session, onRestart, onReview }: QuizResult
                   <div className="flex flex-col gap-0.5 min-w-0">
                     <span className="font-semibold text-gray-800 truncate">{r.question.targetNom}</span>
                     <span className="text-gray-400">{MODE_LABELS[r.mode]}</span>
-                    {correctLabel && (
-                      <span className="text-gray-600">
-                        Bonne réponse : <span className="font-medium text-green-700">{correctLabel}</span>
-                        {answeredLabel && answeredLabel !== correctLabel && (
-                          <span className="text-red-500"> · vous : {answeredLabel}</span>
-                        )}
-                      </span>
+                    {isQcmQuestion(r.question) ? (
+                      correctLabel && (
+                        <span className="text-gray-600">
+                          Bonne réponse : <span className="font-medium text-green-700">{correctLabel}</span>
+                          {answeredLabel && answeredLabel !== correctLabel && (
+                            <span className="text-red-500"> · vous : {answeredLabel}</span>
+                          )}
+                        </span>
+                      )
+                    ) : (
+                      answeredLabel && (
+                        <span className="text-gray-500">
+                          Vous avez cliqué : <span className="font-medium text-red-500">{answeredLabel}</span>
+                        </span>
+                      )
                     )}
                   </div>
                 </li>
@@ -139,6 +158,13 @@ export default function QuizResults({ session, onRestart, onReview }: QuizResult
           }`}
         >
           Rejouer
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate('/stats')}
+          className="text-sm text-blue-600 hover:text-blue-800 underline underline-offset-2 transition-colors"
+        >
+          Voir mes statistiques →
         </button>
       </div>
     </div>
