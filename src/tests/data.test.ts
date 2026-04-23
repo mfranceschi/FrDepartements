@@ -2,8 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { DEPARTEMENTS } from '../data/departements';
 import { REGIONS } from '../data/regions';
 import { REGION_ADJACENCY } from '../data/regionAdjacency';
+import { FLEUVES_DEPTS } from '../data/fleuvesDepts';
 
 const REGION_CODES = new Set(REGIONS.map((r) => r.code));
+const DEPT_CODES = new Set(DEPARTEMENTS.map((d) => d.code));
 
 describe('DEPARTEMENTS — intégrité des données', () => {
   it('contient exactement 96 départements métropolitains', () => {
@@ -105,5 +107,65 @@ describe('REGION_ADJACENCY — intégrité du graphe', () => {
     for (const [code, neighbors] of Object.entries(REGION_ADJACENCY)) {
       expect((neighbors as readonly string[]).includes(code), `${code} est voisine d'elle-même`).toBe(false);
     }
+  });
+});
+
+describe('FLEUVES_DEPTS — intégrité des données (généré par compute-fleuves-depts.mjs)', () => {
+  const entries = Object.entries(FLEUVES_DEPTS);
+
+  it('contient au moins 20 cours d\'eau', () => {
+    expect(entries.length).toBeGreaterThanOrEqual(20);
+  });
+
+  it('les grands fleuves (Loire, Rhône, Seine, Garonne) sont présents', () => {
+    for (const name of ['Loire', 'Rhône', 'Seine', 'Garonne']) {
+      expect(FLEUVES_DEPTS, `${name} absent de FLEUVES_DEPTS`).toHaveProperty(name);
+    }
+  });
+
+  it('chaque cours d\'eau a au moins un département', () => {
+    for (const [name, { depts }] of entries) {
+      expect(depts.length, `${name} : liste de depts vide`).toBeGreaterThan(0);
+    }
+  });
+
+  it('chaque code de département référence un département métropolitain connu', () => {
+    for (const [name, { depts }] of entries) {
+      for (const code of depts) {
+        expect(DEPT_CODES.has(code), `${name} : code dept "${code}" inconnu`).toBe(true);
+      }
+    }
+  });
+
+  it('les codes de département sont uniques au sein de chaque cours d\'eau', () => {
+    for (const [name, { depts }] of entries) {
+      expect(new Set(depts).size, `${name} : codes depts dupliqués`).toBe(depts.length);
+    }
+  });
+
+  it('les codes numériques sont triés en ordre croissant', () => {
+    for (const [name, { depts }] of entries) {
+      const numericCodes = depts.filter((c) => /^\d+$/.test(c));
+      for (let i = 1; i < numericCodes.length; i++) {
+        expect(
+          parseInt(numericCodes[i], 10),
+          `${name} : code ${numericCodes[i]} avant ${numericCodes[i - 1]} (ordre non croissant)`,
+        ).toBeGreaterThan(parseInt(numericCodes[i - 1], 10));
+      }
+    }
+  });
+
+  it('scalerank est un entier positif pour chaque cours d\'eau', () => {
+    for (const [name, { scalerank }] of entries) {
+      expect(Number.isInteger(scalerank), `${name} : scalerank non entier`).toBe(true);
+      expect(scalerank, `${name} : scalerank ≤ 0`).toBeGreaterThan(0);
+    }
+  });
+
+  it('la Loire traverse des départements du Massif Central et du Val de Loire', () => {
+    const loireDepts = new Set(FLEUVES_DEPTS['Loire'].depts);
+    expect(loireDepts.has('42')).toBe(true); // Loire (source, Massif Central)
+    expect(loireDepts.has('44')).toBe(true); // Loire-Atlantique (embouchure)
+    expect(loireDepts.has('37')).toBe(true); // Indre-et-Loire (Val de Loire)
   });
 });

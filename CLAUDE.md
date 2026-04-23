@@ -69,10 +69,32 @@ src/
 ## Testing philosophy
 
 - **Unit tests** (Vitest + Testing Library): cover components, hooks, and pure logic. All test files live in `src/tests/`.
-- **E2E tests** (Playwright, Chromium only): cover critical user flows (navigation, quiz session, map interactions). Located in `e2e/`.
+- **E2E tests** (Playwright, Chromium only): cover flows that require a real browser — GeoJSON loading, SVG map interactions, full quiz sessions, routing. Located in `e2e/`.
 - **Property tests**: `buildChoices.property.test.ts` uses randomized inputs to verify distractor invariants.
 - GeoJSON hooks (`useGeoData`, `useFleuveData`) are mocked in unit tests — their real loading is covered by E2E.
 - The `as QcmQuestion` cast in QCM components is intentional: `QuizShell` guarantees the mode matches before rendering.
+
+### E2E policy
+
+**Write E2E when:**
+
+- A feature loads data at runtime (new fetch from `src/geo/` or `/public/`)
+- Behavior depends on the real DOM beyond jsdom (SVG hit-testing, D3 transforms, scroll)
+- A flow spans multiple pages or requires real routing
+
+**Do NOT write E2E for:** pure logic (`buildChoices`, `generateQuestions`) or isolated component rendering — use unit tests.
+
+**Performance — serial groups for heavy assets:** when tests share an expensive GeoJSON load, group them with `test.describe.configure({ mode: 'serial' })` and a shared `page` (beforeAll/afterAll). The first test absorbs the load; subsequent tests hit the HTTP cache. Each serial group must be self-contained.
+
+**Timeouts:**
+
+- Default UI interaction: 3–5 s
+- GeoJSON / river data first load: 15 s (`test.slow()` triples this for river data, ~50 s)
+- Full quiz session (10 questions): `test.setTimeout(90_000)`
+
+**No conditional assertions.** Do not guard assertions with `if (await element.isVisible())` — either assert unconditionally or skip the test explicitly with `test.skip`. Silent no-ops hide regressions.
+
+**New features:** every new user-visible feature must add at least one E2E happy-path test. Runtime data loads require a load + render assertion.
 
 ## Known gotchas
 

@@ -99,20 +99,14 @@ test.describe('Quiz – parcours complet', () => {
 
   test('peut avancer à la question suivante après avoir répondu', async ({ page }) => {
     await page.getByRole('button', { name: /commencer|démarrer|lancer/i }).click();
+    await expect(page.getByText(/Question\s+1\s*\//)).toBeVisible({ timeout: 8_000 });
 
-    // Cherche les boutons de choix QCM (scoper à main pour exclure les boutons de nav)
-    const choiceButtons = page.locator('main').getByRole('button').filter({ hasNotText: /zoom|reset|\+|−|↺/i });
-    const firstChoice = choiceButtons.first();
+    await answerCurrentQuestion(page);
 
-    if (await firstChoice.isVisible({ timeout: 8_000 })) {
-      await firstChoice.click();
-      // Le bouton "Suivant" ou "Continuer" doit apparaître après la réponse
-      const nextBtn = page.getByRole('button', { name: /suivant|continuer|next/i });
-      await expect(nextBtn).toBeVisible({ timeout: 3_000 });
-      await nextBtn.click();
-      // La question 2 doit s'afficher
-      await expect(page.getByText(/2\s*\/\s*\d+/)).toBeVisible();
-    }
+    const nextBtn = page.getByRole('button', { name: /suivant|continuer|next/i });
+    await expect(nextBtn).toBeVisible({ timeout: 5_000 });
+    await nextBtn.click();
+    await expect(page.getByText(/2\s*\/\s*\d+/)).toBeVisible();
   });
 
   test('modal de confirmation lors de la navigation pendant un quiz en cours', async ({ page }) => {
@@ -135,12 +129,9 @@ test.describe('Quiz – parcours complet', () => {
 
     await page.getByRole('link', { name: /données/i }).click();
 
-    // Clique sur "Quitter"
-    const quitBtn = page.getByRole('button', { name: /quitter/i });
-    if (await quitBtn.isVisible({ timeout: 2_000 })) {
-      await quitBtn.click();
-      await expect(page).toHaveURL('/tableau');
-    }
+    await expect(page.getByRole('button', { name: /quitter/i })).toBeVisible({ timeout: 3_000 });
+    await page.getByRole('button', { name: /quitter/i }).click();
+    await expect(page).toHaveURL('/tableau');
   });
 });
 
