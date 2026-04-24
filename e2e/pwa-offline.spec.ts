@@ -19,7 +19,7 @@ test.describe('PWA — mode hors ligne', () => {
     await page.reload();
 
     // L'app doit rester fonctionnelle (nav + contenu principal présents)
-    await expect(page.locator('nav')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('navigation', { name: 'Navigation principale' })).toBeVisible({ timeout: 10_000 });
     await expect(page.locator('h1').first()).toBeVisible({ timeout: 10_000 });
 
     await context.setOffline(false);
