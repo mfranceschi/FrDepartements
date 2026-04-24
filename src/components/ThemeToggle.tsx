@@ -63,7 +63,7 @@ export default function ThemeToggle() {
             style={
               active
                 ? { backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }
-                : { backgroundColor: 'transparent', color: 'var(--text-secondary)' }
+                : { backgroundColor: 'transparent', color: 'var(--text-primary)' }
             }
           >
             {icon}

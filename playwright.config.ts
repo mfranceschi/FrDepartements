@@ -23,9 +23,10 @@ export default defineConfig({
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   ],
 
-  // Démarre le serveur de dev Vite avant les tests, l'arrête après
+  // En CI : preview du build de production (service worker disponible)
+  // En local : dev server (plus rapide, hot reload)
   webServer: {
-    command: 'npm run dev',
+    command: process.env.CI ? 'npm run preview -- --port 5173' : 'npm run dev',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
     timeout: 30_000,

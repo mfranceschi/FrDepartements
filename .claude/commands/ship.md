@@ -81,11 +81,15 @@ En cas d'échec : avant de toucher quoi que ce soit, diagnostique la cause de l'
 
 Ne reviens jamais sur une feature ou une modification locale pour faire passer un test sans avoir d'abord déterminé dans quel cas tu te trouves.
 
+Si des fichiers de couverture sont concernés (nouveau code non couvert), lance `npm run test:coverage` pour vérifier que les seuils (70% lignes/fonctions/statements, 55% branches) sont toujours respectés. Les D3 hooks et couches SVG sont exclus du calcul — ne les ajoute pas à la liste d'exclusions sans raison valable.
+
 ### 2d. Tests E2E
 ```
 npm run test:e2e
 ```
 En cas d'échec : même diagnostic en trois cas — adapte le test Playwright si le comportement a légitimement changé, corrige le code s'il y a un vrai bug, ne supprime pas ou ne contourne pas la feature.
+
+**Note** : `e2e/pwa-offline.spec.ts` est automatiquement skippé en local (le dev server n'a pas de service worker). Ce skip est normal et attendu — ne le supprime pas.
 
 Une fois que les 4 étapes passent, annonce-le clairement et passe à l'étape 3.
 

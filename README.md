@@ -58,9 +58,10 @@ npm run dev
 |---|---|
 | `npm run dev` | Serveur de développement Vite |
 | `npm run build` | Vérification TypeScript + build de production |
-| `npm run preview` | Prévisualiser le build de production |
+| `npm run preview` | Prévisualiser le build de production (port 4173) |
 | `npm run lint` | ESLint sur tout le projet |
 | `npm test` | Tests unitaires (Vitest, mode run) |
+| `npm run test:coverage` | Tests unitaires + rapport de couverture (seuils à 70%) |
 | `npm run test:watch` | Tests unitaires en mode watch |
 | `npm run test:e2e` | Tests E2E Playwright (lance le serveur dev automatiquement) |
 | `npm run test:e2e:ui` | Interface graphique Playwright |
@@ -94,18 +95,14 @@ La mise à jour se fait automatiquement (`autoUpdate`).
 
 ## CI/CD
 
-La pipeline GitHub Actions (`.github/workflows/ci.yml`) comprend deux jobs :
+La pipeline GitHub Actions (`.github/workflows/ci.yml`) comprend cinq jobs :
 
-**`build`** (bloquant — timeout 15 min) :
-1. Lint ESLint
-2. Vérification TypeScript (`tsc --noEmit`)
-3. Tests unitaires Vitest
-4. Build Vite de production
-5. Upload de l'artefact `dist/`
+| Job | Ce qui est vérifié | Bloquant |
+|---|---|---|
+| **Lint & Type Check** | ESLint · `tsc --noEmit` · `npm audit` (prod uniquement) | Oui |
+| **Unit Tests** | Vitest + couverture ≥ 70% lignes/fonctions, ≥ 55% branches | Oui |
+| **Build** | Bundle Vite ≤ 9 MB · artefact `dist/` uploadé | Oui |
+| **Lighthouse CI** | Accessibilité ≥ 0.9 · Best Practices ≥ 0.85 (erreur) · Perf/PWA ≥ 0.8 (warning) | Partiel |
+| **E2E** | Playwright Chromium · navigation, carte, quiz, tableau, a11y WCAG AA, PWA offline | Oui |
 
-**`e2e`** (dépend de `build` — timeout 20 min) :
-1. Installation des navigateurs Playwright (Chromium)
-2. Tests E2E complets (parcours quiz, navigation, score)
-3. Upload du rapport Playwright (toujours disponible, conservation 7 jours)
-
-Les tests E2E ont 2 tentatives automatiques en cas d'échec sur CI.
+Les tests E2E ont 2 tentatives automatiques en cas d'échec. Le rapport Playwright est uploadé après chaque run (conservation 7 jours). Les mises à jour de dépendances sont gérées par Dependabot (npm + GitHub Actions, chaque lundi).

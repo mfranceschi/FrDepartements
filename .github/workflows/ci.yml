@@ -37,10 +37,13 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
+      - name: Security audit (production dependencies)
+        run: npm audit --audit-level=high --omit=dev
+
   unit-tests:
-    name: Unit Tests
+    name: Unit Tests (coverage)
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
 
     steps:
       - name: Checkout
@@ -55,8 +58,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Unit tests
-        run: npm test
+      - name: Unit tests with coverage
+        run: npm run test:coverage
 
   build:
     name: Build
@@ -86,12 +89,38 @@ jobs:
           path: dist/
           retention-days: 1
 
+  lighthouse:
+    name: Lighthouse CI
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [build]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Run Lighthouse CI
+        run: npx lhci autorun
+
   e2e:
     name: E2E Tests (Playwright)
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    # Les tests E2E tournent après le build pour ne pas bloquer le merge en cas
-    # d'échec isolé dû à l'environnement (flakiness réseau, etc.)
     needs: [lint-and-typecheck, unit-tests, build]
 
     steps:
@@ -113,6 +142,12 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: playwright-chromium-${{ hashFiles('package-lock.json') }}
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
 
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'

@@ -163,12 +163,12 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
               />
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-gray-800">{option.label}</p>
-                <p className="text-xs text-gray-500">{option.description}</p>
+                <p className="text-xs text-gray-600">{option.description}</p>
                 {lastSessionBySujet.get(option.sujet) && (() => {
                   const last = lastSessionBySujet.get(option.sujet)!;
                   const pct = Math.round((last.score / last.total) * 100);
                   return (
-                    <p className="text-xs text-gray-400 mt-0.5">
+                    <p className="text-xs text-gray-600 mt-0.5">
                       Dernière session :{' '}
                       <span className={`font-medium ${pct >= 85 ? 'text-green-600' : pct >= 60 ? 'text-yellow-500' : 'text-red-500'}`}>
                         {last.score}/{last.total}
@@ -201,7 +201,7 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
                 />
                 <div>
                   <p className="text-sm capitalize">{d}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{DIFFICULTY_DESCRIPTIONS[d]}</p>
+                  <p className="text-xs text-gray-600 mt-0.5">{DIFFICULTY_DESCRIPTIONS[d]}</p>
                 </div>
               </label>
             ))}
@@ -230,7 +230,7 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
             ))}
           </div>
           {zoneCode !== 'tout' && (
-            <p className="text-xs text-gray-500 mt-2">{ZONES_BY_CODE[zoneCode].description}</p>
+            <p className="text-xs text-gray-600 mt-2">{ZONES_BY_CODE[zoneCode].description}</p>
           )}
         </section>
       )}
@@ -274,14 +274,14 @@ export default function QuizConfig({ onStart }: QuizConfigProps) {
           />
           <div>
             <p className="text-sm font-medium text-gray-800">Priorité à mes points faibles</p>
-            <p className="text-xs text-gray-500 mt-0.5">Les éléments souvent ratés reviennent plus fréquemment</p>
+            <p className="text-xs text-gray-600 mt-0.5">Les éléments souvent ratés reviennent plus fréquemment</p>
           </div>
         </label>
       </section>
 
       {/* Résumé + bouton Commencer */}
       <div className="mt-8">
-        <p className="text-sm text-gray-400 text-center mb-3">
+        <p className="text-sm text-gray-600 text-center mb-3">
           {effectiveCount} question{effectiveCount !== 1 ? 's' : ''}
           {selectedOption.hasDifficulty && ` · ${difficulty}`}
           {selectedOption.hasZone && zoneCode !== 'tout' && ` · ${ZONES_BY_CODE[zoneCode].label}`}

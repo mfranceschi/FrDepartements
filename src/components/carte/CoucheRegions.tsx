@@ -106,6 +106,7 @@ export default memo(function CoucheRegions({
           <path
             key={code ?? d}
             d={d}
+            role="img"
             aria-label={nom ?? code}
             fill={fill}
             stroke={stroke}

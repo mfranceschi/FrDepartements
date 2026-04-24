@@ -54,8 +54,34 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/tests/setup.ts'],
-    // Exclut les tests Playwright (gérés par leur propre runner)
     exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json-summary'],
+      exclude: [
+        'src/tests/**',
+        'src/quiz/types.ts',
+        'e2e/**',
+        '*.config.*',
+        'src/main.tsx',
+        // D3 hooks — getBoundingClientRect/SVG layout incompatible jsdom, couvert par E2E
+        'src/hooks/useD3Zoom.ts',
+        'src/hooks/useTooltip.ts',
+        // Couches D3 SVG — renderers purs sans logique métier, couverts par E2E
+        'src/components/carte/CarteFrance.tsx',
+        'src/components/carte/CoucheDepts.tsx',
+        'src/components/carte/CoucheRegions.tsx',
+        'src/components/carte/CouchePrefectures.tsx',
+        // Thin wrappers — pas de logique à tester (CLAUDE.md)
+        'src/components/SuccessBar.tsx',
+      ],
+      thresholds: {
+        lines: 70,
+        functions: 70,
+        branches: 55,
+        statements: 70,
+      },
+    },
   },
   server: {
     host: true,  // activé sur le réseau local pour tester sur d'autres appareils

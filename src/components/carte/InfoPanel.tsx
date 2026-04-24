@@ -29,10 +29,10 @@ export function EmptyPanel() {
       <p className="text-sm text-gray-500 leading-relaxed">
         Cliquez sur un département, une région, une préfecture ou un cours d'eau pour afficher ses informations.
       </p>
-      <p className="text-xs text-gray-400 leading-relaxed">
-        Activez les couches <span className="font-semibold text-gray-500">Préfectures</span> ou{' '}
-        <span className="font-semibold text-gray-500">Cours d'eau</span> dans la barre d'outils pour les rendre cliquables,
-        ou lancez un <span className="font-semibold text-blue-400">Quiz</span> pour vous entraîner.
+      <p className="text-xs text-gray-600 leading-relaxed">
+        Activez les couches <span className="font-semibold text-gray-700">Préfectures</span> ou{' '}
+        <span className="font-semibold text-gray-700">Cours d'eau</span> dans la barre d'outils pour les rendre cliquables,
+        ou lancez un <span className="font-semibold text-blue-700">Quiz</span> pour vous entraîner.
       </p>
     </div>
   );

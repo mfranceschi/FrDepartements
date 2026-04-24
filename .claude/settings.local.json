@@ -27,7 +27,9 @@
       "Bash(gh run view *)",
       "Bash(node scripts/compute-fleuves-depts.mjs)",
       "Bash(git commit -m *)",
-      "Bash(npm ls *)"
+      "Bash(npm ls *)",
+      "Bash(npm audit *)",
+      "Bash(npx lhci *)"
     ]
   },
   "hooks": {

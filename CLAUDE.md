@@ -8,8 +8,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run dev          # Start dev server (http://localhost:5173)
 npm run build        # TypeScript check + Vite production build
 npm run lint         # ESLint validation
-npm run preview      # Preview production build
+npm run preview      # Preview production build (port 4173)
 npm test             # Run Vitest unit tests (single run)
+npm run test:coverage  # Unit tests + coverage report (seuils 70%)
 npm run test:watch   # Vitest in watch mode
 npm run test:e2e     # Playwright E2E tests (auto-starts dev server)
 npm run test:e2e:ui  # Playwright interactive UI mode
@@ -90,9 +91,12 @@ The `as QcmQuestion` cast in QCM components is intentional: `QuizShell` guarante
 **Do NOT write unit tests for:**
 
 - **D3 hooks** (`useD3Zoom`, `useTooltip`): depend on `getBoundingClientRect` and real SVG layout; jsdom cannot simulate these faithfully — cover via E2E.
+- **D3 SVG layer components** (`CarteFrance`, `CoucheDepts`, `CoucheRegions`, `CouchePrefectures`): pure D3 renderers, same reason — cover via E2E.
 - **Thin wrappers** (`ThemeToggle`, `SuccessBar`, `QuizNextButton`): no logic beyond a prop passthrough or a single one-line toggle.
 - **Type-only files** (`quiz/types.ts`): nothing to execute.
 - **Generator scripts** (`scripts/*.mjs`): correctness is validated by the data integrity tests on their output.
+
+These exclusions are also reflected in the coverage config (`vite.config.ts`) so they don't drag down the 70% threshold.
 
 **Conventions:**
 
@@ -123,6 +127,10 @@ The `as QcmQuestion` cast in QCM components is intentional: `QuizShell` guarante
 
 **New features:** every new user-visible feature must add at least one E2E happy-path test. Runtime data loads require a load + render assertion.
 
+**PWA offline test** (`e2e/pwa-offline.spec.ts`): skipped automatically in local dev (`npm run dev` has no service worker). Runs only in CI where Playwright uses `vite preview` against the production build.
+
+**Accessibility** (`e2e/accessibilite.spec.ts`): checks WCAG 2.1 AA on all three pages via axe-core. All SVG `<path>` elements that carry an `aria-label` must have `role="img"`.
+
 ## Known gotchas
 
 - **Centre-Val de Loire adjacency**: this region's neighbors in `regionAdjacency.ts` were wrong and have been corrected — double-check if touching adjacency data.
@@ -134,7 +142,9 @@ The `as QcmQuestion` cast in QCM components is intentional: `QuizShell` guarante
 
 ## Constraints — and why
 
-- **Bundle size ≤ 9 MB**: GeoJSON files are large. The limit is enforced in CI. Never import GeoJSON statically; always load lazily. Do not add large new assets without checking the impact.
+- **Bundle size ≤ 9 MB**: GeoJSON files are large. The limit is enforced in CI (`du -sb dist/`). Never import GeoJSON statically; always load lazily. Do not add large new assets without checking the impact.
+- **Coverage ≥ 70%** (lines/functions/statements) et **≥ 55%** (branches) : seuils vérifiés par `npm run test:coverage`. Les D3 hooks et couches SVG sont exclus du calcul (non testables en jsdom).
+- **WCAG 2.1 AA** : l'accessibilité est vérifiée par axe-core en E2E. `npm audit --omit=dev --audit-level=high` surveille les CVE de production en CI.
 - **TypeScript strict mode**: `noUnusedLocals` and `noUnusedParameters` are on. Clean up any unused symbols before committing.
 - **No external API calls**: all data is either bundled in `src/data/` or loaded from `/public/`. The app must work fully offline (PWA).
 - **PWA cache strategy**: GeoJSON files use a Cache-First Workbox strategy (30-day expiration). Changes to these files require a cache bust — bump the file name or use query params if needed.
