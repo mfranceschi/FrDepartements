@@ -68,11 +68,38 @@ src/
 
 ## Testing philosophy
 
-- **Unit tests** (Vitest + Testing Library): cover components, hooks, and pure logic. All test files live in `src/tests/`.
-- **E2E tests** (Playwright, Chromium only): cover flows that require a real browser — GeoJSON loading, SVG map interactions, full quiz sessions, routing. Located in `e2e/`.
-- **Property tests**: `buildChoices.property.test.ts` uses randomized inputs to verify distractor invariants.
-- GeoJSON hooks (`useGeoData`, `useFleuveData`) are mocked in unit tests — their real loading is covered by E2E.
-- The `as QcmQuestion` cast in QCM components is intentional: `QuizShell` guarantees the mode matches before rendering.
+Three layers, each with a distinct scope:
+
+- **Unit tests** (Vitest + Testing Library) — `src/tests/`: pure logic, hooks, components, data integrity. Run in jsdom, fast, no network.
+- **E2E tests** (Playwright, Chromium only) — `e2e/`: flows that require a real browser — GeoJSON loading, SVG map interactions, full quiz sessions, routing.
+- **Property tests** — `buildChoices.property.test.ts`: randomized inputs to verify distractor invariants that would take too many hand-written cases to cover.
+
+GeoJSON hooks (`useGeoData`, `useFleuveData`) are mocked in unit tests — their real loading is covered by E2E.
+
+The `as QcmQuestion` cast in QCM components is intentional: `QuizShell` guarantees the mode matches before rendering.
+
+### Unit test policy
+
+**Write unit tests for:**
+
+- **Pure logic** — any function that takes inputs and returns a value: `buildChoices`, `generateQuestions`, `relativeTime`, `computeDeptColors`, `sortCodes`.
+- **Storage hooks** — `useLocalStorage`, `useQuizHistory`, `useItemStats`: cover the happy path, functional updaters, and error cases (invalid JSON, quota exceeded, private mode).
+- **Components** — render with Testing Library, fire events, assert visible output. Test the component's contract (what it renders and what it calls), not its internals (class names are acceptable when they encode meaningful state, e.g. `bg-blue-600` for the active button).
+- **Data integrity** — every static or generated dataset gets a `describe` block in `data.test.ts`: count, uniqueness, cross-references, invariants. This is the regression net for generator scripts (`compute-fleuves-depts.mjs`) whose pure functions aren't directly exported.
+
+**Do NOT write unit tests for:**
+
+- **D3 hooks** (`useD3Zoom`, `useTooltip`): depend on `getBoundingClientRect` and real SVG layout; jsdom cannot simulate these faithfully — cover via E2E.
+- **Thin wrappers** (`ThemeToggle`, `SuccessBar`, `QuizNextButton`): no logic beyond a prop passthrough or a single one-line toggle.
+- **Type-only files** (`quiz/types.ts`): nothing to execute.
+- **Generator scripts** (`scripts/*.mjs`): correctness is validated by the data integrity tests on their output.
+
+**Conventions:**
+
+- Named `<ComponentOrModule>.test.ts(x)` in `src/tests/` — named after the thing tested, not the directory.
+- Extract a `renderXxx()` factory when `render(...)` is repeated across tests in the same file (see `renderConfig`, `renderShell`, `renderResults`).
+- No conditional assertions inside `it()` bodies — no `if (condition) expect(...)`.
+- `beforeEach` in `src/tests/setup.ts` already clears `localStorage` before every test.
 
 ### E2E policy
 

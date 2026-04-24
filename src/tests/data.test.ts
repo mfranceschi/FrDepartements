@@ -3,6 +3,7 @@ import { DEPARTEMENTS } from '../data/departements';
 import { REGIONS } from '../data/regions';
 import { REGION_ADJACENCY } from '../data/regionAdjacency';
 import { FLEUVES_DEPTS } from '../data/fleuvesDepts';
+import { ZONES, ZONES_BY_CODE } from '../data/zones';
 
 const REGION_CODES = new Set(REGIONS.map((r) => r.code));
 const DEPT_CODES = new Set(DEPARTEMENTS.map((d) => d.code));
@@ -167,5 +168,33 @@ describe('FLEUVES_DEPTS — intégrité des données (généré par compute-fleu
     expect(loireDepts.has('42')).toBe(true); // Loire (source, Massif Central)
     expect(loireDepts.has('44')).toBe(true); // Loire-Atlantique (embouchure)
     expect(loireDepts.has('37')).toBe(true); // Indre-et-Loire (Val de Loire)
+  });
+});
+
+describe('ZONES — intégrité des données', () => {
+  const nonTout = ZONES.filter(z => z.code !== 'tout');
+
+  it('la zone "tout" a regionCodes vide', () => {
+    expect(ZONES_BY_CODE['tout'].regionCodes).toHaveLength(0);
+  });
+
+  it('chaque regionCode référence une région connue', () => {
+    for (const zone of nonTout) {
+      for (const code of zone.regionCodes) {
+        expect(REGION_CODES.has(code), `zone ${zone.code} : région ${code} inconnue`).toBe(true);
+      }
+    }
+  });
+
+  it('les 4 zones non-tout couvrent exactement les 13 régions sans chevauchement', () => {
+    const all = nonTout.flatMap(z => z.regionCodes);
+    expect(all).toHaveLength(13);
+    expect(new Set(all).size).toBe(13);
+  });
+
+  it('ZONES_BY_CODE indexe chaque zone par son code', () => {
+    for (const zone of ZONES) {
+      expect(ZONES_BY_CODE[zone.code]).toBe(zone);
+    }
   });
 });
